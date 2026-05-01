@@ -5,109 +5,99 @@ frappe.pages['taliui-ngaue-tool'].on_page_load = function(wrapper) {
         single_column: true
     });
 
-    // Add Filters
-    let house_f = page.add_field({
-        label: 'School House', 
-        fieldtype: 'Link', 
-        options: 'School House', 
-        fieldname: 'house'
-    });
+    // Filters
+    let house_f = page.add_field({label: 'School House', fieldtype: 'Link', options: 'School House', fieldname: 'house'});
+    let shift_f = page.add_field({label: 'Taliui', fieldtype: 'Select', options: ['Pongipongi', 'Ngaue', 'Mohe'], fieldname: 'shift', default: 'Pongipongi'});
+    let date_f = page.add_field({label: 'Date', fieldtype: 'Date', default: frappe.datetime.nowdate(), fieldname: 'date'});
 
-    let shift_f = page.add_field({
-        label: 'Taliui', 
-        fieldtype: 'Select', 
-        options: ['Pongipongi', 'Ngaue', 'Mohe'], 
-        fieldname: 'shift'
-    });
+    let $container = $('<div class="student-area" style="padding: 15px;"></div>').appendTo(page.main);
 
-    // Create a plain div for the list - No microtemplate needed
-    let $container = $('<div class="attendance-area" style="padding: 20px;">' +
-                       '<div class="text-muted">Please select a School House to begin.</div>' +
-                       '</div>').appendTo(page.main);
-
-    // Function to fetch and render
-    const refresh_list = () => {
-        let house = house_f.get_value();
-        if(!house) return;
-
-        $container.html('<div class="text-muted">Loading Students...</div>');
+    const refresh = () => {
+        if (!house_f.get_value()) return;
+        $container.html('<div class="text-muted">Fetching...</div>');
 
         frappe.call({
-            method: "high_school.api.get_students_by_house",
-            args: { house: house },
-            callback: function(r) {
-                if(r.message) {
-                    render_table(page, $container, r.message);
-                }
+            method: "high_school.high_school.api.get_taliui_records",
+            args: {
+                house: house_f.get_value(),
+                date: date_f.get_value(),
+                taliui: shift_f.get_value()
+            },
+            callback: (r) => {
+                render_student_grid(page, $container, r.message || []);
             }
         });
     };
 
-    house_f.$input.on('change', refresh_list);
+    house_f.$input.on('change', refresh);
+    shift_f.$input.on('change', refresh);
+    date_f.$input.on('change', refresh);
 
-    // Primary Action Button
-    page.set_primary_action('Submit Attendance', () => {
-        let rows = [];
-        $container.find('.s-row').each(function() {
-            rows.push({
-                student: $(this).data('name'),
-                status: $(this).find('.status-val').val()
-            });
-        });
-
-        if(rows.length === 0) {
-            frappe.msgprint("No students found to submit.");
+    function render_student_grid(page, wrapper, students) {
+        wrapper.empty();
+        if (students.length === 0) {
+            wrapper.html('<div class="text-muted">No Students found in this House.</div>');
             return;
         }
 
-        frappe.call({
-            method: "high_school.high_school.api.submit_taliui_bulk",
-            args: {
-                house: house_f.get_value(),
-                shift: shift_f.get_value(),
-                date: frappe.datetime.nowdate(),
-                attendance_json: JSON.stringify(rows)
-            },
-            callback: function(r) {
-                if(!r.exc) {
-                    frappe.show_alert({message: __('Attendance Saved Successfully'), indicator: 'green'});
-                    refresh_list();
-                }
-            }
-        });
-    });
-};
+        // Toolbar
+        let toolbar = $(`<p>
+            <button class="btn btn-default btn-xs btn-check-all">Check all</button>
+            <button class="btn btn-default btn-xs btn-uncheck-all">Uncheck all</button>
+            <button class="btn btn-primary btn-xs btn-mark">Mark Attendance</button>
+        </p>`).appendTo(wrapper);
 
-function render_table(page, $container, students) {
-    let html = `
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th style="width: 60%">Student Name</th>
-                    <th style="width: 40%">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    students.forEach(s => {
-        let label = s.on_leave ? ' <span class="label label-warning">On Leave</span>' : '';
-        let selected_status = s.on_leave ? 'Leave' : 'Present';
+        toolbar.find('.btn-check-all').click(() => wrapper.find('input[type="checkbox"]:not(:disabled)').prop('checked', true));
+        toolbar.find('.btn-uncheck-all').click(() => wrapper.find('input[type="checkbox"]:not(:disabled)').prop('checked', false));
         
-        html += `
-            <tr class="s-row" data-name="${s.name}">
-                <td>${s.student_name}${label}</td>
-                <td>
-                    <select class="form-control status-val">
-                        <option value="Present" ${selected_status === 'Present' ? 'selected' : ''}>Present</option>
-                        <option value="Absent">Absent</option>
-                        <option value="Leave" ${selected_status === 'Leave' ? 'selected' : ''}>Leave</option>
-                    </select>
-                </td>
-            </tr>
-        `;
-    });
+        toolbar.find('.btn-mark').click(() => {
+            let studs = [];
+            wrapper.find('input[type="checkbox"]').each(function() {
+                let $chk = $(this);
+                studs.push({
+                    student: $chk.data('student'),
+                    checked: $chk.is(':checked'),
+                    disabled: $chk.prop('disabled')
+                });
+            });
 
-    html += `</tbody></table>`;
-    $container.html(html);
-}
+            let present = studs.filter(s => s.checked && !s.disabled);
+            let absent = studs.filter(s => !s.checked && !s.disabled);
+
+            frappe.confirm(`Update Attendance?<br>Present: ${present.length}<br>Absent: ${absent.length}`, () => {
+                frappe.call({
+                    method: "high_school.high_school.api.mark_taliui_attendance",
+                    freeze: true,
+                    args: {
+                        students_present: present,
+                        students_absent: absent,
+                        house: house_f.get_value(),
+                        taliui: shift_f.get_value(),
+                        date: date_f.get_value()
+                    },
+                    callback: refresh
+                });
+            });
+        });
+
+        // Grid
+        let grid = $('<div class="row"></div>').appendTo(wrapper);
+        students.forEach(s => {
+            let is_leave = s.status === "Leave";
+            grid.append(`
+                <div class="col-sm-3">
+                    <div class="checkbox">
+                        <label style="${is_leave ? 'color: orange; font-weight: bold;' : ''}">
+                            <input type="checkbox" 
+                                class="students-check" 
+                                data-student="${s.student}" 
+                                ${s.status === "Present" ? "checked" : ""}
+                                ${is_leave ? "disabled" : ""}>
+                            ${s.student_name} ${is_leave ? '(Leave)' : ''}
+                        </label>
+                    </div>
+                </div>
+            `);
+        });
+    }
+};
