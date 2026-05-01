@@ -62,13 +62,14 @@
   {
    "fieldname": "houa_ngaue_moua",
    "fieldtype": "Int",
-   "label": "Houa Ngaue Mo'ua"
+   "label": "Houa Ngaue Mo'ua",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-01 15:11:38.801586",
+ "modified": "2026-05-01 18:39:09.529800",
  "modified_by": "Administrator",
  "module": "High School",
  "name": "Taliui Akonofo",
