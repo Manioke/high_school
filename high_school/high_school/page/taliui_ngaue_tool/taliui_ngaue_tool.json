@@ -1,0 +1,23 @@
+{
+ "content": null,
+ "creation": "2026-05-01 14:55:47.768706",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-05-01 15:47:29.296893",
+ "modified_by": "Administrator",
+ "module": "High School",
+ "name": "taliui-ngaue-tool",
+ "owner": "Administrator",
+ "page_name": "taliui-ngaue-tool",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Taliui Ngaue Tool"
+}
