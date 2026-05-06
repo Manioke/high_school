@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "School House",
+  "enabled": 1,
+  "modified": "2026-05-07 10:26:16.550429",
+  "module": "High School",
+  "name": "List Students",
+  "script": "frappe.ui.form.on('School House', {\n    refresh: function(frm) {\n        if (!frm.is_new()) {\n            frappe.call({\n                method: \"frappe.client.get_list\",\n                args: {\n                    doctype: \"Student\",\n                    filters: { \"custom_falemohe\": frm.doc.name },\n                    fields: [\"name\", \"first_name\", \"last_name\"]\n                },\n                callback: function(r) {\n                    if (r.message) {\n                        frm.clear_table(\"custom_students\"); // Use your actual table field name\n                        r.message.forEach(stu => {\n                            let child = frm.add_child(\"custom_students\");\n                            child.student = stu.name;\n                            child.student_name = stu.first_name + \" \" + (stu.last_name || \"\");\n                        });\n                        frm.refresh_field(\"custom_students\");\n                    }\n                }\n            });\n        }\n    }\n});",
+  "view": "Form"
+ }
+]

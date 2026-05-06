@@ -47,6 +47,9 @@ app_license = "mit"
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_js = {
+    "Student Group": "public/js/student_group_custom.js"
+}
 
 # Svg Icons
 # ------------------
@@ -136,7 +139,6 @@ app_license = "mit"
 # Document Events
 # ---------------
 # Hook on document methods and events
-
 # doc_events = {
 # 	"*": {
 # 		"on_update": "method",
@@ -178,12 +180,20 @@ app_license = "mit"
 # 	"frappe.desk.doctype.event.event.get_events": "high_school.event.get_events"
 # }
 #
+
+override_whitelisted_methods = {
+    "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom"
+}
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
 # 	"Task": "high_school.task.get_dashboard_data"
 # }
+
+# JS injection for Education App DocTypes
+# ---------------
 
 # exempt linked doctypes from being automatically cancelled
 #
@@ -247,10 +257,16 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 fixtures = [
-        {
-            "dt": "Custom Field",
-            "filters": [
-                ["module", "=", "High School"]
-            ]
-        }
-    ]
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["module", "=", "High School"]
+        ]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["module", "=", "High School"]
+        ]
+    }
+]
