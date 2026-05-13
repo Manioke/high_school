@@ -50,7 +50,13 @@ app_license = "mit"
 doctype_js = {
     "Student Group": "public/js/student_group_custom.js"
 }
-
+doctype_js = {
+    "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js"
+}
+# Link the JS to the DocType
+doctype_js = {
+    "Student Leave Application": "public/js/student_leave_application.js"
+}
 # Svg Icons
 # ------------------
 # include app icons in desk
@@ -136,6 +142,10 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+override_doctype_class = {
+    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
+}
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -146,6 +156,18 @@ doctype_js = {
 # 		"on_trash": "method"
 # 	}
 # }
+
+#doc_events = {
+#    "Student Leave Application": {
+#        "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
+#    }
+#}
+
+doc_events = {
+    "Student Leave Application": {
+        "on_submit": "high_school.high_school.api.create_course_leave_attendance"
+    }
+}
 
 # Scheduled Tasks
 # ---------------
@@ -182,9 +204,13 @@ doctype_js = {
 #
 
 override_whitelisted_methods = {
-    "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom"
+    "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom",
+    "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance"
 }
-
+# Replace the Core Class with your Smart Class
+override_doctype_class = {
+    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
+}
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
