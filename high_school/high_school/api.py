@@ -173,101 +173,8 @@ education.education.api.mark_attendance = custom_mark_attendance
 
 # --- 2. LEAVE APPLICATION OVERRIDE ---
 
-def daterange(start_date, end_date):
-    for n in range(int((end_date - start_date).days) + 1):
-        yield start_date + timedelta(n)
-
-class HighSchoolLeaveApplication(StudentLeaveApplication):
-    def on_submit(self):
-        # This calls our custom logic below
-        self.update_attendance()
-
-    def update_attendance(self):
-        # Get all groups the student belongs to
-        student_groups = frappe.db.get_all(
-            "Student Group Student",
-            pluck="parent",
-            filters={"student": self.student},
-        )
-
-        # Determine the primary group (for the daily/main record)
-        primary_group = self.student_group or (student_groups[0] if student_groups else None)
-
-        holiday_list = get_holiday_list()
-        status = "Present" if self.mark_as_present else "Leave"
-
-        # Loop through every day in the range
-        for dt in daterange(getdate(self.from_date), getdate(self.to_date)):
-            date_str = dt.strftime("%Y-%m-%d")
-            
-            if is_holiday(holiday_list, date_str):
-                continue
-
-            # --- TRACK 1: MAIN DAILY RECORD ---
-            # Creates/Updates the record for F5-A-2026 (No Schedule)
-            if primary_group:
-                self.force_attendance(date_str, status, primary_group, schedule_name=None)
-
-            # --- TRACK 2: COURSE SCHEDULES ---
-            # Find every lesson for THIS specific day for ALL groups the student is in
-            if student_groups:
-                schedules = frappe.db.get_all(
-                    "Course Schedule",
-                    filters={
-                        "docstatus": 1,
-                        "schedule_date": date_str,
-                        "student_group": ["in", student_groups]
-                    },
-                    fields=["name", "student_group"]
-                )
-
-                for s in schedules:
-                    # Creates/Updates the record for specific lessons like Economics
-                    self.force_attendance(date_str, status, s.student_group, s.name)
-
-    def force_attendance(self, date, status, group_name, schedule_name=None):
-        # Define filter for searching existing records
-        # If schedule_name is None, we look for records where course_schedule is empty
-        cs_filter = schedule_name if schedule_name else ["in", ["", None]]
-        
-        existing = frappe.db.exists("Student Attendance", {
-            "student": self.student,
-            "date": date,
-            "course_schedule": cs_filter,
-            "docstatus": ["<", 2]
-        })
-
-        if existing:
-            # Overwrite existing record (e.g., Change 'Absent' to 'Leave')
-            frappe.db.set_value("Student Attendance", existing, {
-                "status": status,
-                "leave_application": self.name,
-                "student_group": group_name
-            })
-            
-            # Ensure it is submitted
-            if frappe.db.get_value("Student Attendance", existing, "docstatus") == 0:
-                frappe.db.set_value("Student Attendance", existing, "docstatus", 1)
-        else:
-            # Create a brand new record
-            try:
-                doc = frappe.new_doc("Student Attendance")
-                doc.student = self.student
-                doc.student_name = self.student_name
-                doc.date = date
-                doc.status = status
-                doc.student_group = group_name
-                doc.leave_application = self.name
-                if schedule_name:
-                    doc.course_schedule = schedule_name
-                
-                doc.insert(ignore_permissions=True, ignore_mandatory=True)
-                doc.submit()
-            except Exception:
-                # Catch potential race conditions
-                pass
-
-def create_course_leave_attendance(doc, method):
+@frappe.whitelist()
+def update_attendance_on_leave_approval(doc, method=None):
     # 1. Get all Student Groups the student is part of
     student_groups = frappe.get_all("Student Group Student", 
         filters={"student": doc.student, "active": 1}, 
@@ -282,38 +189,48 @@ def create_course_leave_attendance(doc, method):
 
     # 2. Iterate through each day of the leave
     while current_date <= to_date:
-        # Check if it's a holiday (optional, based on your settings)
-        # if is_holiday(current_date): continue 
-
-        # 3. Find all Course Schedules for this student's groups on this date
+        # 3. Find all Course Schedules (Removed docstatus filter so it finds everything)
         schedules = frappe.get_all("Course Schedule",
             filters={
                 "student_group": ["in", student_groups],
                 "schedule_date": current_date
+                # No docstatus filter here makes it more inclusive
             },
             fields=["name", "student_group"]
         )
 
         for sch in schedules:
-            # 4. Check if attendance already exists to avoid duplicates
-            exists = frappe.db.exists("Student Attendance", {
+            # 4. Check if attendance already exists
+            existing = frappe.db.exists("Student Attendance", {
                 "student": doc.student,
                 "course_schedule": sch.name,
-                "date": current_date
+                "date": current_date,
+                "docstatus": ["<", 2] # Don't look at cancelled records
             })
 
-            if not exists:
-                attendance = frappe.get_doc({
-                    "doctype": "Student Attendance",
-                    "student": doc.student,
-                    "student_name": doc.student_name,
-                    "date": current_date,
+            if existing:
+                # 5. FLIP: Update existing record (e.g. Absent -> Leave)
+                frappe.db.set_value("Student Attendance", existing, {
                     "status": "Leave",
-                    "student_group": sch.student_group,
-                    "course_schedule": sch.name,
-                    "leave_application": doc.name
+                    "leave_application": doc.name,
+                    "student_group": sch.student_group
                 })
-                attendance.insert(ignore_permissions=True)
-                attendance.submit()
+            else:
+                # 6. CREATE: Only if it absolutely doesn't exist
+                try:
+                    attendance = frappe.get_doc({
+                        "doctype": "Student Attendance",
+                        "student": doc.student,
+                        "student_name": doc.student_name,
+                        "date": current_date,
+                        "status": "Leave",
+                        "student_group": sch.student_group,
+                        "course_schedule": sch.name,
+                        "leave_application": doc.name
+                    })
+                    attendance.insert(ignore_permissions=True)
+                    attendance.submit()
+                except Exception:
+                    pass
 
         current_date = add_days(current_date, 1)

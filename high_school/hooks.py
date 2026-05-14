@@ -142,9 +142,9 @@ doctype_js = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
-override_doctype_class = {
-    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
-}
+#override_doctype_class = {
+#    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
+#}
 
 # Document Events
 # ---------------
@@ -157,17 +157,17 @@ override_doctype_class = {
 # 	}
 # }
 
-#doc_events = {
-#    "Student Leave Application": {
-#        "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
-#    }
-#}
-
 doc_events = {
     "Student Leave Application": {
-        "on_submit": "high_school.high_school.api.create_course_leave_attendance"
+        "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
     }
 }
+
+#doc_events = {
+#    "Student Leave Application": {
+#        "on_submit": "high_school.high_school.api.create_course_leave_attendance"
+#    }
+#}
 
 # Scheduled Tasks
 # ---------------
@@ -208,9 +208,11 @@ override_whitelisted_methods = {
     "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance"
 }
 # Replace the Core Class with your Smart Class
-override_doctype_class = {
-    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
-}
+
+#override_doctype_class = {
+#    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
+#}
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
