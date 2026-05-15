@@ -234,3 +234,41 @@ def update_attendance_on_leave_approval(doc, method=None):
                     pass
 
         current_date = add_days(current_date, 1)
+
+from education.education.doctype.fee_schedule.fee_schedule import create_sales_invoice
+
+def generate_custom_fees(doc, method):
+    # 1. Determine Stream Prefix
+    stream = "I" if doc.student_category == "INT" else "N"
+    
+    # 2. Determine Form/Level
+    # Logic: "Form 1 - 2026" -> "F01", "TVET - 2026" -> "TV"
+    form_code = ""
+    if "TVET" in doc.student_batch_name:
+        form_code = "TV"
+    else:
+        # Extracts '01' from 'Form 1' and adds 'F'
+        import re
+        digit = re.findall(r'\d+', doc.student_batch_name)
+        if digit:
+            form_code = f"F0{digit[0]}"
+    
+    # 3. Get Sibling Rank from Student (assuming it was mapped from Applicant)
+    rank = frappe.db.get_value("Student", doc.student, "custom_sibling_rank") or "C01"
+    
+    # 4. Construct the Final Fee Structure Name
+    # Example: I + F01 + C02 = IF01C02
+    target_fee_structure = f"{stream}{form_code}{rank}"
+    
+    # 5. Find a Fee Schedule linked to this structure for the current term
+    fee_schedule = frappe.db.get_value("Fee Schedule", {
+        "fee_structure": target_fee_structure,
+        "academic_term": doc.academic_term,
+        "docstatus": 1
+    }, "name")
+    
+    if fee_schedule:
+        create_sales_invoice(fee_schedule, doc.student)
+        frappe.msgprint(f"Sales Invoice created for {target_fee_structure}")
+    else:
+        frappe.throw(f"No active Fee Schedule found for {target_fee_structure} in {doc.academic_term}")

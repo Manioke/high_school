@@ -57,6 +57,9 @@ doctype_js = {
 doctype_js = {
     "Student Leave Application": "public/js/student_leave_application.js"
 }
+doctype_js = {
+    "Program Enrollment": "public/js/program_enrollment.js"
+}
 # Svg Icons
 # ------------------
 # include app icons in desk
@@ -160,6 +163,12 @@ doctype_js = {
 doc_events = {
     "Student Leave Application": {
         "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
+    }
+}
+
+doc_events = {
+    "Program Enrollment": {
+        "on_submit": "high_school.high_school.api.generate_custom_fees"
     }
 }
 
