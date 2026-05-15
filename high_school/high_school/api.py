@@ -4,7 +4,7 @@ import education.education.api
 from education.education.doctype.student_leave_application.student_leave_application import StudentLeaveApplication
 from education.education.doctype.student_attendance.student_attendance import get_holiday_list
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
-from frappe.utils import getdate, add_days, date_diff
+from frappe.utils import data, getdate, add_days, date_diff
 from urllib.parse import unquote
 from datetime import timedelta
 
@@ -90,42 +90,52 @@ def get_students_custom(*args, **kwargs):
         if 'student-group/' in referrer:
             identifier = referrer.split('student-group/')[-1].split('?')[0]
     
-    if not identifier:
-        frappe.throw("Could not detect Student Group Name.")
-
     identifier = unquote(str(identifier))
-    course = data.get('course')
-    academic_year = data.get('academic_year')
     
-    student = frappe.qb.DocType("Student")
-    pe = frappe.qb.DocType("Program Enrollment")
-    
-    option_field = None
-    if "Opt1" in identifier: option_field = student.custom_option_1
-    elif "Opt2" in identifier: option_field = student.custom_option_2
-    elif "Opt3" in identifier: option_field = student.custom_option_3
-    elif "Opt4" in identifier: option_field = student.custom_option_4
+    # Check if this is an "Option" group or a "Main" group
+    is_option_group = any(x in identifier for x in ["Opt1", "Opt2", "Opt3", "Opt4"])
+
+    # CASE 1: It's an Option Group (Your custom High School logic)
+    if is_option_group:
+        student = frappe.qb.DocType("Student")
+        pe = frappe.qb.DocType("Program Enrollment")
         
-    if not option_field:
-        frappe.throw(f"Group '{identifier}' needs Opt1-Opt4 in its name.")
+        option_field = None
+        if "Opt1" in identifier: option_field = student.custom_option_1
+        elif "Opt2" in identifier: option_field = student.custom_option_2
+        elif "Opt3" in identifier: option_field = student.custom_option_3
+        elif "Opt4" in identifier: option_field = student.custom_option_4
 
-    query = (
-        frappe.qb.from_(pe)
-        .join(student).on(pe.student == student.name)
-        .select(pe.student, pe.student_name)
-        .where(pe.academic_year == academic_year)
-        .where(pe.docstatus == 1)
-        .where(option_field == course)
-    )
-    
-    if data.get('program'): query = query.where(pe.program == data.get('program'))
-    if data.get('batch'): query = query.where(pe.student_batch_name == data.get('batch'))
+        query = (
+            frappe.qb.from_(pe)
+            .join(student).on(pe.student == student.name)
+            .select(pe.student, pe.student_name)
+            .where(pe.academic_year == data.get('academic_year'))
+            .where(pe.docstatus == 1)
+            .where(option_field == data.get('course'))
+        )
+        
+        if data.get('program'): query = query.where(pe.program == data.get('program'))
+        if data.get('batch'): query = query.where(pe.student_batch_name == data.get('batch'))
 
-    res = query.run(as_dict=1)
-    for d in res:
-        d.active = frappe.db.get_value("Student", d.student, "enabled")
+        res = query.run(as_dict=1)
+        for d in res:
+            d.active = 1 if frappe.db.get_value("Student", d.student, "enabled") else 0
+        return res
 
-    return res
+    # CASE 2: It's a Main Group (Standard Frappe Education logic)
+    else:
+        from education.education.doctype.student_group.student_group import get_students
+        # Fallback to the original Frappe function you pasted above
+        return get_students(
+            academic_year=data.get('academic_year'),
+            group_based_on=data.get('group_based_on'),
+            academic_term=data.get('academic_term'),
+            program=data.get('program'),
+            batch=data.get('batch'),
+            student_category=data.get('student_category'),
+            course=data.get('course')
+        )
 
 # --- 1. MONKEY PATCHES ---
 
