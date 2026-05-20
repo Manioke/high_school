@@ -48,17 +48,11 @@ app_license = "mit"
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 doctype_js = {
-    "Student Group": "public/js/student_group_custom.js"
-}
-doctype_js = {
-    "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js"
-}
-# Link the JS to the DocType
-doctype_js = {
-    "Student Leave Application": "public/js/student_leave_application.js"
-}
-doctype_js = {
-    "Program Enrollment": "public/js/program_enrollment.js"
+    "Student Group": "public/js/student_group_custom.js",
+    "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js",
+    "Student Leave Application": "public/js/student_leave_application.js",
+    "Program Enrollment": "public/js/program_enrollment.js",
+    "Student Applicant": "public/js/student_applicant.js"
 }
 # Svg Icons
 # ------------------
@@ -110,6 +104,11 @@ doctype_js = {
 
 # before_app_install = "high_school.utils.before_app_install"
 # after_app_install = "high_school.utils.after_app_install"
+
+
+after_migrate = [
+    "high_school.high_school.api.create_education_settings_custom_field"
+]
 
 # Integration Cleanup
 # -------------------
@@ -168,10 +167,15 @@ doc_events = {
 
 doc_events = {
     "Program Enrollment": {
-        "on_submit": "high_school.high_school.api.generate_custom_fees"
+        "on_submit": [
+            "high_school.high_school.api.generate_custom_fees",
+            "high_school.high_school.api.update_student_fields"
+        ]
+    },
+    "Student Applicant": {
+        "before_save": "high_school.high_school.api.sync_old_student_rank_on_approval"
     }
 }
-
 #doc_events = {
 #    "Student Leave Application": {
 #        "on_submit": "high_school.high_school.api.create_course_leave_attendance"
