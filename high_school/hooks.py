@@ -24,6 +24,8 @@ app_license = "mit"
 # Includes in <head>
 # ------------------
 
+import high_school.high_school.api
+
 # include js, css files in header of desk.html
 # app_include_css = "/assets/high_school/css/high_school.css"
 # app_include_js = "/assets/high_school/js/high_school.js"
@@ -162,10 +164,7 @@ after_migrate = [
 doc_events = {
     "Student Leave Application": {
         "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
-    }
-}
-
-doc_events = {
+    },
     "Program Enrollment": {
         "on_submit": [
             "high_school.high_school.api.generate_custom_fees",
