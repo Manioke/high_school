@@ -54,7 +54,8 @@ doctype_js = {
     "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js",
     "Student Leave Application": "public/js/student_leave_application.js",
     "Program Enrollment": "public/js/program_enrollment.js",
-    "Student Applicant": "public/js/student_applicant.js"
+    "Student Applicant": "public/js/student_applicant.js",
+    "Program Enrollment Tool": "public/js/program_enrollment_tool.js"
 }
 # Svg Icons
 # ------------------
@@ -173,6 +174,11 @@ doc_events = {
     },
     "Student Applicant": {
         "before_save": "high_school.high_school.api.sync_old_student_rank_on_approval"
+    },
+    "Student Attendance": {
+        "validate": "high_school.high_school.api.process_standard_attendance_punishment",
+        "on_update": "high_school.high_school.api.trigger_standard_attendance_recalc",
+        "on_trash": "high_school.high_school.api.trigger_standard_attendance_recalc"
     }
 }
 #doc_events = {

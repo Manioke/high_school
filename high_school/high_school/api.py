@@ -317,18 +317,30 @@ def sync_old_student_rank_on_approval(doc, method=None):
             )
 
 def create_education_settings_custom_field():
-    field_fieldname = "custom_use_sibling_ranking"
-    if not frappe.db.exists("Custom Field", {"dt": "Education Settings", "fieldname": field_fieldname}):
-        custom_field = frappe.get_doc({
+    # Setup Sibling Ranking Toggle
+    if not frappe.db.exists("Custom Field", {"dt": "Education Settings", "fieldname": "custom_use_sibling_ranking"}):
+        frappe.get_doc({
             "doctype": "Custom Field",
             "dt": "Education Settings",
-            "fieldname": field_fieldname,
+            "fieldname": "custom_use_sibling_ranking",
             "label": "Use Sibling Ranking Matrix",
             "fieldtype": "Check",
             "insert_after": "user_creation_skip",
             "description": "Toggle ON for FWC style sibling ranking, toggle OFF for standard Form levels."
-        })
-        custom_field.insert(ignore_permissions=True)
+        }).insert(ignore_permissions=True)
+        frappe.db.commit()
+
+    # Setup Punishment Logic Toggle
+    if not frappe.db.exists("Custom Field", {"dt": "Education Settings", "fieldname": "custom_apply_attendance_punishment"}):
+        frappe.get_doc({
+            "doctype": "Custom Field",
+            "dt": "Education Settings",
+            "fieldname": "custom_apply_attendance_punishment",
+            "label": "Apply Punishment Hours to Standard Attendance",
+            "fieldtype": "Check",
+            "insert_after": "custom_use_sibling_ranking",
+            "description": "Toggle ON to automatically compute punishment hours for standard Student Attendance records."
+        }).insert(ignore_permissions=True)
         frappe.db.commit() 
 
 # --- 3. REPORT CARD GENERATION TOOL MONKEY PATCH ---
@@ -377,3 +389,175 @@ def patched_get_attendance_count(student, academic_year, academic_term=None):
 
 # Safely exchange the reference pointers globally
 report_tool.get_attendance_count = patched_get_attendance_count
+
+
+@frappe.whitelist()
+def update_student_overall_moua_total(student):
+    if not student:
+        return
+
+    # 1. Sum up custom house/shift records
+    taliui_total = frappe.db.sql("""
+        SELECT SUM(houa_ngaue_moua) 
+        FROM `tabTaliui Akonofo` 
+        WHERE student = %s
+    """, student)[0][0] or 0
+
+    # 2. Sum up standard attendance records (if custom punishment field exists there)
+    standard_total = 0
+    if frappe.db.has_column("Student Attendance", "custom_houa_ngaue_moua"):
+        standard_total = frappe.db.sql("""
+            SELECT SUM(custom_houa_ngaue_moua) 
+            FROM `tabStudent Attendance` 
+            WHERE student = %s AND docstatus < 2
+        """, student)[0][0] or 0
+
+    # Combine totals safely
+    grand_total = taliui_total + standard_total
+
+    # Update Student Master DocType
+    frappe.db.set_value("Student", student, "custom_total_moua", grand_total, update_modified=False)
+
+def process_standard_attendance_punishment(doc, method=None):
+    # Check if the global education settings toggle switch is turned ON
+    apply_punishment = frappe.db.get_single_value("Education Settings", "custom_apply_attendance_punishment")
+    
+    if apply_punishment and doc.status == "Absent":
+        doc.custom_houa_ngaue_moua = 2  # Matches your punishment_rate rules
+    else:
+        doc.custom_houa_ngaue_moua = 0
+
+def trigger_standard_attendance_recalc(doc, method=None):
+    # Trigger full calculation updates onto the master record
+    update_student_overall_moua_total(doc.student)
+
+# --- 4. PROGRAM ENROLLMENT TOOL MASSIVE IMPROVEMENT PATCH ---
+from education.education.doctype.program_enrollment_tool.program_enrollment_tool import ProgramEnrollmentTool
+
+def custom_get_students(self):
+    students = []
+    
+    if not self.get_students_from:
+        frappe.throw("Mandatory field - Get Students From")
+    if not self.program:
+        frappe.throw("Mandatory field - Program")
+    if not self.academic_year:
+        frappe.throw("Mandatory field - Academic Year")
+
+    # CASE A: Pull clean newly accepted raw student applications
+    if self.get_students_from == "Student Applicant":
+        SA = frappe.qb.DocType("Student Applicant")
+        students = (
+            frappe.qb.from_(SA)
+            .select(
+                SA.name.as_("student_applicant"),
+                SA.title.as_("student_name")
+            )
+            .where(SA.application_status == "Approved")
+            .where(SA.program == self.program)
+            .where(SA.academic_year == self.academic_year)
+        ).run(as_dict=1)
+
+    # CASE B: Smart filtering for returning / existing High School students
+    elif self.get_students_from == "Program Enrollment":
+        PE = frappe.qb.DocType("Program Enrollment")
+        ST = frappe.qb.DocType("Student")
+        
+        # We need to find students whose PREVIOUS enrollment was active, 
+        # but do not yet have an enrollment row for this TARGET new academic year run.
+        previous_year = str(int(self.academic_year) - 1) if self.academic_year.isdigit() else None
+        
+        if previous_year:
+            # Sub-query identifying who is already handled for the target year
+            already_enrolled = (
+                frappe.qb.from_(PE)
+                .select(PE.student)
+                .where(PE.academic_year == self.academic_year)
+                .where(PE.docstatus < 2)
+            )
+
+            # Query picking up students from last year who need placement this year
+            students = (
+                frappe.qb.from_(PE)
+                .join(ST).on(PE.student == ST.name)
+                .select(
+                    PE.student,
+                    PE.student_name,
+                    PE.student_batch_name,  # Last year's batch as a helper reference
+                    PE.student_category     # Last year's section as a helper reference
+                )
+                .where(PE.academic_year == previous_year)
+                .where(PE.docstatus < 2)
+                .where(ST.enabled == 1)
+                .where(PE.student.not_in(already_enrolled))
+                .order_by(PE.student_batch_name, PE.student_name)
+            ).run(as_dict=1)
+        else:
+            frappe.throw("Could not dynamically parse the previous Academic Year value to scan records.")
+
+    if students:
+        return students
+    else:
+        frappe.throw("No unallocated students found requiring setup parameters.")
+
+def custom_enroll_students(self):
+    from education.education.api import enroll_student
+    total = len(self.students)
+    
+    for i, stud in enumerate(self.students):
+        frappe.publish_realtime(
+            "program_enrollment_tool", dict(progress=[i + 1, total]), user=frappe.session.user
+        )
+        
+        # 1. Process Returning Students
+        if stud.student:
+            # Prevent double generation rows safely
+            if frappe.db.exists("Program Enrollment", {"student": stud.student, "academic_year": self.new_academic_year, "docstatus": ["<", 2]}):
+                continue
+                
+            pe = frappe.new_doc("Program Enrollment")
+            pe.student = stud.student
+            pe.student_name = stud.student_name
+            pe.program = self.new_program
+            pe.academic_year = self.new_academic_year
+            pe.academic_term = self.new_academic_term
+            pe.enrollment_date = self.enrollment_date
+            
+            # Row value takes complete priority, falls back to top-level default field if empty
+            pe.student_batch_name = stud.student_batch_name if stud.student_batch_name else self.new_student_batch
+            pe.student_category = stud.student_category if stud.student_category else self.new_student_category
+            
+            # Use submit() instead of save() to trigger invoice generation and tracking automation
+            pe.insert(ignore_permissions=True)
+            pe.submit()
+
+        # 2. Process New Applicants
+        elif stud.student_applicant:
+            pe = enroll_student(stud.student_applicant)
+            pe.academic_year = self.academic_year
+            pe.academic_term = self.academic_term
+            pe.enrollment_date = self.enrollment_date
+            
+            pe.student_batch_name = stud.student_batch_name if stud.student_batch_name else self.new_student_batch
+            pe.student_category = stud.student_category if stud.student_category else self.new_student_category
+            
+            pe.save(ignore_permissions=True)
+            pe.submit()
+
+    frappe.msgprint(frappe._("Successfully created and processed structural updates for {0} Students.").format(total))
+
+# 1. Apply the overrides to the Class fields
+ProgramEnrollmentTool.get_students = custom_get_students
+ProgramEnrollmentTool.enroll_students = custom_enroll_students
+
+# 2. Force-inject them directly into Frappe's global whitelisted methods registry pool
+frappe.whitelisted.add(ProgramEnrollmentTool.get_students)
+frappe.whitelisted.add(ProgramEnrollmentTool.enroll_students)
+
+# 3. Explicitly authorize HTTP POST requests for these two patched functions
+# This satisfies the middleware handler checks and eliminates the KeyError completely.
+if not hasattr(frappe, "allowed_http_methods_for_whitelisted_func"):
+    frappe.allowed_http_methods_for_whitelisted_func = {}
+
+frappe.allowed_http_methods_for_whitelisted_func[ProgramEnrollmentTool.get_students] = ["POST", "GET"]
+frappe.allowed_http_methods_for_whitelisted_func[ProgramEnrollmentTool.enroll_students] = ["POST", "GET"]
