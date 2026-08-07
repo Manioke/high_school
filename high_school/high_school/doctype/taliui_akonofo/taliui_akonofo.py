@@ -1,6 +1,6 @@
 import frappe
 from frappe.model.document import Document
-from high_school.high_school.high_school.api import update_student_overall_moua_total
+from high_school.high_school.api import update_student_overall_moua_total
 
 class TaliuiAkonofo(Document):
     def validate(self):

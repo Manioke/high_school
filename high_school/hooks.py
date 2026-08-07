@@ -223,7 +223,8 @@ doc_events = {
 
 override_whitelisted_methods = {
     "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom",
-    "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance"
+    "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance",
+#    "education.education.api.get_student_invoices": "high_school.high_school.api.get_student_invoices"
 }
 # Replace the Core Class with your Smart Class
 
@@ -297,7 +298,10 @@ override_whitelisted_methods = {
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
+#on_login = "high_school.high_school.auth.after_login"
+on_session_creation = [
+    "high_school.high_school.auth.redirect_after_login"
+]
 # Translation
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
@@ -313,6 +317,12 @@ fixtures = [
         "dt": "Client Script",
         "filters": [
             ["module", "=", "High School"]
+        ]
+    },
+    {
+        "dt": "Custom DocPerm",
+        "filters": [
+            ["parent", "=", "Sales Invoice"]
         ]
     }
 ]

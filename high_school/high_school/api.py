@@ -1,6 +1,7 @@
 import frappe
 import json
 import education.education.api 
+from education.education.api import check_permission
 from education.education.doctype.student_leave_application.student_leave_application import StudentLeaveApplication
 from education.education.doctype.student_attendance.student_attendance import get_holiday_list
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
@@ -561,3 +562,4 @@ if not hasattr(frappe, "allowed_http_methods_for_whitelisted_func"):
 
 frappe.allowed_http_methods_for_whitelisted_func[ProgramEnrollmentTool.get_students] = ["POST", "GET"]
 frappe.allowed_http_methods_for_whitelisted_func[ProgramEnrollmentTool.enroll_students] = ["POST", "GET"]
+
