@@ -23,8 +23,8 @@ app_license = "mit"
 
 # Includes in <head>
 # ------------------
-
 import high_school.high_school.api
+from high_school.high_school.patches import apply_patches
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/high_school/css/high_school.css"
@@ -55,7 +55,7 @@ doctype_js = {
     "Student Leave Application": "public/js/student_leave_application.js",
     "Program Enrollment": "public/js/program_enrollment.js",
     "Student Applicant": "public/js/student_applicant.js",
-    "Program Enrollment Tool": "public/js/program_enrollment_tool.js"
+    "Program Enrollment Tool": "public/js/program_enrollment_tool_override.js"
 }
 # Svg Icons
 # ------------------
@@ -110,7 +110,7 @@ doctype_js = {
 
 
 after_migrate = [
-    "high_school.high_school.api.create_education_settings_custom_field"
+    "high_school.high_school.student_utils.create_education_settings_custom_fields"
 ]
 
 # Integration Cleanup
@@ -164,21 +164,22 @@ after_migrate = [
 
 doc_events = {
     "Student Leave Application": {
-        "on_submit": "high_school.high_school.api.update_attendance_on_leave_approval"
+        "on_submit": "high_school.high_school.attendance_utils.update_attendance_on_leave_approval"
+    },
+    "Student Attendance": {
+        "validate": "high_school.high_school.attendance_utils.process_standard_attendance_punishment",
+        "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+        "on_cancel": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+    },
+    "Taliui Akonofo": {
+        "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+        "on_cancel": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
     },
     "Program Enrollment": {
         "on_submit": [
-            "high_school.high_school.api.generate_custom_fees",
-            "high_school.high_school.api.update_student_fields"
+            "high_school.high_school.fee_utils.generate_custom_fees",
+            "high_school.high_school.student_utils.update_student_fields"
         ]
-    },
-    "Student Applicant": {
-        "before_save": "high_school.high_school.api.sync_old_student_rank_on_approval"
-    },
-    "Student Attendance": {
-        "validate": "high_school.high_school.api.process_standard_attendance_punishment",
-        "on_update": "high_school.high_school.api.trigger_standard_attendance_recalc",
-        "on_trash": "high_school.high_school.api.trigger_standard_attendance_recalc"
     }
 }
 #doc_events = {
