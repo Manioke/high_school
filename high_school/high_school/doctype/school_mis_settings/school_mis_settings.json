@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-13 10:50:12.800918",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "attendance_target",
+  "attendance_submission_target",
+  "persistent_absence_threshold",
+  "minimum_group_attendance_records"
+ ],
+ "fields": [
+  {
+   "fieldname": "attendance_target",
+   "fieldtype": "Percent",
+   "label": "Attendance Target"
+  },
+  {
+   "fieldname": "attendance_submission_target",
+   "fieldtype": "Percent",
+   "label": "Attendance Submission Target"
+  },
+  {
+   "fieldname": "persistent_absence_threshold",
+   "fieldtype": "Percent",
+   "label": "Persistent Absence Threshold"
+  },
+  {
+   "fieldname": "minimum_group_attendance_records",
+   "fieldtype": "Percent",
+   "label": "Minimum Group Attendance Records"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-13 11:17:44.913089",
+ "modified_by": "Administrator",
+ "module": "High School",
+ "name": "School MIS Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

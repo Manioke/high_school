@@ -276,33 +276,3 @@ def create_student_fees(student_enrollment):
     )
 
     return generate_custom_fees(doc)
-
-@frappe.whitelist()
-def get_executive_summary():
-    """Generates dynamic text commentary based on real-time database figures."""
-    
-    # 1. Fetch Key Data
-    # Example: Check attendance threshold
-    total_students = frappe.db.count("Student")
-    # Add your actual doctype filters for attendance/fees here
-    
-    # 2. Build Narrative Comments
-    comments = []
-    
-    # Mock threshold logic (replace with your real doctypes)
-    unpaid_fees = 12500  # Query actual Fee doctype
-    attendance_rate = 88 # Query actual Student Attendance doctype
-
-    if attendance_rate < 90:
-        comments.append(f"<li><b>Attendance Warning:</b> Overall school attendance is at {attendance_rate}%. Grade 10 shows the lowest engagement.</li>")
-    else:
-        comments.append(f"<li><b>Attendance Healthy:</b> Attendance is stable at {attendance_rate}%.</li>")
-        
-    if unpaid_fees > 5000:
-        comments.append(f"<li><b>Financial Alert:</b> Overdue fees stand at ${unpaid_fees:,.2f}. 18 students risk missing Term 2 exams.</li>")
-
-    summary_html = f"<ul>{''.join(comments)}</ul>"
-    
-    return {
-        "summary_html": summary_html
-    }
