@@ -6,9 +6,13 @@
  "engine": "InnoDB",
  "field_order": [
   "attendance_target",
+  "attendance_coverage_target",
   "attendance_submission_target",
   "persistent_absence_threshold",
-  "minimum_group_attendance_records"
+  "minimum_group_attendance_records",
+  "minimum_student_attendance_records",
+  "track_daily_attendance",
+  "track_course_attendance"
  ],
  "fields": [
   {
@@ -28,15 +32,38 @@
   },
   {
    "fieldname": "minimum_group_attendance_records",
-   "fieldtype": "Percent",
+   "fieldtype": "Int",
    "label": "Minimum Group Attendance Records"
+  },
+  {
+   "fieldname": "attendance_coverage_target",
+   "fieldtype": "Percent",
+   "label": "Attendance Coverage Target"
+  },
+  {
+   "default": "0",
+   "fieldname": "track_daily_attendance",
+   "fieldtype": "Check",
+   "label": "Track Daily Homeroom Attendance"
+  },
+  {
+   "default": "0",
+   "fieldname": "track_course_attendance",
+   "fieldtype": "Check",
+   "label": "Track Course Schedule Attendance"
+  },
+  {
+   "default": "10",
+   "fieldname": "minimum_student_attendance_records",
+   "fieldtype": "Int",
+   "label": "Student Attendance Records"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-13 11:17:44.913089",
+ "modified": "2026-08-20 14:35:59.363385",
  "modified_by": "Administrator",
  "module": "High School",
  "name": "School MIS Settings",

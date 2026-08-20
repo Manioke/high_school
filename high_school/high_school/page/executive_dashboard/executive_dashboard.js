@@ -6,19 +6,45 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
         single_column: true
     });
 
-    $(page.body).html(`
-        <div class="executive-dashboard-container" style="padding: 15px;">
 
-            <!-- Controls -->
-            <div class="card" style="
-                padding: 15px;
-                margin-bottom: 20px;
-            ">
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                ">
+    // =========================================================
+    // Configuration
+    // =========================================================
+
+    const INSIGHTS_DASHBOARD_URL = '';
+
+
+    // =========================================================
+    // Page Layout
+    // =========================================================
+
+    $(page.body).html(`
+
+        <div
+            class="executive-dashboard-container"
+            style="padding: 15px;"
+        >
+
+            <!-- ============================================= -->
+            <!-- School Term -->
+            <!-- ============================================= -->
+
+            <div
+                class="card"
+                style="
+                    padding: 15px;
+                    margin-bottom: 20px;
+                "
+            >
+
+                <div
+                    style="
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        flex-wrap: wrap;
+                    "
+                >
 
                     <div style="font-weight: 600;">
                         School Term
@@ -29,91 +55,379 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                         class="form-control"
                         style="max-width: 250px;"
                     >
+
                         <option value="">
                             Loading terms...
                         </option>
+
                     </select>
 
-                    <div id="term-dates"
-                         style="color: #6c757d;">
+                    <div
+                        id="term-dates"
+                        style="color: #6c757d;"
+                    >
                     </div>
 
                 </div>
+
             </div>
 
 
-            <!-- KPI Cards -->
+            <!-- ============================================= -->
+            <!-- KPIs -->
+            <!-- ============================================= -->
+
             <div
                 id="executive-kpis"
                 style="
                     display: grid;
                     grid-template-columns:
-                        repeat(auto-fit, minmax(220px, 1fr));
+                        repeat(
+                            auto-fit,
+                            minmax(200px, 1fr)
+                        );
                     gap: 15px;
                     margin-bottom: 20px;
                 "
             >
-                <div class="card" style="padding: 20px;">
+
+                <div
+                    class="card"
+                    style="padding: 20px;"
+                >
                     Loading...
                 </div>
+
             </div>
 
 
-            <!-- Executive Briefing -->
+            <!-- ============================================= -->
+            <!-- Executive Attention -->
+            <!-- ============================================= -->
+
             <div
                 class="card"
                 style="
                     padding: 20px;
                     margin-bottom: 20px;
-                    background-color: #f8f9fa;
-                    border-left: 4px solid #007bff;
                 "
             >
 
                 <h4 style="margin-top: 0;">
-                    📋 Executive Briefing
+                    Executive Attention
                 </h4>
 
-                <div id="executive-summary-content">
+                <div id="executive-alerts">
+
                     <i>
-                        Loading executive summary...
+                        Loading management information...
                     </i>
+
                 </div>
 
             </div>
 
 
-            <!-- Insights -->
-            <div class="card" style="padding: 10px;">
+            <!-- ============================================= -->
+            <!-- Attendance Management -->
+            <!-- ============================================= -->
 
-                <h4 style="padding: 10px;">
-                    📊 Attendance Analytics
+            <div
+                id="attendance-management-container"
+                class="card"
+                style="
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    display: none;
+                "
+            >
+
+                <h4 style="margin-top: 0;">
+                    Attendance Management
                 </h4>
 
-                <iframe
-                    id="insights-dashboard"
-                    src=""
-                    style="
-                        width: 100%;
-                        height: 750px;
-                        border: none;
-                    "
-                ></iframe>
+                <div id="attendance-management-content">
+                </div>
+
+            </div>
+
+
+            <!-- ============================================= -->
+            <!-- Student Attendance Management -->
+            <!-- ============================================= -->
+
+            <div
+                id="student-management-container"
+                class="card"
+                style="
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    display: none;
+                "
+            >
+
+                <h4 style="margin-top: 0;">
+                    Student Attendance Follow-up
+                </h4>
+
+                <div id="student-management-content">
+                </div>
+
+            </div>
+
+
+            <!-- ============================================= -->
+            <!-- Insights -->
+            <!-- ============================================= -->
+
+            <div
+                class="card"
+                style="padding: 10px;"
+            >
+
+                <h4 style="padding: 10px;">
+                    Attendance Analytics
+                </h4>
+
+                <div id="insights-container">
+
+                    <div
+                        style="
+                            padding: 20px;
+                            color: #6c757d;
+                        "
+                    >
+                        Insights dashboard URL
+                        has not been configured.
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
+
     `);
 
 
-    // ---------------------------------------------------------
-    // Load School Terms
-    // ---------------------------------------------------------
+    // =========================================================
+    // Utilities
+    // =========================================================
+
+    function escapeHtml(value) {
+
+        return $('<div>')
+            .text(
+                value === null
+                || value === undefined
+                    ? ''
+                    : String(value)
+            )
+            .html();
+
+    }
+
+
+    function formatPercent(value) {
+
+        if (
+            value === null
+            || value === undefined
+        ) {
+            return 'N/A';
+        }
+
+        return `${value}%`;
+
+    }
+
+
+    function formatNumber(value) {
+
+        if (
+            value === null
+            || value === undefined
+        ) {
+            return '0';
+        }
+
+        return Number(
+            value
+        ).toLocaleString();
+
+    }
+
+
+    function statusLabel(status) {
+
+        switch (status) {
+
+            case 'healthy':
+                return 'Healthy';
+
+            case 'warning':
+                return 'Needs Attention';
+
+            case 'no_data':
+                return 'No Data';
+
+            default:
+                return '';
+
+        }
+
+    }
+
+
+    function statusBorder(status) {
+
+        switch (status) {
+
+            case 'healthy':
+                return '#28a745';
+
+            case 'warning':
+                return '#f0ad4e';
+
+            case 'no_data':
+                return '#6c757d';
+
+            default:
+                return '#dee2e6';
+
+        }
+
+    }
+
+
+    function severityBorder(severity) {
+
+        switch (severity) {
+
+            case 'Critical':
+                return '#dc3545';
+
+            case 'Action Required':
+                return '#fd7e14';
+
+            case 'Warning':
+                return '#f0ad4e';
+
+            case 'Information':
+                return '#007bff';
+
+            default:
+                return '#6c757d';
+
+        }
+
+    }
+
+
+    function createKpiCard({
+        title,
+        value,
+        subtitle = '',
+        status = null
+    }) {
+
+        const border =
+            statusBorder(
+                status
+            );
+
+        return `
+
+            <div
+                class="card"
+                style="
+                    padding: 20px;
+                    border-left:
+                        4px solid ${border};
+                "
+            >
+
+                <div
+                    style="
+                        color: #6c757d;
+                        font-size: 12px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                    "
+                >
+                    ${escapeHtml(title)}
+                </div>
+
+
+                <div
+                    style="
+                        font-size: 30px;
+                        font-weight: 700;
+                        margin-top: 8px;
+                    "
+                >
+                    ${escapeHtml(value)}
+                </div>
+
+
+                ${
+                    subtitle
+                        ? `
+                            <div
+                                style="
+                                    margin-top: 6px;
+                                    color: #6c757d;
+                                "
+                            >
+                                ${escapeHtml(
+                                    subtitle
+                                )}
+                            </div>
+                        `
+                        : ''
+                }
+
+
+                ${
+                    status
+                        ? `
+                            <div
+                                style="
+                                    margin-top: 6px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                "
+                            >
+                                ${escapeHtml(
+                                    statusLabel(
+                                        status
+                                    )
+                                )}
+                            </div>
+                        `
+                        : ''
+                }
+
+            </div>
+
+        `;
+
+    }
+
+
+    // =========================================================
+    // School Terms
+    // =========================================================
 
     frappe.call({
-        method: 'frappe.client.get_list',
+
+        method:
+            'frappe.client.get_list',
+
         args: {
-            doctype: 'School Term',
+
+            doctype:
+                'School Term',
 
             fields: [
                 'name',
@@ -123,19 +437,23 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 'end_date'
             ],
 
-            order_by: 'start_date desc',
+            order_by:
+                'start_date desc',
 
-            limit_page_length: 50
+            limit_page_length:
+                50
         },
 
         callback: function(r) {
 
-            const terms = r.message || [];
+            const terms =
+                r.message || [];
 
             const selector =
                 $('#school-term-selector');
 
             selector.empty();
+
 
             if (!terms.length) {
 
@@ -146,121 +464,158 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 `);
 
                 return;
+
             }
 
 
-            // Determine current term
+            const today =
+                frappe.datetime.get_today();
 
-            const today = frappe.datetime.get_today();
 
-            let currentTerm = null;
+            const currentTerm =
+                terms.find(term => {
+
+                    return (
+                        term.start_date <= today
+                        &&
+                        term.end_date >= today
+                    );
+
+                });
+
 
             terms.forEach(term => {
-
-                if (
-                    term.start_date <= today &&
-                    term.end_date >= today
-                ) {
-                    currentTerm = term;
-                }
-
-            });
-
-
-            // Add options
-
-            terms.forEach(term => {
-
-                const selected =
-                    currentTerm &&
-                    currentTerm.name === term.name
-                        ? 'selected'
-                        : '';
 
                 selector.append(`
+
                     <option
-                        value="${term.name}"
-                        ${selected}
+                        value="${escapeHtml(
+                            term.name
+                        )}"
                     >
-                        ${term.academic_year}
-                        - ${term.term}
+                        ${escapeHtml(
+                            term.academic_year
+                        )}
+                        -
+                        ${escapeHtml(
+                            term.term
+                        )}
                     </option>
+
                 `);
 
             });
 
 
-            // Load selected term
-
             const selectedTerm =
-                currentTerm || terms[0];
+                currentTerm
+                || terms[0];
+
+
+            selector.val(
+                selectedTerm.name
+            );
+
+
+            updateTermDates(
+                selectedTerm
+            );
+
 
             loadExecutiveSummary(
                 selectedTerm.name
             );
 
 
-            updateTermDates(selectedTerm);
+            selector.on(
+                'change',
+                function() {
+
+                    const termName =
+                        $(this).val();
 
 
-            // Change handler
+                    const term =
+                        terms.find(
+                            item =>
+                                item.name
+                                === termName
+                        );
 
-            selector.on('change', function() {
 
-                const termName = $(this).val();
+                    if (!term) {
+                        return;
+                    }
 
-                const term = terms.find(
-                    t => t.name === termName
-                );
 
-                if (term) {
+                    updateTermDates(
+                        term
+                    );
 
-                    updateTermDates(term);
 
                     loadExecutiveSummary(
                         term.name
                     );
 
                 }
-
-            });
+            );
 
         }
+
     });
 
 
-    // ---------------------------------------------------------
-    // Update term dates
-    // ---------------------------------------------------------
+    // =========================================================
+    // Term Dates
+    // =========================================================
 
     function updateTermDates(term) {
 
-        $('#term-dates').html(`
-            ${term.start_date}
-            →
-            ${term.end_date}
-        `);
+        $('#term-dates')
+            .text(
+                `${term.start_date} → ${term.end_date}`
+            );
 
     }
 
 
-    // ---------------------------------------------------------
-    // Load Executive Summary
-    // ---------------------------------------------------------
+    // =========================================================
+    // Load Executive Data
+    // =========================================================
 
-    function loadExecutiveSummary(schoolTerm) {
+    function loadExecutiveSummary(
+        schoolTerm
+    ) {
 
-        $('#executive-summary-content').html(`
-            <i>
-                Loading executive summary...
-            </i>
-        `);
+        $('#executive-kpis')
+            .html(`
 
-        $('#executive-kpis').html(`
-            <div class="card" style="padding: 20px;">
-                Loading...
-            </div>
-        `);
+                <div
+                    class="card"
+                    style="padding: 20px;"
+                >
+                    Loading...
+                </div>
+
+            `);
+
+
+        $('#executive-alerts')
+            .html(`
+
+                <i>
+                    Loading management information...
+                </i>
+
+            `);
+
+
+        $('#attendance-management-container')
+            .hide();
+
+
+        $('#student-management-container')
+            .hide();
 
 
         frappe.call({
@@ -269,190 +624,1313 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 'high_school.high_school.executive_mis.get_executive_summary',
 
             args: {
-                school_term: schoolTerm
+                school_term:
+                    schoolTerm
             },
 
             callback: function(r) {
 
                 if (!r.message) {
 
-                    $('#executive-summary-content')
-                        .html(`
-                            <p>
-                                Unable to load executive summary.
-                            </p>
-                        `);
+                    showError(
+                        'Unable to load Executive MIS.'
+                    );
 
                     return;
+
                 }
 
 
-                const data = r.message;
+                const data =
+                    r.message;
 
-
-                // ---------------------------------------------
-                // Handle errors
-                // ---------------------------------------------
 
                 if (data.error) {
 
-                    $('#executive-summary-content')
-                        .html(`
-                            <p>
-                                ${data.error}
-                            </p>
-                        `);
+                    showError(
+                        data.error
+                    );
 
                     return;
+
                 }
 
 
-                const attendance =
-                    data.attendance;
+                renderExecutiveMIS(
+                    data
+                );
 
+            },
 
-                // ---------------------------------------------
-                // Attendance KPI
-                // ---------------------------------------------
+            error: function() {
 
-                let attendanceDisplay =
-                    attendance.attendance_rate !== null
-                        ? `${attendance.attendance_rate}%`
-                        : 'N/A';
-
-
-                let statusText =
-                    attendance.status === 'healthy'
-                        ? 'Healthy'
-                        : 'Needs Attention';
-
-
-                $('#executive-kpis').html(`
-
-                    <div class="card"
-                         style="padding: 20px;">
-
-                        <div style="
-                            color: #6c757d;
-                            font-size: 13px;
-                            text-transform: uppercase;
-                        ">
-                            Attendance
-                        </div>
-
-                        <div style="
-                            font-size: 32px;
-                            font-weight: 700;
-                            margin-top: 8px;
-                        ">
-                            ${attendanceDisplay}
-                        </div>
-
-                        <div style="
-                            margin-top: 5px;
-                            color: #6c757d;
-                        ">
-                            Target:
-                            ${attendance.target}%
-                        </div>
-
-                    </div>
-
-
-                    <div class="card"
-                         style="padding: 20px;">
-
-                        <div style="
-                            color: #6c757d;
-                            font-size: 13px;
-                            text-transform: uppercase;
-                        ">
-                            Absent
-                        </div>
-
-                        <div style="
-                            font-size: 32px;
-                            font-weight: 700;
-                            margin-top: 8px;
-                        ">
-                            ${attendance.absent}
-                        </div>
-
-                    </div>
-
-
-                    <div class="card"
-                         style="padding: 20px;">
-
-                        <div style="
-                            color: #6c757d;
-                            font-size: 13px;
-                            text-transform: uppercase;
-                        ">
-                            Leave
-                        </div>
-
-                        <div style="
-                            font-size: 32px;
-                            font-weight: 700;
-                            margin-top: 8px;
-                        ">
-                            ${attendance.leave}
-                        </div>
-
-                    </div>
-
-
-                    <div class="card"
-                         style="padding: 20px;">
-
-                        <div style="
-                            color: #6c757d;
-                            font-size: 13px;
-                            text-transform: uppercase;
-                        ">
-                            Groups Below Target
-                        </div>
-
-                        <div style="
-                            font-size: 32px;
-                            font-weight: 700;
-                            margin-top: 8px;
-                        ">
-                            ${attendance.groups_below_target}
-                        </div>
-
-                    </div>
-
-                `);
-
-
-                // ---------------------------------------------
-                // Executive summary
-                // ---------------------------------------------
-
-                $('#executive-summary-content')
-                    .html(data.summary_html);
-
-
-                // ---------------------------------------------
-                // Insights dashboard
-                // ---------------------------------------------
-
-                /*
-                 * Put your actual Insights dashboard URL here.
-                 *
-                 * Example:
-                 *
-                 * $('#insights-dashboard').attr(
-                 *     'src',
-                 *     '/insights/dashboards/...'
-                 * );
-                 */
+                showError(
+                    'An error occurred while loading the Executive MIS.'
+                );
 
             }
 
         });
+
+    }
+
+
+    // =========================================================
+    // Main Renderer
+    // =========================================================
+
+    function renderExecutiveMIS(data) {
+
+        renderKpis(
+            data
+        );
+
+        renderAlerts(
+            data.alerts || []
+        );
+
+        renderAttendanceManagement(
+            data
+        );
+
+        renderStudentManagement(
+            data
+        );
+
+        renderInsights();
+
+    }
+
+
+    // =========================================================
+    // KPIs
+    // =========================================================
+
+    function renderKpis(data) {
+
+        const cards = [];
+
+
+        const daily =
+            data.attendance.daily;
+
+
+        const course =
+            data.attendance.course;
+
+
+        const persistent =
+            data.persistent_absence || {};
+
+
+        // -----------------------------------------------------
+        // Daily Attendance
+        // -----------------------------------------------------
+
+        if (daily.enabled) {
+
+            const summary =
+                daily.summary;
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Daily Attendance',
+
+                    value:
+                        formatPercent(
+                            summary.attendance_rate
+                        ),
+
+                    subtitle:
+                        `Target: ${summary.target}%`,
+
+                    status:
+                        summary.status
+
+                })
+            );
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Daily Groups Below Target',
+
+                    value:
+                        formatNumber(
+                            daily
+                                .analysis
+                                .groups_below_target_count
+                        ),
+
+                    subtitle:
+                        'Reliable groups only'
+
+                })
+            );
+
+        }
+
+
+        // -----------------------------------------------------
+        // Course Attendance
+        // -----------------------------------------------------
+
+        if (course.enabled) {
+
+            const performance =
+                course.performance.summary;
+
+
+            const coverage =
+                course.coverage;
+
+
+            const submission =
+                course.submission;
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Course Attendance',
+
+                    value:
+                        formatPercent(
+                            performance
+                                .attendance_rate
+                        ),
+
+                    subtitle:
+                        `Target: ${performance.target}%`,
+
+                    status:
+                        performance.status
+
+                })
+            );
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Course Coverage',
+
+                    value:
+                        formatPercent(
+                            coverage
+                                .coverage_rate
+                        ),
+
+                    subtitle:
+                        `Target: ${coverage.target}%`,
+
+                    status:
+                        coverage.status
+
+                })
+            );
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Attendance Submission',
+
+                    value:
+                        formatPercent(
+                            submission
+                                .compliance_rate
+                        ),
+
+                    subtitle:
+                        `Target: ${submission.target}%`,
+
+                    status:
+                        submission.status
+
+                })
+            );
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Missing Classes',
+
+                    value:
+                        formatNumber(
+                            submission
+                                .missing_sessions
+                        ),
+
+                    subtitle:
+                        `${
+                            submission
+                                .expected_sessions
+                        } expected classes`
+
+                })
+            );
+
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Instructors Below Target',
+
+                    value:
+                        formatNumber(
+                            submission
+                                .teachers_below_target
+                        ),
+
+                    subtitle:
+                        'Submission compliance'
+
+                })
+            );
+
+        }
+
+
+        // -----------------------------------------------------
+        // Persistent Absence
+        // -----------------------------------------------------
+
+        cards.push(
+            createKpiCard({
+
+                title:
+                    'Persistent Absence',
+
+                value:
+                    formatNumber(
+                        persistent
+                            .unique_students_flagged
+                        || 0
+                    ),
+
+                subtitle:
+                    'Students requiring review',
+
+                status:
+                    (
+                        (
+                            persistent
+                                .unique_students_flagged
+                            || 0
+                        ) > 0
+                            ? 'warning'
+                            : 'healthy'
+                    )
+
+            })
+        );
+
+
+        if (!cards.length) {
+
+            cards.push(
+                createKpiCard({
+
+                    title:
+                        'Attendance Tracking',
+
+                    value:
+                        'Disabled',
+
+                    subtitle:
+                        'Configure School MIS Settings'
+
+                })
+            );
+
+        }
+
+
+        $('#executive-kpis')
+            .html(
+                cards.join('')
+            );
+
+    }
+
+
+    // =========================================================
+    // Executive Alerts
+    // =========================================================
+
+    function renderAlerts(alerts) {
+
+        const container =
+            $('#executive-alerts');
+
+
+        if (!alerts.length) {
+
+            container.html(`
+
+                <div
+                    style="
+                        color: #6c757d;
+                        padding: 5px 0;
+                    "
+                >
+                    No configured MIS alert rules
+                    are currently triggered.
+                </div>
+
+            `);
+
+            return;
+
+        }
+
+
+        const html =
+            alerts
+                .map(alert => {
+
+                    const border =
+                        severityBorder(
+                            alert.severity
+                        );
+
+
+                    const message =
+                        alert.message
+                            ? `
+
+                                <div
+                                    style="
+                                        margin-top: 8px;
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        alert.message
+                                    )}
+                                </div>
+
+                            `
+                            : '';
+
+
+                    const recommendation =
+                        alert.recommended_action
+                            ? `
+
+                                <div
+                                    style="
+                                        margin-top: 10px;
+                                    "
+                                >
+
+                                    <b>
+                                        Recommended Action:
+                                    </b>
+
+                                    ${escapeHtml(
+                                        alert
+                                            .recommended_action
+                                    )}
+
+                                </div>
+
+                            `
+                            : '';
+
+
+                    return `
+
+                        <div
+                            style="
+                                padding: 15px;
+                                border-left:
+                                    4px solid ${border};
+                                background:
+                                    var(
+                                        --control-bg,
+                                        #f8f9fa
+                                    );
+                                margin-bottom: 12px;
+                                border-radius: 4px;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content:
+                                        space-between;
+                                    gap: 15px;
+                                "
+                            >
+
+                                <b>
+                                    ${escapeHtml(
+                                        alert.title
+                                    )}
+                                </b>
+
+
+                                <div
+                                    style="
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        alert.severity
+                                    )}
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                style="
+                                    margin-top: 7px;
+                                    color: #6c757d;
+                                    font-size: 13px;
+                                "
+                            >
+
+                                Current:
+                                ${escapeHtml(
+                                    alert.value
+                                )}
+
+                                &nbsp;•&nbsp;
+
+                                Trigger:
+                                ${escapeHtml(
+                                    alert.operator
+                                )}
+
+                                ${escapeHtml(
+                                    alert.threshold
+                                )}
+
+                            </div>
+
+
+                            ${message}
+
+                            ${recommendation}
+
+                        </div>
+
+                    `;
+
+                })
+                .join('');
+
+
+        container.html(
+            html
+        );
+
+    }
+
+
+    // =========================================================
+    // Attendance Management Summary
+    // =========================================================
+
+    function renderAttendanceManagement(
+        data
+    ) {
+
+        const course =
+            data.attendance.course;
+
+
+        if (!course.enabled) {
+
+            $('#attendance-management-container')
+                .hide();
+
+            return;
+
+        }
+
+
+        const submission =
+            course.submission || {};
+
+
+        const missing =
+            submission.missing_sessions
+            || 0;
+
+
+        const incomplete =
+            submission.incomplete_sessions
+            || 0;
+
+
+        const teachersBelow =
+            submission.teachers_below_target
+            || 0;
+
+
+        const hasIssues = (
+            missing > 0
+            ||
+            incomplete > 0
+            ||
+            teachersBelow > 0
+        );
+
+
+        if (!hasIssues) {
+
+            $('#attendance-management-container')
+                .hide();
+
+            return;
+
+        }
+
+
+        $('#attendance-management-content')
+            .html(`
+
+                <div
+                    style="
+                        display: flex;
+                        justify-content:
+                            space-between;
+                        align-items: center;
+                        gap: 20px;
+                        flex-wrap: wrap;
+                    "
+                >
+
+                    <div>
+
+                        <div
+                            style="
+                                font-size: 15px;
+                                font-weight: 600;
+                                margin-bottom: 5px;
+                            "
+                        >
+                            Course attendance requires
+                            management review
+                        </div>
+
+
+                        <div
+                            style="
+                                color: #6c757d;
+                            "
+                        >
+
+                            ${missing}
+                            missing class(es),
+
+                            ${incomplete}
+                            incomplete submission(s),
+
+                            ${teachersBelow}
+                            instructor(s) below target.
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="investigate-attendance-btn"
+                        class="btn btn-primary btn-sm"
+                    >
+                        Investigate Attendance
+                    </button>
+
+                </div>
+
+            `);
+
+
+        $('#attendance-management-container')
+            .show();
+
+
+        $('#investigate-attendance-btn')
+            .off('click')
+            .on(
+                'click',
+                function() {
+
+                    showAttendanceInvestigation(
+                        course
+                    );
+
+                }
+            );
+
+    }
+
+
+    // =========================================================
+    // Attendance Investigation
+    // =========================================================
+
+    function showAttendanceInvestigation(
+        course
+    ) {
+
+        const submission =
+            course.submission || {};
+
+
+        const teachers =
+            submission.teachers || [];
+
+
+        const sessions =
+            course.attention_sessions || [];
+
+
+        const teacherRows =
+            teachers
+
+                .filter(
+                    teacher =>
+                        teacher.status
+                        === 'warning'
+                )
+
+                .map(teacher => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                teacher.instructor_name
+                                || teacher.instructor
+                            )}
+                        </td>
+
+                        <td>
+                            ${teacher.expected_sessions}
+                        </td>
+
+                        <td>
+                            ${teacher.complete_sessions}
+                        </td>
+
+                        <td>
+                            ${teacher.missing_sessions}
+                        </td>
+
+                        <td>
+                            ${teacher.incomplete_sessions}
+                        </td>
+
+                        <td>
+                            ${formatPercent(
+                                teacher.compliance_rate
+                            )}
+                        </td>
+
+                    </tr>
+
+                `)
+
+                .join('');
+
+
+        const sessionRows =
+            sessions
+
+                .map(session => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                session.schedule_date
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                session.course
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                session.student_group
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                session.instructor_name
+                                || session.instructor
+                                || 'Unassigned'
+                            )}
+                        </td>
+
+                        <td>
+                            ${session.expected_students}
+                        </td>
+
+                        <td>
+                            ${session.recorded_students}
+                        </td>
+
+                        <td>
+                            ${formatPercent(
+                                session.coverage_rate
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                session.submission_status
+                            )}
+                        </td>
+
+                    </tr>
+
+                `)
+
+                .join('');
+
+
+        const dialog =
+            new frappe.ui.Dialog({
+
+                title:
+                    'Attendance Investigation',
+
+                size:
+                    'extra-large',
+
+                fields: [
+
+                    {
+                        fieldname:
+                            'details',
+
+                        fieldtype:
+                            'HTML',
+                    }
+
+                ]
+
+            });
+
+
+        dialog.fields_dict
+            .details
+            .$wrapper
+            .html(`
+
+                <h5>
+                    Instructor Submission Compliance
+                </h5>
+
+
+                <div
+                    style="
+                        overflow-x: auto;
+                        margin-bottom: 25px;
+                    "
+                >
+
+                    <table
+                        class="
+                            table
+                            table-bordered
+                            table-hover
+                        "
+                    >
+
+                        <thead>
+
+                            <tr>
+                                <th>Instructor</th>
+                                <th>Expected</th>
+                                <th>Complete</th>
+                                <th>Missing</th>
+                                <th>Incomplete</th>
+                                <th>Compliance</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            ${
+                                teacherRows
+                                ||
+
+                                `
+                                    <tr>
+                                        <td colspan="6">
+                                            No instructors are
+                                            currently below target.
+                                        </td>
+                                    </tr>
+                                `
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <h5>
+                    Scheduled Classes Requiring Attention
+                </h5>
+
+
+                <div style="overflow-x: auto;">
+
+                    <table
+                        class="
+                            table
+                            table-bordered
+                            table-hover
+                        "
+                    >
+
+                        <thead>
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Group</th>
+                                <th>Instructor</th>
+                                <th>Expected</th>
+                                <th>Recorded</th>
+                                <th>Coverage</th>
+                                <th>Status</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            ${
+                                sessionRows
+                                ||
+
+                                `
+                                    <tr>
+                                        <td colspan="8">
+                                            No sessions currently
+                                            require investigation.
+                                        </td>
+                                    </tr>
+                                `
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            `);
+
+
+        dialog.show();
+
+    }
+
+
+    // =========================================================
+    // Persistent Absence Management
+    // =========================================================
+
+    function renderStudentManagement(
+        data
+    ) {
+
+        const persistent =
+            data.persistent_absence || {};
+
+
+        const count =
+            persistent
+                .unique_students_flagged
+            || 0;
+
+
+        if (count <= 0) {
+
+            $('#student-management-container')
+                .hide();
+
+            return;
+
+        }
+
+
+        $('#student-management-content')
+            .html(`
+
+                <div
+                    style="
+                        display: flex;
+                        justify-content:
+                            space-between;
+                        align-items: center;
+                        gap: 20px;
+                        flex-wrap: wrap;
+                    "
+                >
+
+                    <div>
+
+                        <div
+                            style="
+                                font-size: 15px;
+                                font-weight: 600;
+                                margin-bottom: 5px;
+                            "
+                        >
+                            Persistent absence
+                            requires review
+                        </div>
+
+
+                        <div
+                            style="
+                                color: #6c757d;
+                            "
+                        >
+
+                            ${count}
+                            student(s) currently exceed
+                            the school's configured
+                            persistent absence threshold.
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="investigate-students-btn"
+                        class="btn btn-primary btn-sm"
+                    >
+                        Investigate Students
+                    </button>
+
+                </div>
+
+            `);
+
+
+        $('#student-management-container')
+            .show();
+
+
+        $('#investigate-students-btn')
+            .off('click')
+            .on(
+                'click',
+                function() {
+
+                    showStudentInvestigation(
+                        persistent
+                    );
+
+                }
+            );
+
+    }
+
+
+    // =========================================================
+    // Student Investigation Dialog
+    // =========================================================
+
+    function showStudentInvestigation(
+        persistent
+    ) {
+
+        const records = [];
+
+
+        for (
+            const mode
+            of ['daily', 'course']
+        ) {
+
+            const modeData =
+                persistent[mode] || {};
+
+
+            if (!modeData.enabled) {
+                continue;
+            }
+
+
+            for (
+                const student
+                of (
+                    modeData
+                        .flagged_students
+                    || []
+                )
+            ) {
+
+                records.push({
+                    ...student,
+                    attendance_type:
+                        mode
+                });
+
+            }
+
+        }
+
+
+        const rows =
+            records
+
+                .map(student => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                student.student_name
+                                || student.student
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                student.attendance_type
+                            )}
+                        </td>
+
+                        <td>
+                            ${student.present}
+                        </td>
+
+                        <td>
+                            ${student.absent}
+                        </td>
+
+                        <td>
+                            ${student.leave}
+                        </td>
+
+                        <td>
+                            ${student.counted_records}
+                        </td>
+
+                        <td>
+                            ${formatPercent(
+                                student.absence_rate
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatPercent(
+                                student.threshold
+                            )}
+                        </td>
+
+                    </tr>
+
+                `)
+
+                .join('');
+
+
+        const dialog =
+            new frappe.ui.Dialog({
+
+                title:
+                    'Persistent Absence Investigation',
+
+                size:
+                    'extra-large',
+
+                fields: [
+
+                    {
+                        fieldname:
+                            'details',
+
+                        fieldtype:
+                            'HTML'
+                    }
+
+                ]
+
+            });
+
+
+        dialog.fields_dict
+            .details
+            .$wrapper
+            .html(`
+
+                <div
+                    style="
+                        margin-bottom: 15px;
+                        color: #6c757d;
+                    "
+                >
+                    Only students meeting the configured
+                    minimum attendance-record requirement
+                    and persistent absence threshold are
+                    shown.
+                </div>
+
+
+                <div style="overflow-x: auto;">
+
+                    <table
+                        class="
+                            table
+                            table-bordered
+                            table-hover
+                        "
+                    >
+
+                        <thead>
+
+                            <tr>
+                                <th>Student</th>
+                                <th>Attendance Type</th>
+                                <th>Present</th>
+                                <th>Absent</th>
+                                <th>Leave</th>
+                                <th>Counted</th>
+                                <th>Absence Rate</th>
+                                <th>Threshold</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            ${
+                                rows
+                                ||
+
+                                `
+                                    <tr>
+                                        <td colspan="8">
+                                            No students currently
+                                            require investigation.
+                                        </td>
+                                    </tr>
+                                `
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            `);
+
+
+        dialog.show();
+
+    }
+
+
+    // =========================================================
+    // Insights
+    // =========================================================
+
+    function renderInsights() {
+
+        if (!INSIGHTS_DASHBOARD_URL) {
+
+            $('#insights-container')
+                .html(`
+
+                    <div
+                        style="
+                            padding: 20px;
+                            color: #6c757d;
+                        "
+                    >
+                        Insights dashboard URL
+                        has not been configured.
+                    </div>
+
+                `);
+
+            return;
+
+        }
+
+
+        $('#insights-container')
+            .html(`
+
+                <iframe
+                    src="${escapeHtml(
+                        INSIGHTS_DASHBOARD_URL
+                    )}"
+                    style="
+                        width: 100%;
+                        height: 750px;
+                        border: none;
+                    "
+                >
+                </iframe>
+
+            `);
+
+    }
+
+
+    // =========================================================
+    // Error
+    // =========================================================
+
+    function showError(message) {
+
+        $('#executive-kpis')
+            .html('');
+
+
+        $('#executive-alerts')
+            .html(`
+
+                <div
+                    class="alert alert-danger"
+                >
+                    ${escapeHtml(
+                        message
+                    )}
+                </div>
+
+            `);
 
     }
 
