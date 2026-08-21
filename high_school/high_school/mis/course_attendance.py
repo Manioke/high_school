@@ -6,6 +6,11 @@ from frappe.utils import (
     today,
 )
 
+from high_school.high_school.mis.issues import (
+    CLOSED_STATUSES,
+    get_course_attendance_issue_map,
+)
+
 
 # =========================================================
 # Course Attendance Sessions
@@ -15,14 +20,11 @@ def get_course_attendance_sessions(
     start_date,
     end_date,
     coverage_target,
+    school_term=None,
 ):
     """
     Analyse expected versus recorded attendance for
-    each past Course Schedule.
-
-    Today's schedules are excluded so teachers are
-    not treated as missing before today's classes
-    have finished.
+    each historical Course Schedule.
     """
 
     start_date = getdate(
@@ -44,7 +46,6 @@ def get_course_attendance_sessions(
     )
 
     if cutoff_date < start_date:
-
         return []
 
     # =====================================================
@@ -89,16 +90,18 @@ def get_course_attendance_sessions(
     )
 
     if not schedules:
-
         return []
 
     # =====================================================
-    # Expected Students
+    # Expected students
     # =====================================================
 
     group_names = list({
         schedule.student_group
-        for schedule in schedules
+
+        for schedule
+        in schedules
+
         if schedule.student_group
     })
 
@@ -115,8 +118,7 @@ def get_course_attendance_sessions(
                     DISTINCT student
                 ) AS expected_students
 
-            FROM
-                `tabStudent Group Student`
+            FROM `tabStudent Group Student`
 
             WHERE
                 parent IN %(groups)s
@@ -146,7 +148,7 @@ def get_course_attendance_sessions(
         }
 
     # =====================================================
-    # Attendance Records by Course Schedule
+    # Attendance records
     # =====================================================
 
     schedule_names = [
@@ -187,15 +189,12 @@ def get_course_attendance_sessions(
                 END
             ) AS leave_count
 
-        FROM
-            `tabStudent Attendance`
+        FROM `tabStudent Attendance`
 
         WHERE
-            course_schedule
-                IN %(schedules)s
+            course_schedule IN %(schedules)s
 
-            AND course_schedule
-                IS NOT NULL
+            AND course_schedule IS NOT NULL
 
             AND course_schedule != ''
 
@@ -221,7 +220,21 @@ def get_course_attendance_sessions(
     }
 
     # =====================================================
-    # Build Session Results
+    # Existing management issues
+    # =====================================================
+
+    issue_map = (
+        get_course_attendance_issue_map(
+            course_schedule_names=
+                schedule_names,
+
+            school_term=
+                school_term,
+        )
+    )
+
+    # =====================================================
+    # Build session output
     # =====================================================
 
     output = []
@@ -295,7 +308,7 @@ def get_course_attendance_sessions(
         )
 
         # =================================================
-        # Attendance Performance
+        # Student attendance performance
         # =================================================
 
         counted = (
@@ -317,7 +330,7 @@ def get_course_attendance_sessions(
         )
 
         # =================================================
-        # Submission Classification
+        # Submission status
         # =================================================
 
         if expected == 0:
@@ -333,12 +346,8 @@ def get_course_attendance_sessions(
             )
 
         elif (
-            coverage_rate
-            is not None
-
-            and
-
-            coverage_rate > 100
+            coverage_rate is not None
+            and coverage_rate > 100
         ):
 
             submission_status = (
@@ -383,18 +392,14 @@ def get_course_attendance_sessions(
 
             "from_time":
                 (
-                    str(
-                        schedule.from_time
-                    )
+                    str(schedule.from_time)
                     if schedule.from_time
                     else None
                 ),
 
             "to_time":
                 (
-                    str(
-                        schedule.to_time
-                    )
+                    str(schedule.to_time)
                     if schedule.to_time
                     else None
                 ),
@@ -425,13 +430,63 @@ def get_course_attendance_sessions(
 
             "submission_status":
                 submission_status,
+
+            "management_issue":
+                issue_map.get(
+                    schedule.name
+                ),
         })
 
     return output
 
 
 # =========================================================
-# Overall Course Coverage
+# Management Helpers
+# =========================================================
+
+def _is_resolved(
+    session,
+):
+    issue = (
+        session.get(
+            "management_issue"
+        )
+        or {}
+    )
+
+    return (
+        issue.get(
+            "status"
+        )
+        in CLOSED_STATUSES
+    )
+
+
+def _exclude_from_kpis(
+    session,
+):
+    issue = (
+        session.get(
+            "management_issue"
+        )
+        or {}
+    )
+
+    return (
+        _is_resolved(
+            session
+        )
+        and
+        bool(
+            issue.get(
+                "exclude_from_kpis"
+            )
+        )
+    )
+
+
+# =========================================================
+# Course Coverage
 # =========================================================
 
 def get_course_coverage_summary(
@@ -439,12 +494,10 @@ def get_course_coverage_summary(
     coverage_target,
 ):
     """
-    Calculate weighted Course Attendance coverage.
+    Calculate Course Attendance coverage.
 
-    Coverage =
-        Recorded Student Attendance Records
-        /
-        Expected Student Attendance Records
+    Approved resolved issues marked Exclude from KPI
+    Calculations are excluded from this denominator.
     """
 
     expected = 0
@@ -452,8 +505,16 @@ def get_course_coverage_summary(
 
     data_issue_sessions = 0
     no_student_sessions = 0
+    management_excluded_sessions = 0
 
     for session in sessions:
+
+        if _exclude_from_kpis(
+            session
+        ):
+
+            management_excluded_sessions += 1
+            continue
 
         status = (
             session[
@@ -464,13 +525,11 @@ def get_course_coverage_summary(
         if status == "no_students":
 
             no_student_sessions += 1
-
             continue
 
         if status == "data_issue":
 
             data_issue_sessions += 1
-
             continue
 
         expected += (
@@ -534,6 +593,9 @@ def get_course_coverage_summary(
 
         "no_student_sessions":
             no_student_sessions,
+
+        "management_excluded_sessions":
+            management_excluded_sessions,
     }
 
 
@@ -546,12 +608,13 @@ def get_teacher_submission_compliance(
     submission_target,
 ):
     """
-    Calculate attendance submission compliance
-    by instructor.
+    Calculate Course Attendance submission compliance.
 
-    A Course Schedule is complete when its
-    coverage satisfies the configured
-    Attendance Coverage Target.
+    Resolved issues disappear from actionable counts.
+
+    A resolved issue only disappears from KPI
+    calculations when Exclude from KPI Calculations
+    was explicitly selected.
     """
 
     teachers = {}
@@ -562,7 +625,14 @@ def get_teacher_submission_compliance(
     overall_missing = 0
     overall_incomplete = 0
 
+    actionable_missing = 0
+    actionable_incomplete = 0
+
+    resolved_sessions = 0
+
     excluded_sessions = 0
+    management_excluded_sessions = 0
+
     unassigned_sessions = 0
 
     for session in sessions:
@@ -573,8 +643,31 @@ def get_teacher_submission_compliance(
             ]
         )
 
+        resolved = (
+            _is_resolved(
+                session
+            )
+        )
+
+        if resolved:
+            resolved_sessions += 1
+
         # ---------------------------------------------
-        # Invalid / non-assessable sessions
+        # Management exclusion
+        # ---------------------------------------------
+
+        if _exclude_from_kpis(
+            session
+        ):
+
+            excluded_sessions += 1
+
+            management_excluded_sessions += 1
+
+            continue
+
+        # ---------------------------------------------
+        # Technically non-assessable
         # ---------------------------------------------
 
         if status in (
@@ -596,9 +689,15 @@ def get_teacher_submission_compliance(
 
             overall_missing += 1
 
+            if not resolved:
+                actionable_missing += 1
+
         elif status == "incomplete":
 
             overall_incomplete += 1
+
+            if not resolved:
+                actionable_incomplete += 1
 
         instructor = (
             session[
@@ -609,7 +708,6 @@ def get_teacher_submission_compliance(
         if not instructor:
 
             unassigned_sessions += 1
-
             continue
 
         instructor_name = (
@@ -672,7 +770,7 @@ def get_teacher_submission_compliance(
             ] += 1
 
     # =====================================================
-    # Teacher Rates
+    # Teacher rates
     # =====================================================
 
     teacher_results = []
@@ -754,7 +852,7 @@ def get_teacher_submission_compliance(
     )
 
     # =====================================================
-    # Overall Compliance
+    # Overall
     # =====================================================
 
     overall_rate = (
@@ -827,14 +925,28 @@ def get_teacher_submission_compliance(
         "complete_sessions":
             overall_complete,
 
+        # Historical KPI failures
         "missing_sessions":
             overall_missing,
 
         "incomplete_sessions":
             overall_incomplete,
 
+        # Still requiring management attention
+        "actionable_missing_sessions":
+            actionable_missing,
+
+        "actionable_incomplete_sessions":
+            actionable_incomplete,
+
+        "resolved_sessions":
+            resolved_sessions,
+
         "excluded_sessions":
             excluded_sessions,
+
+        "management_excluded_sessions":
+            management_excluded_sessions,
 
         "unassigned_sessions":
             unassigned_sessions,

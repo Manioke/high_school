@@ -403,7 +403,11 @@ def get_metric_candidates(
                 candidates.append(
                     _candidate(
                         value=submission.get(
-                            "missing_sessions"
+                            "actionable_missing_sessions",
+                            submission.get(
+                                "missing_sessions",
+                                0,
+                            ),
                         ),
 
                         subject=(
@@ -612,7 +616,11 @@ def get_metric_candidates(
             candidates.append(
                 _candidate(
                     value=submission.get(
-                        "missing_sessions"
+                        "actionable_missing_sessions",
+                        submission.get(
+                            "missing_sessions",
+                            0,
+                        ),
                     ),
 
                     subject=(
@@ -780,7 +788,7 @@ def get_metric_candidates(
         for teacher in submission.get(
             "teachers",
             [],
-        ):
+            ):
 
             instructor = teacher.get(
                 "instructor"

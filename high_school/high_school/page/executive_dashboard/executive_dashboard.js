@@ -869,15 +869,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     value:
                         formatNumber(
                             submission
+                                .actionable_missing_sessions
+                            ?? submission
                                 .missing_sessions
                         ),
 
                     subtitle:
-                        `${
-                            submission
-                                .expected_sessions
-                        } expected classes`
-
+                        `${submission.resolved_sessions || 0} resolved`
                 })
             );
 
@@ -1170,17 +1168,30 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
 
         const missing =
-            submission.missing_sessions
-            || 0;
+            submission
+                .actionable_missing_sessions
+            ?? submission
+                .missing_sessions
+            ?? 0;
 
 
         const incomplete =
-            submission.incomplete_sessions
-            || 0;
+            submission
+                .actionable_incomplete_sessions
+            ?? submission
+                .incomplete_sessions
+            ?? 0;
 
 
         const teachersBelow =
-            submission.teachers_below_target
+            submission
+                .teachers_below_target
+            || 0;
+
+
+        const resolved =
+            submission
+                .resolved_sessions
             || 0;
 
 
@@ -1188,8 +1199,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             missing > 0
             ||
             incomplete > 0
-            ||
-            teachersBelow > 0
         );
 
 
@@ -1238,13 +1247,21 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                         >
 
                             ${missing}
-                            missing class(es),
+                            unresolved missing class(es),
 
                             ${incomplete}
-                            incomplete submission(s),
+                            unresolved incomplete
+                            submission(s).
 
-                            ${teachersBelow}
-                            instructor(s) below target.
+                            ${
+                                resolved > 0
+                                    ? `
+                                        ${resolved}
+                                        historical issue(s)
+                                        have been resolved.
+                                    `
+                                    : ''
+                            }
 
                         </div>
 
@@ -1274,7 +1291,8 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 function() {
 
                     showAttendanceInvestigation(
-                        course
+                        course,
+                        data.school_term.name
                     );
 
                 }
@@ -1282,13 +1300,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
     }
 
-
     // =========================================================
     // Attendance Investigation
     // =========================================================
 
     function showAttendanceInvestigation(
-        course
+        course,
+        schoolTerm
     ) {
 
         const submission =
@@ -1302,6 +1320,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
         const sessions =
             course.attention_sessions || [];
 
+
+        // =====================================================
+        // Teacher compliance
+        // =====================================================
 
         const teacherRows =
             teachers
@@ -1352,62 +1374,109 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 .join('');
 
 
+        // =====================================================
+        // Unresolved sessions
+        // =====================================================
+
         const sessionRows =
             sessions
 
-                .map(session => `
+                .map(session => {
 
-                    <tr>
+                    const issue =
+                        session.management_issue || {};
 
-                        <td>
-                            ${escapeHtml(
-                                session.schedule_date
-                            )}
-                        </td>
 
-                        <td>
-                            ${escapeHtml(
-                                session.course
-                            )}
-                        </td>
+                    const issueStatus =
+                        issue.status
+                        || 'Not Reviewed';
 
-                        <td>
-                            ${escapeHtml(
-                                session.student_group
-                            )}
-                        </td>
 
-                        <td>
-                            ${escapeHtml(
-                                session.instructor_name
-                                || session.instructor
-                                || 'Unassigned'
-                            )}
-                        </td>
+                    return `
 
-                        <td>
-                            ${session.expected_students}
-                        </td>
+                        <tr>
 
-                        <td>
-                            ${session.recorded_students}
-                        </td>
+                            <td>
+                                ${escapeHtml(
+                                    session.schedule_date
+                                )}
+                            </td>
 
-                        <td>
-                            ${formatPercent(
-                                session.coverage_rate
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHtml(
+                                    session.course
+                                )}
+                            </td>
 
-                        <td>
-                            ${escapeHtml(
-                                session.submission_status
-                            )}
-                        </td>
+                            <td>
+                                ${escapeHtml(
+                                    session.student_group
+                                )}
+                            </td>
 
-                    </tr>
+                            <td>
+                                ${escapeHtml(
+                                    session.instructor_name
+                                    || session.instructor
+                                    || 'Unassigned'
+                                )}
+                            </td>
 
-                `)
+                            <td>
+                                ${session.expected_students}
+                            </td>
+
+                            <td>
+                                ${session.recorded_students}
+                            </td>
+
+                            <td>
+                                ${formatPercent(
+                                    session.coverage_rate
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    session.submission_status
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    issueStatus
+                                )}
+                            </td>
+
+                            <td>
+
+                                <button
+                                    class="
+                                        btn
+                                        btn-xs
+                                        btn-default
+                                        manage-attendance-issue
+                                    "
+                                    data-course-schedule="${
+                                        escapeHtml(
+                                            session.course_schedule
+                                        )
+                                    }"
+                                >
+                                    ${
+                                        issue.name
+                                            ? 'Manage'
+                                            : 'Review'
+                                    }
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                })
 
                 .join('');
 
@@ -1428,7 +1497,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                             'details',
 
                         fieldtype:
-                            'HTML',
+                            'HTML'
                     }
 
                 ]
@@ -1441,17 +1510,85 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             .$wrapper
             .html(`
 
+                <div
+                    style="
+                        margin-bottom: 15px;
+                        color: #6c757d;
+                    "
+                >
+                    Historical attendance should not be
+                    fabricated. Review each unresolved
+                    session and record the appropriate
+                    management outcome.
+                </div>
+
+
                 <h5>
-                    Instructor Submission Compliance
+                    Scheduled Classes Requiring Attention
                 </h5>
 
 
                 <div
                     style="
                         overflow-x: auto;
-                        margin-bottom: 25px;
+                        margin-bottom: 30px;
                     "
                 >
+
+                    <table
+                        class="
+                            table
+                            table-bordered
+                            table-hover
+                        "
+                    >
+
+                        <thead>
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Group</th>
+                                <th>Instructor</th>
+                                <th>Expected</th>
+                                <th>Recorded</th>
+                                <th>Coverage</th>
+                                <th>Attendance Status</th>
+                                <th>Management Status</th>
+                                <th>Action</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            ${
+                                sessionRows
+                                ||
+                                `
+                                    <tr>
+                                        <td colspan="10">
+                                            No unresolved sessions
+                                            currently require review.
+                                        </td>
+                                    </tr>
+                                `
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <h5>
+                    Instructor Submission Performance
+                </h5>
+
+
+                <div style="overflow-x: auto;">
 
                     <table
                         class="
@@ -1480,7 +1617,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                             ${
                                 teacherRows
                                 ||
-
                                 `
                                     <tr>
                                         <td colspan="6">
@@ -1497,66 +1633,82 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
                 </div>
 
-
-                <h5>
-                    Scheduled Classes Requiring Attention
-                </h5>
-
-
-                <div style="overflow-x: auto;">
-
-                    <table
-                        class="
-                            table
-                            table-bordered
-                            table-hover
-                        "
-                    >
-
-                        <thead>
-
-                            <tr>
-                                <th>Date</th>
-                                <th>Course</th>
-                                <th>Group</th>
-                                <th>Instructor</th>
-                                <th>Expected</th>
-                                <th>Recorded</th>
-                                <th>Coverage</th>
-                                <th>Status</th>
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            ${
-                                sessionRows
-                                ||
-
-                                `
-                                    <tr>
-                                        <td colspan="8">
-                                            No sessions currently
-                                            require investigation.
-                                        </td>
-                                    </tr>
-                                `
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
             `);
 
 
         dialog.show();
 
-    }
+
+        // =====================================================
+        // Manage Issue
+        // =====================================================
+
+        dialog.$wrapper
+            .off(
+                'click',
+                '.manage-attendance-issue'
+            )
+            .on(
+                'click',
+                '.manage-attendance-issue',
+
+                function() {
+
+                    const courseSchedule =
+                        $(this).data(
+                            'course-schedule'
+                        );
+
+
+                    frappe.call({
+
+                        method:
+                            'high_school.high_school.management_mis.get_or_create_course_attendance_issue',
+
+                        args: {
+                            course_schedule:
+                                courseSchedule,
+
+                            school_term:
+                                schoolTerm
+                        },
+
+                        freeze:
+                            true,
+
+                        freeze_message:
+                            __(
+                                'Opening management issue...'
+                            ),
+
+                        callback(r) {
+
+                            if (
+                                !r.message
+                                ||
+                                !r.message.name
+                            ) {
+                                return;
+                            }
+
+
+                            dialog.hide();
+
+
+                            frappe.set_route(
+                                'Form',
+                                'MIS Issue',
+                                r.message.name
+                            );
+
+                        }
+
+                    });
+
+                }
+            );
+
+    } 
 
 
     // =========================================================

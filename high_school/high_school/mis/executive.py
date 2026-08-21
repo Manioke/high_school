@@ -27,30 +27,22 @@ from high_school.high_school.mis.alerts import (
 )
 
 
-# =========================================================
-# Executive MIS
-# =========================================================
+CLOSED_ISSUE_STATUSES = {
+    "Resolved",
+    "Dismissed",
+}
+
 
 def get_executive_summary(
     school_term=None,
 ):
     """
     Build structured Executive MIS data.
-
-    This module contains no UI presentation logic.
     """
-
-    # =====================================================
-    # Settings
-    # =====================================================
 
     settings = (
         get_mis_settings()
     )
-
-    # =====================================================
-    # School Term
-    # =====================================================
 
     term = get_school_term(
         school_term
@@ -76,7 +68,8 @@ def get_executive_summary(
     # =====================================================
 
     daily_attendance = {
-        "enabled": False,
+        "enabled":
+            False,
     }
 
     if settings[
@@ -84,7 +77,8 @@ def get_executive_summary(
     ]:
 
         daily_attendance = {
-            "enabled": True,
+            "enabled":
+                True,
 
             **analyse_attendance(
                 start_date=start_date,
@@ -101,7 +95,8 @@ def get_executive_summary(
     # =====================================================
 
     course_attendance = {
-        "enabled": False,
+        "enabled":
+            False,
     }
 
     if settings[
@@ -123,9 +118,12 @@ def get_executive_summary(
             get_course_attendance_sessions(
                 start_date=start_date,
                 end_date=end_date,
+
                 coverage_target=settings[
                     "attendance_coverage_target"
                 ],
+
+                school_term=term.name,
             )
         )
 
@@ -149,23 +147,44 @@ def get_executive_summary(
             )
         )
 
-        attention_sessions = [
-            session
+        # ---------------------------------------------
+        # Only unresolved problems require attention
+        # ---------------------------------------------
 
-            for session
-            in sessions
+        attention_sessions = []
+
+        for session in sessions:
 
             if (
                 session[
                     "submission_status"
                 ]
-                in (
+                not in (
                     "missing",
                     "incomplete",
                     "data_issue",
                 )
+            ):
+                continue
+
+            issue = (
+                session.get(
+                    "management_issue"
+                )
+                or {}
             )
-        ]
+
+            if (
+                issue.get(
+                    "status"
+                )
+                in CLOSED_ISSUE_STATUSES
+            ):
+                continue
+
+            attention_sessions.append(
+                session
+            )
 
         course_attendance = {
             "enabled":
@@ -181,9 +200,7 @@ def get_executive_summary(
                 submission,
 
             "session_count":
-                len(
-                    sessions
-                ),
+                len(sessions),
 
             "attention_sessions":
                 attention_sessions[:20],
@@ -216,9 +233,11 @@ def get_executive_summary(
             get_student_absence_analysis(
                 start_date=start_date,
                 end_date=end_date,
+
                 attendance_type=(
                     DAILY_ATTENDANCE
                 ),
+
                 settings=settings,
             )
         )
@@ -240,9 +259,11 @@ def get_executive_summary(
             get_student_absence_analysis(
                 start_date=start_date,
                 end_date=end_date,
+
                 attendance_type=(
                     COURSE_ATTENDANCE
                 ),
+
                 settings=settings,
             )
         )
@@ -255,10 +276,6 @@ def get_executive_summary(
 
             **course_persistent,
         }
-
-    # -----------------------------------------------------
-    # Unique students across modes
-    # -----------------------------------------------------
 
     flagged_student_ids = set()
 
@@ -297,7 +314,7 @@ def get_executive_summary(
     )
 
     # =====================================================
-    # Base Payload
+    # Payload
     # =====================================================
 
     result = {
@@ -336,10 +353,6 @@ def get_executive_summary(
         "persistent_absence":
             persistent_absence,
     }
-
-    # =====================================================
-    # Dynamic Alert Rules
-    # =====================================================
 
     result[
         "alerts"

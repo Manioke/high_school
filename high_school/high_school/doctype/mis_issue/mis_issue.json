@@ -1,0 +1,200 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-08-20 18:35:23.210885",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "issue_key",
+  "title",
+  "source_type",
+  "issue_type",
+  "severity",
+  "description",
+  "reference_doctype",
+  "reference_name",
+  "school_term",
+  "student",
+  "instructor",
+  "status",
+  "assigned_to",
+  "follow_up_date",
+  "first_detected",
+  "last_detected",
+  "resolution_type",
+  "resolution_notes",
+  "exclude_from_kpis",
+  "resolved_by",
+  "resolved_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming",
+   "options": "MIS-ISS-.YYYY.-.#####"
+  },
+  {
+   "fieldname": "issue_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Issue Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Source Type",
+   "options": "Attendance\nAssessment\nStudent Performance\nFinance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issue_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Issue Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Information\nWarning\nAction Required\nCritical"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "label": "School Term",
+   "options": "School Term"
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "label": "Student",
+   "options": "Student"
+  },
+  {
+   "fieldname": "instructor",
+   "fieldtype": "Link",
+   "label": "Instructor",
+   "options": "Instructor"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nUnder Review\nResolved\nDismissed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "follow_up_date",
+   "fieldtype": "Date",
+   "label": "Follow-up Date"
+  },
+  {
+   "fieldname": "first_detected",
+   "fieldtype": "Datetime",
+   "label": "First Detected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_detected",
+   "fieldtype": "Datetime",
+   "label": "Last Detected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolution_type",
+   "fieldtype": "Select",
+   "label": "Resolution Type",
+   "options": "Class Cancelled\nSchool Event\nTimetable Change\nTeacher Absent\nAttendance Not Recoverable\nAdministrative Error\nIssue No Longer Applicable\nOther"
+  },
+  {
+   "fieldname": "resolution_notes",
+   "fieldtype": "Small Text",
+   "label": "Resolution Notes"
+  },
+  {
+   "default": "0",
+   "fieldname": "exclude_from_kpis",
+   "fieldtype": "Check",
+   "label": "Exclude From KPI Calculations"
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Datetime",
+   "label": "Resolved On",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-20 20:57:05.037509",
+ "modified_by": "Administrator",
+ "module": "High School",
+ "name": "MIS Issue",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
