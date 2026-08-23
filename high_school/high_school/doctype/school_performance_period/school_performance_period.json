@@ -1,0 +1,148 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:period_name",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "period_name",
+  "academic_year",
+  "school_term",
+  "main_student_group",
+  "configuration_section",
+  "result_status_filter",
+  "missing_result_policy",
+  "tie_method",
+  "minimum_subjects",
+  "rounding_precision",
+  "components_section",
+  "components"
+ ],
+ "fields": [
+  {
+   "fieldname": "period_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Performance Period Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "School Term",
+   "options": "School Term",
+   "reqd": 1
+  },
+  {
+   "description": "The home/main class in which students will be ranked.",
+   "fieldname": "main_student_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Main Student Group",
+   "options": "Student Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Calculation Rules"
+  },
+  {
+   "default": "Draft and Submitted",
+   "fieldname": "result_status_filter",
+   "fieldtype": "Select",
+   "label": "Assessment Results to Include",
+   "options": "Draft and Submitted\nSubmitted Only",
+   "reqd": 1
+  },
+  {
+   "default": "Incomplete and Do Not Rank",
+   "description": "Ignore Missing Components recalculates a course from the available component weights.",
+   "fieldname": "missing_result_policy",
+   "fieldtype": "Select",
+   "label": "Missing Result Policy",
+   "options": "Incomplete and Do Not Rank\nCount Missing as Zero\nIgnore Missing Components",
+   "reqd": 1
+  },
+  {
+   "default": "Competition (1, 2, 2, 4)",
+   "fieldname": "tie_method",
+   "fieldtype": "Select",
+   "label": "Tie Ranking Method",
+   "options": "Competition (1, 2, 2, 4)\nDense (1, 2, 2, 3)",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "minimum_subjects",
+   "fieldtype": "Int",
+   "label": "Minimum Subjects Required",
+   "reqd": 1
+  },
+  {
+   "default": "2",
+   "fieldname": "rounding_precision",
+   "fieldtype": "Int",
+   "label": "Displayed Decimal Places",
+   "reqd": 1
+  },
+  {
+   "fieldname": "components_section",
+   "fieldtype": "Section Break",
+   "label": "Assessment Components"
+  },
+  {
+   "description": "Use one component at 100% for an independent term, or several components whose weights total 100%.",
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Components",
+   "options": "School Performance Component",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "High School",
+ "name": "School Performance Period",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "period_name"
+}

@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "autoname": "format:PERF-{academic_year}-{student}-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "performance_period",
+  "student",
+  "student_name",
+  "academic_year",
+  "school_term",
+  "main_student_group",
+  "result_section",
+  "status",
+  "total_subjects",
+  "overall_percentage",
+  "position",
+  "rank_out_of",
+  "course_results_section",
+  "course_results",
+  "component_results_section",
+  "component_results"
+ ],
+ "fields": [
+  {
+   "fieldname": "performance_period",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Performance Period",
+   "options": "School Performance Period",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "Student",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "student.student_name",
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "label": "School Term",
+   "options": "School Term",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "main_student_group",
+   "fieldtype": "Link",
+   "label": "Main Student Group",
+   "options": "Student Group",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_section",
+   "fieldtype": "Section Break",
+   "label": "Overall Result"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Complete\nIncomplete",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_subjects",
+   "fieldtype": "Int",
+   "label": "Total Subjects",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overall_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Overall Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "position",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Position",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rank_out_of",
+   "fieldtype": "Int",
+   "label": "Ranked Students",
+   "read_only": 1
+  },
+  {
+   "fieldname": "course_results_section",
+   "fieldtype": "Section Break",
+   "label": "Course Results"
+  },
+  {
+   "fieldname": "course_results",
+   "fieldtype": "Table",
+   "label": "Course Results",
+   "options": "School Performance Course Result",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "component_results_section",
+   "fieldtype": "Section Break",
+   "label": "Assessment Component Details"
+  },
+  {
+   "fieldname": "component_results",
+   "fieldtype": "Table",
+   "label": "Component Results",
+   "options": "School Performance Component Result",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "module": "High School",
+ "name": "Student Performance Summary",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "student_name",
+ "track_changes": 1
+}

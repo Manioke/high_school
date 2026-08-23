@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "course",
+  "assessment_group",
+  "weight",
+  "score",
+  "maximum_score",
+  "percentage",
+  "status",
+  "assessment_plan",
+  "assessment_result"
+ ],
+ "fields": [
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course",
+   "options": "Course",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessment_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assessment Group",
+   "options": "Assessment Group",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Weight",
+   "read_only": 1
+  },
+  {
+   "fieldname": "score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Score",
+   "read_only": 1
+  },
+  {
+   "fieldname": "maximum_score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Maximum Score",
+   "read_only": 1
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Complete\nMissing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_plan",
+   "fieldtype": "Link",
+   "label": "Assessment Plan",
+   "options": "Assessment Plan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_result",
+   "fieldtype": "Link",
+   "label": "Assessment Result",
+   "options": "Assessment Result",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "module": "High School",
+ "name": "School Performance Component Result",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20
+}
