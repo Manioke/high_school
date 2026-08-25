@@ -15,6 +15,7 @@ from frappe.desk.calendar import get_event_conditions
 from high_school.api.permissions import (
     get_instructor,
     is_instructor_user,
+    instructor_teaches_assessment_plan,
 )
 
 
@@ -342,4 +343,98 @@ def get_course_schedule_events(start, end, filters=None):
         values,
         as_dict=True,
         update={"allDay": 0},
+    )
+
+def check_assessment_plan_access(assessment_plan):
+    if not assessment_plan:
+        frappe.throw(
+            _("Assessment Plan is required."),
+            frappe.ValidationError,
+        )
+
+    if not frappe.db.exists(
+        "Assessment Plan",
+        assessment_plan,
+    ):
+        frappe.throw(
+            _("Assessment Plan {0} does not exist.").format(
+                assessment_plan
+            ),
+            frappe.DoesNotExistError,
+        )
+
+    user = frappe.session.user
+
+    # Instructors are checked through Course Schedule ownership.
+    if is_instructor_user(user):
+        if not instructor_teaches_assessment_plan(
+            assessment_plan,
+            user,
+        ):
+            frappe.throw(
+                _(
+                    "You can only enter results for a course and "
+                    "student group assigned to you in Course Schedule."
+                ),
+                frappe.PermissionError,
+            )
+
+        # get_doc itself does not perform check_permission().
+        return frappe.get_doc(
+            "Assessment Plan",
+            assessment_plan,
+        )
+
+    # Managers and other users use standard Frappe permissions.
+    plan = frappe.get_doc(
+        "Assessment Plan",
+        assessment_plan,
+    )
+
+    plan.check_permission("read")
+
+    return plan
+
+@frappe.whitelist()
+def get_assessment_students(assessment_plan, student_group):
+    check_assessment_plan_access(assessment_plan)
+
+    from education.education.api import (
+        get_assessment_students as standard_method,
+    )
+
+    return standard_method(
+        assessment_plan,
+        student_group,
+    )
+
+
+@frappe.whitelist()
+def mark_assessment_result(assessment_plan, scores):
+    check_assessment_plan_access(assessment_plan)
+
+    from education.education.api import (
+        mark_assessment_result as standard_method,
+    )
+
+    return standard_method(
+        assessment_plan,
+        scores,
+    )
+
+
+@frappe.whitelist()
+def submit_assessment_results(
+    assessment_plan,
+    student_group,
+):
+    check_assessment_plan_access(assessment_plan)
+
+    from education.education.api import (
+        submit_assessment_results as standard_method,
+    )
+
+    return standard_method(
+        assessment_plan,
+        student_group,
     )

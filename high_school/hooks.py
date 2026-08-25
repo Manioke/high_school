@@ -141,11 +141,19 @@ after_migrate = [
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-    "Exam Paper Requirement": "high_school.high_school.exam_preparation.get_requirement_permission_query_conditions"
+    "Exam Paper Requirement": "high_school.high_school.exam_preparation.get_requirement_permission_query_conditions",
+    "Course Schedule": "high_school.api.permissions.course_schedule_query",
+    "Student Attendance": "high_school.api.permissions.student_attendance_query",
+    "Assessment Plan": "high_school.api.permissions.assessment_plan_query",
+    "Assessment Result": "high_school.api.permissions.assessment_result_query",
 }
 
 has_permission = {
-    "Exam Paper Requirement": "high_school.high_school.exam_preparation.has_requirement_permission"
+    "Exam Paper Requirement": "high_school.high_school.exam_preparation.has_requirement_permission",
+    "Course Schedule": "high_school.api.permissions.course_schedule_has_permission",
+    "Student Attendance": "high_school.api.permissions.student_attendance_has_permission",
+    "Assessment Plan": "high_school.api.permissions.assessment_plan_has_permission",
+    "Assessment Result": "high_school.api.permissions.assessment_result_has_permission",
 }
 
 # DocType Class
@@ -181,9 +189,16 @@ doc_events = {
         "on_submit": "high_school.high_school.attendance_utils.update_attendance_on_leave_approval"
     },
     "Student Attendance": {
-        "validate": "high_school.high_school.attendance_utils.process_standard_attendance_punishment",
+        "validate": [
+            "high_school.high_school.attendance_utils.process_standard_attendance_punishment",
+            "high_school.api.permissions.validate_student_attendance"
+        ],
         "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
         "on_cancel": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+    },
+    "Assessment Result": {
+        "validate":
+            "high_school.api.permissions.validate_assessment_result",
     },
     "Taliui Akonofo": {
         "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
@@ -240,6 +255,9 @@ override_whitelisted_methods = {
     "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom",
     "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance",
     "education.education.api.get_course_schedule_events": "high_school.high_school.api.get_course_schedule_events",
+    "education.education.api.get_assessment_students": "high_school.high_school.api.get_assessment_students",
+    "education.education.api.mark_assessment_result": "high_school.high_school.api.mark_assessment_result",
+    "education.education.api.submit_assessment_results": "high_school.high_school.api.submit_assessment_results",
 #    "education.education.api.get_student_invoices": "high_school.high_school.api.get_student_invoices"
 }
 # Replace the Core Class with your Smart Class
