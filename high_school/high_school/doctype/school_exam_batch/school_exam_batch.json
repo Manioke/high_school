@@ -1,0 +1,21 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["student_batch"],
+ "fields": [
+  {
+   "fieldname": "student_batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Batch",
+   "options": "Student Batch Name",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "School Exam Batch",
+ "permissions": []
+}

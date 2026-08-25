@@ -47,15 +47,24 @@ from high_school.high_school.patches import apply_patches
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Course Schedule": "public/js/course_schedule_list.js"
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 doctype_js = {
     "Student Group": "public/js/student_group_custom.js",
+    "Assessment Plan": "public/js/assessment_plan.js",
     "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js",
     "Student Leave Application": "public/js/student_leave_application.js",
     "Program Enrollment": "public/js/program_enrollment.js",
     "Student Applicant": "public/js/student_applicant.js",
     "Program Enrollment Tool": "public/js/program_enrollment_tool_override.js"
+}
+
+doctype_calendar_js = {
+    "Exam Paper Requirement": "public/js/exam_paper_requirement_calendar.js",
+    "Assessment Plan": "public/js/assessment_plan_calendar.js"
 }
 # Svg Icons
 # ------------------
@@ -131,13 +140,13 @@ after_migrate = [
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+    "Exam Paper Requirement": "high_school.high_school.exam_preparation.get_requirement_permission_query_conditions"
+}
+
+has_permission = {
+    "Exam Paper Requirement": "high_school.high_school.exam_preparation.has_requirement_permission"
+}
 
 # DocType Class
 # ---------------
@@ -163,6 +172,11 @@ after_migrate = [
 # }
 
 doc_events = {
+	"Assessment Plan": {
+		"on_update": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+		"on_cancel": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+		"after_delete": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+	},
     "Student Leave Application": {
         "on_submit": "high_school.high_school.attendance_utils.update_attendance_on_leave_approval"
     },
@@ -191,13 +205,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"high_school.tasks.all"
 # 	],
-# 	"daily": [
-# 		"high_school.tasks.daily"
-# 	],
+	"daily": [
+		"high_school.high_school.exam_preparation.send_exam_preparation_reminders"
+	],
 # 	"hourly": [
 # 		"high_school.tasks.hourly"
 # 	],
@@ -207,7 +221,7 @@ doc_events = {
 # 	"monthly": [
 # 		"high_school.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
@@ -225,6 +239,7 @@ doc_events = {
 override_whitelisted_methods = {
     "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom",
     "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance",
+    "education.education.api.get_course_schedule_events": "high_school.high_school.api.get_course_schedule_events",
 #    "education.education.api.get_student_invoices": "high_school.high_school.api.get_student_invoices"
 }
 # Replace the Core Class with your Smart Class

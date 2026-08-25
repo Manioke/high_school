@@ -1,0 +1,25 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": [],
+ "is_standard": "Yes",
+ "module": "High School",
+ "name": "Exam Preparation Coverage",
+ "prepared_report": 0,
+ "ref_doctype": "Exam Paper Requirement",
+ "report_name": "Exam Preparation Coverage",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Education Manager"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Instructor"
+  }
+ ]
+}

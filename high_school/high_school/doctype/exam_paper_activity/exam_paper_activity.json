@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": ["action", "action_by", "action_on", "notes"],
+ "fields": [
+  {
+   "fieldname": "action",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Action",
+   "read_only": 1
+  },
+  {
+   "fieldname": "action_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Action By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "action_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Action On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "Exam Paper Activity",
+ "permissions": []
+}

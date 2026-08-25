@@ -1,0 +1,28 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["assessment_criteria", "maximum_score"],
+ "fields": [
+  {
+   "fieldname": "assessment_criteria",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assessment Criterion",
+   "options": "Assessment Criteria",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maximum_score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Maximum Score",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "Exam Paper Criteria",
+ "permissions": []
+}

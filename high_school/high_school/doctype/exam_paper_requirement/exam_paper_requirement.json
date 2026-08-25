@@ -1,0 +1,459 @@
+{
+ "actions": [],
+ "autoname": "format:EXAM-PAPER-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "requirement_title",
+  "examination_cycle",
+  "student_batch",
+  "course",
+  "status",
+  "cycle_section",
+  "academic_year",
+  "school_term",
+  "assessment_group",
+  "exam_start_date",
+  "deadlines_section",
+  "assignment_deadline",
+  "paper_submission_deadline",
+  "deadline_column",
+  "hod_review_deadline",
+  "admin_approval_deadline",
+  "assignment_section",
+  "department",
+  "hod_user",
+  "assignment_column",
+  "lead_teacher_user",
+  "collaborators",
+  "paper_section",
+  "blueprint_requirement",
+  "blueprint_file",
+  "question_paper_required",
+  "question_paper_file",
+  "marking_scheme_required",
+  "marking_scheme_file",
+  "teacher_notes",
+  "criteria_section",
+  "assessment_criteria",
+  "maximum_score",
+  "duration_minutes",
+  "schedule_section",
+  "examination_date",
+  "from_time",
+  "to_time",
+  "room",
+  "grading_scale",
+  "review_section",
+  "revision_number",
+  "submitted_by",
+  "submitted_on",
+  "hod_approved_by",
+  "hod_approved_on",
+  "admin_approved_by",
+  "admin_approved_on",
+  "latest_review_notes",
+  "groups_section",
+  "affected_student_groups",
+  "expected_plan_count",
+  "created_plan_count",
+  "missing_plan_count",
+  "activity_section",
+  "activity_history"
+ ],
+ "fields": [
+  {
+   "fieldname": "requirement_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Paper Requirement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "examination_cycle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Examination Cycle",
+   "options": "School Examination Cycle",
+   "reqd": 1
+  },
+  {
+   "fieldname": "student_batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Batch / Form",
+   "options": "Student Batch Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course / Exam Paper",
+   "options": "Course",
+   "reqd": 1
+  },
+  {
+   "default": "Awaiting Assignment",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Awaiting Assignment\nAssigned\nIn Preparation\nSubmitted to HOD\nChanges Requested\nSubmitted to Exam Administration\nApproved\nPlans Partially Created\nComplete",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cycle_section",
+   "fieldtype": "Section Break",
+   "label": "Examination Cycle Details"
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "label": "School Term",
+   "options": "School Term",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_group",
+   "fieldtype": "Link",
+   "label": "Assessment Group",
+   "options": "Assessment Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exam_start_date",
+   "fieldtype": "Date",
+   "label": "Examination Start Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deadlines_section",
+   "fieldtype": "Section Break",
+   "label": "Deadlines"
+  },
+  {
+   "fieldname": "assignment_deadline",
+   "fieldtype": "Date",
+   "label": "Teacher Assignment Deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paper_submission_deadline",
+   "fieldtype": "Date",
+   "in_standard_filter": 1,
+   "label": "Paper Submission Deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deadline_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hod_review_deadline",
+   "fieldtype": "Date",
+   "label": "HOD Review Deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admin_approval_deadline",
+   "fieldtype": "Date",
+   "label": "Final Approval Deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assignment_section",
+   "fieldtype": "Section Break",
+   "label": "Responsibility"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "description": "The User account responsible for assigning and reviewing this paper.",
+   "fieldname": "hod_user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "HOD User",
+   "options": "User"
+  },
+  {
+   "fieldname": "assignment_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The teacher account responsible for the official paper.",
+   "fieldname": "lead_teacher_user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Lead Teacher User",
+   "options": "User"
+  },
+  {
+   "fieldname": "collaborators",
+   "fieldtype": "Table",
+   "label": "Collaborating Teachers",
+   "options": "Exam Paper Collaborator"
+  },
+  {
+   "fieldname": "paper_section",
+   "fieldtype": "Section Break",
+   "label": "Teacher Submission"
+  },
+  {
+   "fieldname": "blueprint_requirement",
+   "fieldtype": "Select",
+   "label": "Blueprint",
+   "options": "Required\nOptional\nNot Required",
+   "read_only": 1
+  },
+  {
+   "description": "Upload the blueprint as a private file.",
+   "fieldname": "blueprint_file",
+   "fieldtype": "Attach",
+   "label": "Blueprint File",
+   "options": "Private"
+  },
+  {
+   "fieldname": "question_paper_required",
+   "fieldtype": "Check",
+   "label": "Question Paper Required",
+   "read_only": 1
+  },
+  {
+   "description": "Upload the official Word document as a private file.",
+   "fieldname": "question_paper_file",
+   "fieldtype": "Attach",
+   "label": "Question Paper DOCX",
+   "options": "Private"
+  },
+  {
+   "fieldname": "marking_scheme_required",
+   "fieldtype": "Check",
+   "label": "Marking Scheme Required",
+   "read_only": 1
+  },
+  {
+   "description": "Upload the marking scheme or model answers as a private file.",
+   "fieldname": "marking_scheme_file",
+   "fieldtype": "Attach",
+   "label": "Marking Scheme File",
+   "options": "Private"
+  },
+  {
+   "fieldname": "teacher_notes",
+   "fieldtype": "Small Text",
+   "label": "Teacher Notes"
+  },
+  {
+   "fieldname": "criteria_section",
+   "fieldtype": "Section Break",
+   "label": "Structured Assessment Criteria"
+  },
+  {
+   "description": "These approved rows are copied into the native Assessment Plans so administration does not retype them from the Word document.",
+   "fieldname": "assessment_criteria",
+   "fieldtype": "Table",
+   "label": "Assessment Criteria",
+   "options": "Exam Paper Criteria"
+  },
+  {
+   "fieldname": "maximum_score",
+   "fieldtype": "Float",
+   "label": "Total Maximum Score",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_minutes",
+   "fieldtype": "Int",
+   "label": "Duration (Minutes)"
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Proposed Examination Schedule"
+  },
+  {
+   "fieldname": "examination_date",
+   "fieldtype": "Date",
+   "label": "Examination Date"
+  },
+  {
+   "fieldname": "from_time",
+   "fieldtype": "Time",
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "to_time",
+   "fieldtype": "Time",
+   "label": "End Time"
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "label": "Default Room / Hall",
+   "options": "Room"
+  },
+  {
+   "fieldname": "grading_scale",
+   "fieldtype": "Link",
+   "label": "Grading Scale",
+   "options": "Grading Scale"
+  },
+  {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Review and Approval"
+  },
+  {
+   "default": "0",
+   "fieldname": "revision_number",
+   "fieldtype": "Int",
+   "label": "Submission Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Submitted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hod_approved_by",
+   "fieldtype": "Link",
+   "label": "HOD Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hod_approved_on",
+   "fieldtype": "Datetime",
+   "label": "HOD Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admin_approved_by",
+   "fieldtype": "Link",
+   "label": "Final Approval By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admin_approved_on",
+   "fieldtype": "Datetime",
+   "label": "Final Approval On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_review_notes",
+   "fieldtype": "Small Text",
+   "label": "Latest Review Notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "groups_section",
+   "fieldtype": "Section Break",
+   "label": "Affected Student Groups and Assessment Plans"
+  },
+  {
+   "description": "One approved paper can create one native Assessment Plan for every affected teaching group.",
+   "fieldname": "affected_student_groups",
+   "fieldtype": "Table",
+   "label": "Affected Student Groups",
+   "options": "Exam Paper Affected Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_plan_count",
+   "fieldtype": "Int",
+   "label": "Expected Assessment Plans",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_plan_count",
+   "fieldtype": "Int",
+   "label": "Plans Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "missing_plan_count",
+   "fieldtype": "Int",
+   "label": "Plans Missing",
+   "read_only": 1
+  },
+  {
+   "fieldname": "activity_section",
+   "fieldtype": "Section Break",
+   "label": "Workflow History"
+  },
+  {
+   "fieldname": "activity_history",
+   "fieldtype": "Table",
+   "label": "Activity History",
+   "options": "Exam Paper Activity",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "is_calendar_and_gantt": 1,
+ "links": [],
+ "module": "High School",
+ "name": "Exam Paper Requirement",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Instructor",
+   "write": 1
+  }
+ ],
+ "search_fields": "course,student_batch,lead_teacher_user,hod_user,status",
+ "sort_field": "paper_submission_deadline",
+ "sort_order": "ASC",
+ "title_field": "requirement_title",
+ "track_changes": 1
+}

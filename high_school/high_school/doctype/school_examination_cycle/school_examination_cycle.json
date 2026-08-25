@@ -1,0 +1,224 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:cycle_name",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cycle_name",
+  "academic_year",
+  "school_term",
+  "assessment_group",
+  "status",
+  "exam_dates_section",
+  "exam_start_date",
+  "exam_end_date",
+  "deadlines_section",
+  "assignment_deadline",
+  "paper_submission_deadline",
+  "deadline_column",
+  "hod_review_deadline",
+  "admin_approval_deadline",
+  "requirements_section",
+  "blueprint_requirement",
+  "question_paper_required",
+  "marking_scheme_required",
+  "course_selection_policy",
+  "student_batches",
+  "courses",
+  "hod_assignments"
+ ],
+ "fields": [
+  {
+   "fieldname": "cycle_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Examination Cycle Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "School Term",
+   "options": "School Term",
+   "reqd": 1
+  },
+  {
+   "description": "The shared examination event used by the native Assessment Plans.",
+   "fieldname": "assessment_group",
+   "fieldtype": "Link",
+   "label": "Assessment Group",
+   "options": "Assessment Group",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nRequirements Generated\nClosed",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "exam_dates_section",
+   "fieldtype": "Section Break",
+   "label": "Examination Dates"
+  },
+  {
+   "fieldname": "exam_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Examination Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exam_end_date",
+   "fieldtype": "Date",
+   "label": "Examination End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "deadlines_section",
+   "fieldtype": "Section Break",
+   "label": "Preparation Deadlines"
+  },
+  {
+   "fieldname": "assignment_deadline",
+   "fieldtype": "Date",
+   "label": "Teacher Assignment Deadline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "paper_submission_deadline",
+   "fieldtype": "Date",
+   "label": "Paper Submission Deadline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "deadline_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hod_review_deadline",
+   "fieldtype": "Date",
+   "label": "HOD Review Deadline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "admin_approval_deadline",
+   "fieldtype": "Date",
+   "label": "Final Approval Deadline",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirements_section",
+   "fieldtype": "Section Break",
+   "label": "Required Papers"
+  },
+  {
+   "default": "Required",
+   "fieldname": "blueprint_requirement",
+   "fieldtype": "Select",
+   "label": "Blueprint",
+   "options": "Required\nOptional\nNot Required",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "question_paper_required",
+   "fieldtype": "Check",
+   "label": "Question Paper Required"
+  },
+  {
+   "default": "1",
+   "fieldname": "marking_scheme_required",
+   "fieldtype": "Check",
+   "label": "Marking Scheme Required"
+  },
+  {
+   "default": "All Scheduled Courses",
+   "description": "Selected Courses also creates requirements when a Course Schedule or group mapping has not yet been prepared.",
+   "fieldname": "course_selection_policy",
+   "fieldtype": "Select",
+   "label": "Course Selection Policy",
+   "options": "All Scheduled Courses\nSelected Courses",
+   "reqd": 1
+  },
+  {
+   "description": "The Forms/batches included in this examination cycle.",
+   "fieldname": "student_batches",
+   "fieldtype": "Table",
+   "label": "Student Batches",
+   "options": "School Exam Batch",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.course_selection_policy=='Selected Courses'",
+   "fieldname": "courses",
+   "fieldtype": "Table",
+   "label": "Selected Courses",
+   "options": "School Exam Course"
+  },
+  {
+   "description": "Map each academic Department to the HOD who will assign and review its examination papers.",
+   "fieldname": "hod_assignments",
+   "fieldtype": "Table",
+   "label": "Department HOD Assignments",
+   "options": "School Exam HOD Assignment"
+  }
+ ],
+ "grid_page_length": 50,
+ "links": [
+  {
+   "link_doctype": "Exam Paper Requirement",
+   "link_fieldname": "examination_cycle"
+  }
+ ],
+ "module": "High School",
+ "name": "School Examination Cycle",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Instructor"
+  }
+ ],
+ "sort_field": "exam_start_date",
+ "sort_order": "DESC",
+ "title_field": "cycle_name",
+ "track_changes": 1
+}

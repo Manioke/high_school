@@ -10,6 +10,12 @@ from high_school.high_school.attendance_utils import (
     mark_taliui_attendance_records,
 )
 from high_school.high_school.fee_utils import generate_custom_fees
+from frappe.desk.calendar import get_event_conditions
+
+from high_school.api.permissions import (
+    get_instructor,
+    is_instructor_user,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -276,3 +282,64 @@ def create_student_fees(student_enrollment):
     )
 
     return generate_custom_fees(doc)
+
+
+## Permission API for Course Schedule Calendar
+@frappe.whitelist()
+def get_course_schedule_events(start, end, filters=None):
+    """Return permitted Course Schedule events for the calendar."""
+
+    if not frappe.has_permission("Course Schedule", "read"):
+        frappe.throw(
+            "You do not have permission to view Course Schedules.",
+            frappe.PermissionError,
+        )
+
+    conditions = get_event_conditions(
+        "Course Schedule",
+        filters,
+    )
+
+    values = {
+        "start": start,
+        "end": end,
+    }
+
+    instructor_condition = ""
+
+    if is_instructor_user(frappe.session.user):
+        instructor = get_instructor(frappe.session.user)
+
+        # Instructor account is not linked correctly.
+        if not instructor:
+            return []
+
+        values["instructor"] = instructor
+
+        instructor_condition = """
+            AND `tabCourse Schedule`.`instructor`
+                = %(instructor)s
+        """
+
+    return frappe.db.sql(
+        f"""
+        SELECT
+            name,
+            course,
+            color,
+            TIMESTAMP(schedule_date, from_time) AS from_time,
+            TIMESTAMP(schedule_date, to_time) AS to_time,
+            room,
+            student_group,
+            instructor,
+            0 AS allDay
+        FROM `tabCourse Schedule`
+        WHERE schedule_date BETWEEN %(start)s AND %(end)s
+        {conditions}
+        {instructor_condition}
+        ORDER BY schedule_date, from_time
+        """,
+        values,
+        as_dict=True,
+        update={"allDay": 0},
+    )

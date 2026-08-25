@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["student_group", "assessment_plan", "plan_status"],
+ "fields": [
+  {
+   "fieldname": "student_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Group",
+   "options": "Student Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessment_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assessment Plan",
+   "options": "Assessment Plan",
+   "read_only": 1
+  },
+  {
+   "default": "Missing",
+   "fieldname": "plan_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Plan Status",
+   "options": "Missing\nCreated",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "Exam Paper Affected Group",
+ "permissions": []
+}

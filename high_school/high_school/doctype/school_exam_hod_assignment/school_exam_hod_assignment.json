@@ -1,0 +1,29 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["department", "hod_user"],
+ "fields": [
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Department",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "hod_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "HOD User",
+   "options": "User",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "School Exam HOD Assignment",
+ "permissions": []
+}
