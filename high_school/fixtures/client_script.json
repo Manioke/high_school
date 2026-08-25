@@ -2,6 +2,17 @@
  {
   "docstatus": 0,
   "doctype": "Client Script",
+  "dt": "Course Schedule",
+  "enabled": 0,
+  "modified": "2026-08-25 16:22:07.353386",
+  "module": "High School",
+  "name": "Course Schedule Fix Calender View",
+  "script": "frappe.views.calendar[\"Course Schedule\"] = {\n    field_map: {\n        start: \"from_time\",\n        end: \"to_time\",\n        id: \"name\",\n        title: \"course\",\n        allDay: \"all_day\"\n    },\n    get_events_method: \"education.education.doctype.course_schedule.course_schedule.get_events\",\n    \n    // This intercepts the calendar load and injects the instructor restriction\n    onload: function(calendar_view) {\n        if (frappe.user_roles.includes(\"Instructor\")) {\n            // Find the instructor record linked to the current logged-in user\n            frappe.db.get_value('Instructor', { user_id: frappe.session.user }, 'name', (r) => {\n                if (r && r.name) {\n                    // Force the calendar to only fetch events for this instructor\n                    calendar_view.filter_vals = { instructor: r.name };\n                    calendar_view.refresh();\n                }\n            });\n        }\n    }\n};",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
   "dt": "School House",
   "enabled": 1,
   "modified": "2026-05-07 10:26:16.550429",

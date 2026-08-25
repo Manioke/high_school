@@ -356,7 +356,28 @@ fixtures = [
     {
         "dt": "Custom DocPerm",
         "filters": [
-            ["parent", "=", "Sales Invoice"]
+            [
+                "parent", 
+                "in", 
+                [
+                    # Instructor Roles Added Permissions
+                    "Course Schedule", 
+                    "Assessment Criteria", 
+                    "Assessment Plan", 
+                    "Assessment Result",
+                    
+                    # Education Manager Roles Added Permissions
+                    "Academic Year", 
+                    "School Term", 
+                    "Assessment Group", 
+                    "Student Batch Name", 
+                    "Grading Scale", 
+                    "Room",
+                    
+                    # Keeping your prior Sales Invoice custom rules active
+                    "Sales Invoice"
+                ]
+            ]
         ]
     }
 ]
