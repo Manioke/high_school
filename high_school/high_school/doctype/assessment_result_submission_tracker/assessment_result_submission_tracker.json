@@ -1,0 +1,272 @@
+{
+ "actions": [],
+ "autoname": "format:RESULT-TRACK-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "assessment_plan",
+  "status",
+  "exam_paper_requirement",
+  "examination_cycle",
+  "assessment_type",
+  "academic_year",
+  "school_term",
+  "assessment_group",
+  "assessment_section",
+  "course",
+  "student_group",
+  "assessment_date",
+  "result_due_date",
+  "responsibility_section",
+  "instructor",
+  "responsible_user",
+  "hod_user",
+  "instructor_mapping_issue",
+  "coverage_section",
+  "expected_student_count",
+  "draft_result_count",
+  "submitted_result_count",
+  "non_participation_count",
+  "missing_result_count",
+  "completion_percentage",
+  "completed_on",
+  "candidates_section",
+  "candidates"
+ ],
+ "fields": [
+  {
+   "fieldname": "assessment_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Assessment Plan",
+   "options": "Assessment Plan",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Awaiting Plan Submission",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Awaiting Plan Submission\nInstructor Mapping Error\nAwaiting Assessment\nAwaiting Results\nMarking In Progress\nOverdue\nResults Complete\nPlan Cancelled",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "exam_paper_requirement",
+   "fieldtype": "Link",
+   "label": "Exam Paper Requirement",
+   "options": "Exam Paper Requirement",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "examination_cycle",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "School Assessment Cycle",
+   "options": "School Examination Cycle",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "assessment_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Assessment Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "label": "School Term",
+   "options": "School Term",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_group",
+   "fieldtype": "Link",
+   "label": "Assessment Group",
+   "options": "Assessment Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_section",
+   "fieldtype": "Section Break",
+   "label": "Assessment"
+  },
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course",
+   "options": "Course",
+   "read_only": 1
+  },
+  {
+   "fieldname": "student_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Group",
+   "options": "Student Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_date",
+   "fieldtype": "Date",
+   "label": "Assessment Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Result Due Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsibility_section",
+   "fieldtype": "Section Break",
+   "label": "Automatically Resolved Responsibility"
+  },
+  {
+   "fieldname": "instructor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Scheduled Instructor",
+   "options": "Instructor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Responsible Teacher User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hod_user",
+   "fieldtype": "Link",
+   "label": "HOD User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "instructor_mapping_issue",
+   "fieldtype": "Small Text",
+   "label": "Instructor Mapping Issue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "coverage_section",
+   "fieldtype": "Section Break",
+   "label": "Result Coverage"
+  },
+  {
+   "fieldname": "expected_student_count",
+   "fieldtype": "Int",
+   "label": "Expected Students",
+   "read_only": 1
+  },
+  {
+   "fieldname": "draft_result_count",
+   "fieldtype": "Int",
+   "label": "Draft Results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_result_count",
+   "fieldtype": "Int",
+   "label": "Submitted Results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "non_participation_count",
+   "fieldtype": "Int",
+   "label": "Did Not Sit / Exempt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "missing_result_count",
+   "fieldtype": "Int",
+   "label": "Unresolved Missing Results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completion_percentage",
+   "fieldtype": "Percent",
+   "label": "Completion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "candidates_section",
+   "fieldtype": "Section Break",
+   "label": "Expected Students and Exceptions"
+  },
+  {
+   "description": "If a student did not take the assessment, select Did Not Sit or Exempt and record the reason. No artificial zero mark is created.",
+   "fieldname": "candidates",
+   "fieldtype": "Table",
+   "label": "Candidates",
+   "options": "Assessment Result Submission Candidate"
+  }
+ ],
+ "links": [],
+ "module": "High School",
+ "name": "Assessment Result Submission Tracker",
+ "permissions": [
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Instructor",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "result_due_date",
+ "sort_order": "ASC",
+ "track_changes": 1
+}

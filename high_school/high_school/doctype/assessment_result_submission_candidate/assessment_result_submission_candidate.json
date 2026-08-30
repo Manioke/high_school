@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "student",
+  "student_name",
+  "result_status",
+  "assessment_result",
+  "non_participation",
+  "reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "Student",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "result_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result Status",
+   "options": "Pending\nDraft\nSubmitted\nDid Not Sit\nExempt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assessment_result",
+   "fieldtype": "Link",
+   "label": "Assessment Result",
+   "options": "Assessment Result",
+   "read_only": 1
+  },
+  {
+   "description": "Use only when no mark should exist for this assessment. A reason is required.",
+   "fieldname": "non_participation",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "No Result Reason Type",
+   "options": "\nDid Not Sit\nExempt"
+  },
+  {
+   "depends_on": "eval:doc.non_participation",
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Reason"
+  }
+ ],
+ "istable": 1,
+ "module": "High School",
+ "name": "Assessment Result Submission Candidate",
+ "permissions": []
+}

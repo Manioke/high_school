@@ -12,7 +12,10 @@
   "minimum_group_attendance_records",
   "minimum_student_attendance_records",
   "track_daily_attendance",
-  "track_course_attendance"
+  "track_course_attendance",
+  "assessment_management_section",
+  "submit_assessment_plans_from_exam_requirements",
+  "protect_performance_summaries_until_results_complete"
  ],
  "fields": [
   {
@@ -57,6 +60,25 @@
    "fieldname": "minimum_student_attendance_records",
    "fieldtype": "Int",
    "label": "Student Attendance Records"
+  },
+  {
+   "fieldname": "assessment_management_section",
+   "fieldtype": "Section Break",
+   "label": "Assessment Management"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, Assessment Plans created from an approved Exam Paper Requirement are submitted immediately. Plans created elsewhere are unaffected.",
+   "fieldname": "submit_assessment_plans_from_exam_requirements",
+   "fieldtype": "Check",
+   "label": "Automatically Submit Plans Created From Exam Requirements"
+  },
+  {
+   "default": "1",
+   "description": "Prevent official performance summaries from being generated while relevant Assessment Results are unresolved. Did Not Sit and Exempt candidates are treated as resolved without inventing a mark.",
+   "fieldname": "protect_performance_summaries_until_results_complete",
+   "fieldtype": "Check",
+   "label": "Require Complete Result Submission Before Performance Summaries"
   }
  ],
  "grid_page_length": 50,

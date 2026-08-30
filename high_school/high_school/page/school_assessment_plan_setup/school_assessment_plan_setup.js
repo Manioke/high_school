@@ -147,7 +147,8 @@ frappe.pages['school-assessment-plan-setup'].on_page_load = function (wrapper) {
 						{ fieldname: 'create_plan', fieldtype: 'Check', label: __('Create'), default: 1, in_list_view: 1 },
 						{ fieldname: 'student_group', fieldtype: 'Link', label: __('Student Group'), options: 'Student Group', in_list_view: 1, read_only: from_approved_paper, reqd: 1 },
 						{ fieldname: 'course', fieldtype: 'Link', label: __('Course'), options: 'Course', default: filters.course, in_list_view: 1, read_only: 1, reqd: 1 },
-						{ fieldname: 'instructor', fieldtype: 'Link', label: __('Course Instructor'), description: __('Not the exam supervisor.'), options: 'Instructor', in_list_view: 1 },
+						{ fieldname: 'instructor', fieldtype: 'Link', label: __('Scheduled Course Instructor'), description: __('Loaded automatically from Course Schedule; this is not the exam supervisor.'), options: 'Instructor', in_list_view: 1, read_only: 1 },
+						{ fieldname: 'instructor_mapping_status', fieldtype: 'Data', label: __('Instructor Mapping'), in_list_view: 1, read_only: 1 },
 						{ fieldname: 'room', fieldtype: 'Link', label: __('Room'), options: 'Room', in_list_view: 1 },
 						{ fieldname: 'existing_plan', fieldtype: 'Link', label: __('Existing Plan'), options: 'Assessment Plan', in_list_view: 1, read_only: 1 },
 					],
@@ -182,8 +183,9 @@ frappe.pages['school-assessment-plan-setup'].on_page_load = function (wrapper) {
 							frappe.msgprint({
 								title: __('Assessment Plan Setup Complete'),
 								indicator: 'green',
-								message: __('Created {0} plan(s). Skipped {1} plan(s) that already existed.', [
+								message: __('Created {0} plan(s), submitted {1}, and skipped {2} that already existed.', [
 									(result.created || []).length,
+									(result.submitted || []).length,
 									(result.skipped || []).length,
 								]),
 							});

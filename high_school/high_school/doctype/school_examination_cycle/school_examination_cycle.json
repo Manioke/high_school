@@ -9,6 +9,7 @@
   "academic_year",
   "school_term",
   "assessment_group",
+  "assessment_type",
   "status",
   "exam_dates_section",
   "exam_start_date",
@@ -19,6 +20,11 @@
   "deadline_column",
   "hod_review_deadline",
   "admin_approval_deadline",
+  "result_deadline_section",
+  "result_deadline_basis",
+  "result_turnaround_days",
+  "result_deadline_column",
+  "fixed_result_deadline",
   "requirements_section",
   "blueprint_requirement",
   "question_paper_required",
@@ -59,6 +65,16 @@
    "fieldtype": "Link",
    "label": "Assessment Group",
    "options": "Assessment Group",
+   "reqd": 1
+  },
+  {
+   "default": "Examination",
+   "description": "Internal Assessments use the same paper-requirement, Assessment Plan, result-tracking, and performance workflow.",
+   "fieldname": "assessment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assessment Type",
+   "options": "Examination\nInternal Assessment",
    "reqd": 1
   },
   {
@@ -121,6 +137,36 @@
    "fieldtype": "Date",
    "label": "Final Approval Deadline",
    "reqd": 1
+  },
+  {
+   "fieldname": "result_deadline_section",
+   "fieldtype": "Section Break",
+   "label": "Result Submission Deadline"
+  },
+  {
+   "default": "After Cycle End Date",
+   "fieldname": "result_deadline_basis",
+   "fieldtype": "Select",
+   "label": "Result Deadline Basis",
+   "options": "After Cycle End Date\nAfter Assessment Date\nFixed Date",
+   "reqd": 1
+  },
+  {
+   "default": "14",
+   "depends_on": "eval:doc.result_deadline_basis!='Fixed Date'",
+   "fieldname": "result_turnaround_days",
+   "fieldtype": "Int",
+   "label": "Result Turnaround (Days)"
+  },
+  {
+   "fieldname": "result_deadline_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.result_deadline_basis=='Fixed Date'",
+   "fieldname": "fixed_result_deadline",
+   "fieldtype": "Date",
+   "label": "Fixed Result Submission Deadline"
   },
   {
    "fieldname": "requirements_section",

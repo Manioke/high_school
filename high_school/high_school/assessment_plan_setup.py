@@ -4,7 +4,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 
 def _as_list(value):
@@ -95,10 +95,39 @@ def _deduplicate_candidates(rows):
 				"course": course,
 				"instructor": row.get("instructor"),
 				"room": row.get("room"),
+				"instructors": {row.get("instructor")} if row.get("instructor") else set(),
 			}
-		elif not current.get("instructor") and row.get("instructor"):
-			current["instructor"] = row.get("instructor")
-	return list(by_key.values())
+		else:
+			if row.get("instructor"):
+				current["instructors"].add(row.get("instructor"))
+			if not current.get("room") and row.get("room"):
+				current["room"] = row.get("room")
+
+	result = []
+	for row in by_key.values():
+		instructors = sorted(row.pop("instructors"))
+		row["instructor"] = instructors[0] if len(instructors) == 1 else None
+		row["instructor_mapping_status"] = (
+			"Resolved" if len(instructors) == 1 else "Missing" if not instructors else "Conflicting"
+		)
+		result.append(row)
+	return result
+
+
+def _scheduled_assignment(student_group, academic_year, course):
+	"""Resolve one authoritative instructor from matching Course Schedules."""
+	rows = _deduplicate_candidates(
+		_course_schedule_candidates([student_group], academic_year, course)
+	)
+	if not rows:
+		return frappe._dict(
+			student_group=student_group,
+			course=course,
+			instructor=None,
+			room=None,
+			instructor_mapping_status="Missing",
+		)
+	return frappe._dict(rows[0])
 
 
 def _validate_school_term(school_term, academic_year):
@@ -154,12 +183,14 @@ def get_setup_candidates(
 		rows = []
 		for affected in requirement.affected_student_groups:
 			existing = _existing_plan(affected.student_group, course, assessment_group, academic_year)
+			assignment = _scheduled_assignment(affected.student_group, academic_year, course)
 			rows.append(
 				{
 					"student_group": affected.student_group,
 					"course": course,
-					"instructor": None,
-					"room": requirement.room,
+					"instructor": assignment.instructor,
+					"instructor_mapping_status": assignment.instructor_mapping_status,
+					"room": requirement.room or assignment.room,
 					"existing_plan": existing,
 					"create_plan": 0 if existing else 1,
 				}
@@ -328,6 +359,22 @@ def create_assessment_plans(setup, rows, criteria):
 					", ".join(sorted(unexpected_groups))
 				)
 			)
+		for row in rows:
+			assignment = _scheduled_assignment(row.get("student_group"), args.academic_year, args.course)
+			if assignment.instructor_mapping_status == "Missing":
+				frappe.throw(
+					_("Student Group {0} has no Course Schedule instructor for {1}. Correct the Course Schedule before creating its Assessment Plan.").format(
+						row.get("student_group"), args.course
+					)
+				)
+			if assignment.instructor_mapping_status == "Conflicting":
+				frappe.throw(
+					_("Student Group {0} has different instructors scheduled for {1}. Correct the Course Schedules so responsibility is unambiguous.").format(
+						row.get("student_group"), args.course
+					)
+				)
+			row["instructor"] = assignment.instructor
+			row["instructor_mapping_status"] = assignment.instructor_mapping_status
 	for row in rows:
 		if row.get("course") != args.course:
 			frappe.throw(
@@ -341,7 +388,16 @@ def create_assessment_plans(setup, rows, criteria):
 		frappe.throw(_("The installed Education app does not expose Assessment Plan criteria as expected."))
 
 	created = []
+	submitted = []
 	skipped = []
+	auto_submit = bool(
+		source_requirement
+		and cint(frappe.db.get_single_value(
+			"School MIS Settings", "submit_assessment_plans_from_exam_requirements"
+		))
+	)
+	if auto_submit and not plan_meta.is_submittable:
+		frappe.throw(_("Assessment Plan is not submittable in the installed Education version."))
 	for row in rows:
 		existing = _existing_plan(
 			row.get("student_group"), row.get("course"), args.assessment_group, args.academic_year
@@ -365,8 +421,18 @@ def create_assessment_plans(setup, rows, criteria):
 			doc.append("assessment_criteria", criterion)
 		doc.insert()
 		created.append(doc.name)
+		if auto_submit:
+			doc.submit()
+			submitted.append(doc.name)
+		if source_requirement:
+			from high_school.high_school.result_submission import sync_tracker_for_assessment_plan
 
-	result = {"created": created, "skipped": skipped}
+			sync_tracker_for_assessment_plan(
+				doc,
+				exam_paper_requirement=source_requirement.name,
+			)
+
+	result = {"created": created, "submitted": submitted, "skipped": skipped}
 	if args.get("exam_paper_requirement"):
 		requirement = frappe.get_doc("Exam Paper Requirement", args.exam_paper_requirement)
 		requirement.update_plan_coverage()

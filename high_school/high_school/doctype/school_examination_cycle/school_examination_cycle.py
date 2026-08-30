@@ -9,6 +9,7 @@ class SchoolExaminationCycle(Document):
 		self._validate_school_term()
 		self._validate_dates()
 		self._validate_unique_rows()
+		self._validate_result_deadline()
 		if self.course_selection_policy == "Selected Courses" and not self.courses:
 			frappe.throw(_("Add at least one Course when Course Selection Policy is Selected Courses."))
 
@@ -48,9 +49,25 @@ class SchoolExaminationCycle(Document):
 					frappe.throw(_("{0} {1} is listed more than once.").format(label, value))
 				seen.add(value)
 
+	def _validate_result_deadline(self):
+		if self.result_deadline_basis == "Fixed Date":
+			if not self.fixed_result_deadline:
+				frappe.throw(_("Fixed Result Submission Deadline is required when Result Deadline Basis is Fixed Date."))
+			if getdate(self.fixed_result_deadline) < getdate(self.exam_start_date):
+				frappe.throw(_("The result submission deadline cannot be before the assessment period begins."))
+		elif (self.result_turnaround_days or 0) < 0:
+			frappe.throw(_("Result Turnaround Days cannot be negative."))
+
 	@frappe.whitelist()
 	def generate_requirements(self):
 		self.check_permission("write")
 		from high_school.high_school.exam_preparation import generate_exam_paper_requirements
 
 		return generate_exam_paper_requirements(self)
+
+	@frappe.whitelist()
+	def generate_result_trackers(self):
+		self.check_permission("write")
+		from high_school.high_school.result_submission import generate_trackers_for_cycle
+
+		return generate_trackers_for_cycle(self.name)

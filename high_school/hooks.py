@@ -181,9 +181,28 @@ has_permission = {
 
 doc_events = {
 	"Assessment Plan": {
-		"on_update": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
-		"on_cancel": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
-		"after_delete": "high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+		"on_update": [
+			"high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+			"high_school.high_school.result_submission.sync_tracker_for_assessment_plan",
+		],
+		"on_cancel": [
+			"high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+			"high_school.high_school.result_submission.sync_tracker_for_assessment_plan",
+		],
+		"after_delete": [
+			"high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
+			"high_school.high_school.result_submission.sync_tracker_for_assessment_plan",
+		],
+	},
+	"Assessment Result": {
+		"validate": [
+            "high_school.high_school.result_submission.validate_assessment_result_responsibility",
+            "high_school.api.permissions.validate_assessment_result",
+        ],
+		"on_update": "high_school.high_school.result_submission.sync_tracker_for_assessment_result",
+		"on_submit": "high_school.high_school.result_submission.sync_tracker_for_assessment_result",
+		"on_cancel": "high_school.high_school.result_submission.sync_tracker_for_assessment_result",
+		"after_delete": "high_school.high_school.result_submission.sync_tracker_for_assessment_result",
 	},
     "Student Leave Application": {
         "on_submit": "high_school.high_school.attendance_utils.update_attendance_on_leave_approval"
@@ -195,10 +214,6 @@ doc_events = {
         ],
         "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
         "on_cancel": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
-    },
-    "Assessment Result": {
-        "validate":
-            "high_school.api.permissions.validate_assessment_result",
     },
     "Taliui Akonofo": {
         "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
@@ -225,7 +240,8 @@ scheduler_events = {
 # 		"high_school.tasks.all"
 # 	],
 	"daily": [
-		"high_school.high_school.exam_preparation.send_exam_preparation_reminders"
+		"high_school.high_school.exam_preparation.send_exam_preparation_reminders",
+		"high_school.high_school.result_submission.refresh_open_result_trackers",
 	],
 # 	"hourly": [
 # 		"high_school.tasks.hourly"

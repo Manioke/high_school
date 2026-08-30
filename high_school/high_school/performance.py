@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 from high_school.high_school.performance_math import (
 	MISSING_INCOMPLETE,
@@ -273,6 +273,26 @@ def generate_performance_summaries(performance_period):
 	period = frappe.get_doc("School Performance Period", performance_period)
 	period.check_permission("write")
 	period.validate()
+	protection_setting = frappe.db.get_single_value(
+		"School MIS Settings", "protect_performance_summaries_until_results_complete"
+	)
+	if protection_setting is None or cint(protection_setting):
+		from high_school.high_school.result_submission import get_performance_readiness
+
+		readiness = get_performance_readiness(period)
+		if not readiness["ready"]:
+			sample = readiness["issues"][:10]
+			details = "<br>".join(frappe.utils.escape_html(row["message"]) for row in sample)
+			if readiness["issue_count"] > len(sample):
+				details += "<br>" + _("...and {0} more issue(s).").format(
+					readiness["issue_count"] - len(sample)
+				)
+			frappe.throw(
+				_("Performance summaries are protected because {0} result-submission issue(s) remain.<br>{1}").format(
+					readiness["issue_count"], details
+				),
+				title=_("Assessment Results Not Ready"),
+			)
 	if frappe.db.exists(
 		"Student Performance Summary",
 		{"performance_period": period.name, "docstatus": 1},

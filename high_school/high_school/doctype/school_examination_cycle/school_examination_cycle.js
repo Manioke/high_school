@@ -27,6 +27,27 @@ frappe.ui.form.on('School Examination Cycle', {
 					examination_cycle: frm.doc.name,
 				});
 			}, __('View'));
+
+			frm.add_custom_button(__('Generate / Refresh Result Trackers'), () => {
+				frappe.confirm(
+					__('Create or refresh result-submission tracking for every Assessment Plan in this cycle?'),
+					() => frm.call('generate_result_trackers').then((r) => {
+						const result = r.message || {};
+						frappe.msgprint(__('Created {0}, refreshed {1}, skipped {2}, and found {3} plan(s) with an instructor mapping problem.', [
+							result.created || 0,
+							result.updated || 0,
+							result.skipped || 0,
+							result.mapping_issues || 0,
+						]));
+					}),
+				);
+			}, __('Result Submission'));
+
+			frm.add_custom_button(__('Result Submission Coverage'), () => {
+				frappe.set_route('query-report', 'Assessment Result Submission Coverage', {
+					examination_cycle: frm.doc.name,
+				});
+			}, __('View'));
 		}
 	},
 });
