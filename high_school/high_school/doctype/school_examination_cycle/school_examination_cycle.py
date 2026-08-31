@@ -39,7 +39,6 @@ class SchoolExaminationCycle(Document):
 	def _validate_unique_rows(self):
 		for fieldname, key, label in (
 			("student_batches", "student_batch", _("Student Batch")),
-			("courses", "course", _("Course")),
 			("hod_assignments", "department", _("Department")),
 		):
 			seen = set()
@@ -48,6 +47,24 @@ class SchoolExaminationCycle(Document):
 				if value in seen:
 					frappe.throw(_("{0} {1} is listed more than once.").format(label, value))
 				seen.add(value)
+
+		selected_batches = {row.student_batch for row in self.student_batches}
+		seen_courses = set()
+		for row in self.courses:
+			if row.student_batch and row.student_batch not in selected_batches:
+				frappe.throw(
+					_("Course {0} is assigned to Student Batch {1}, which is not included in this cycle.").format(
+						row.course, row.student_batch
+					)
+				)
+			key = (row.student_batch or "", row.course)
+			if key in seen_courses:
+				frappe.throw(
+					_("Course {0} is listed more than once for Student Batch {1}.").format(
+						row.course, row.student_batch or _("Unspecified")
+					)
+				)
+			seen_courses.add(key)
 
 	def _validate_result_deadline(self):
 		if self.result_deadline_basis == "Fixed Date":

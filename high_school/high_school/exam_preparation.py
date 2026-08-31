@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import json
+import re
 
 import frappe
 from frappe import _
@@ -65,11 +67,206 @@ def _course_group_map(academic_year, groups):
 	return mapping
 
 
-def _department_for_course(course):
-	fields = _doctype_fields("Course")
-	if "department" in fields:
-		return frappe.db.get_value("Course", course, "department")
+def _department_for_instructor(instructor):
+	if not instructor or not frappe.db.exists("DocType", "Instructor"):
+		return None
+	fields = _doctype_fields("Instructor")
+	direct_field = _first_available(fields, "department", "custom_department")
+	if direct_field:
+		department = frappe.db.get_value("Instructor", instructor, direct_field)
+		if department:
+			return department
+	if "employee" in fields:
+		employee = frappe.db.get_value("Instructor", instructor, "employee")
+		if employee:
+			return frappe.db.get_value("Employee", employee, "department")
 	return None
+
+
+def _normalised_words(value):
+	return {
+		word
+		for word in re.findall(r"[a-z0-9]+", (value or "").lower())
+		if word not in {"department", "dept", "qsc"}
+	}
+
+
+def _mapped_department_for_course_name(course, mapped_departments):
+	course_fields = _doctype_fields("Course")
+	course_values = [course]
+	for fieldname in ("course_name", "course_title", "title"):
+		if fieldname in course_fields:
+			course_values.append(frappe.db.get_value("Course", course, fieldname))
+	course_words = _normalised_words(" ".join(value for value in course_values if value))
+	matches = []
+	department_fields = _doctype_fields("Department")
+	for department in mapped_departments or []:
+		label = department
+		if "department_name" in department_fields:
+			label = frappe.db.get_value("Department", department, "department_name") or department
+		words = _normalised_words(label)
+		if words and words.issubset(course_words):
+			matches.append((len(words), len(" ".join(sorted(words))), department))
+	if not matches:
+		return None
+	matches.sort(reverse=True)
+	best_score = matches[0][:2]
+	best = [department for word_count, length, department in matches if (word_count, length) == best_score]
+	return best[0] if len(best) == 1 else None
+
+
+def _department_for_course(course, academic_year=None, group_names=None, mapped_departments=None):
+	fields = _doctype_fields("Course")
+	direct_field = _first_available(fields, "department", "custom_department")
+	direct_department = None
+	if direct_field:
+		direct_department = frappe.db.get_value("Course", course, direct_field)
+		if direct_department and (
+			not mapped_departments or direct_department in mapped_departments
+		):
+			return direct_department, None
+
+	name_department = _mapped_department_for_course_name(course, mapped_departments)
+	if name_department:
+		return name_department, None
+
+	if not group_names or not frappe.db.exists("DocType", "Course Schedule"):
+		if direct_department:
+			return direct_department, _("Course {0} is linked to Department {1}, but that Department has no HOD mapping in this cycle.").format(
+				course, direct_department
+			)
+		return None, _("Course {0} has no academic Department mapping.").format(course)
+	schedule_fields = _doctype_fields("Course Schedule")
+	if not {"student_group", "course", "instructor"}.issubset(schedule_fields):
+		return None, _("Course Schedule cannot be used to derive the Department for {0}.").format(course)
+	filters = {
+		"student_group": ["in", group_names],
+		"course": course,
+		"docstatus": ["<", 2],
+	}
+	if academic_year and "academic_year" in schedule_fields:
+		filters["academic_year"] = academic_year
+	instructors = set(
+		frappe.get_all("Course Schedule", filters=filters, pluck="instructor")
+	) - {None, ""}
+	departments = {
+		department
+		for department in (_department_for_instructor(instructor) for instructor in instructors)
+		if department and (not mapped_departments or department in mapped_departments)
+	}
+	if len(departments) == 1:
+		return departments.pop(), None
+	if len(departments) > 1:
+		return None, _("Scheduled instructors for {0} belong to different Departments.").format(course)
+	if direct_department:
+		return direct_department, _("Course {0} is linked to Department {1}, but that Department has no HOD mapping in this cycle.").format(
+			course, direct_department
+		)
+	return None, _("No mapped academic Department could be resolved for Course {0}.").format(course)
+
+
+def _as_list(value):
+	if not value:
+		return []
+	return json.loads(value) if isinstance(value, str) else value
+
+
+@frappe.whitelist()
+def get_form_course_rows(academic_year, student_batches, form_level):
+	frappe.only_for(("Education Manager", "System Manager"))
+	form_level = int(form_level)
+	if form_level not in {5, 6, 7}:
+		frappe.throw(_("Form Level must be 5, 6, or 7."))
+	batch_names = [
+		row.get("student_batch") if isinstance(row, dict) else row
+		for row in _as_list(student_batches)
+	]
+	batch_names = [name for name in batch_names if name]
+	form_pattern = re.compile(
+		r"(?:^|\b)form\s*{0}(?:\b|\s*-)".format(form_level),
+		re.IGNORECASE,
+	)
+	matches = [name for name in batch_names if form_pattern.search(name)]
+	if not matches:
+		frappe.throw(_("Add a Form {0} Student Batch to this cycle first.").format(form_level))
+	if len(matches) > 1:
+		frappe.throw(
+			_("More than one Form {0} Student Batch is selected: {1}.").format(
+				form_level, ", ".join(matches)
+			)
+		)
+	student_batch = matches[0]
+	groups = _student_groups_for_batch(academic_year, student_batch)
+	courses = set(_course_group_map(academic_year, groups))
+	course_fields = _doctype_fields("Course")
+	filters = {"name": ["like", "Form {0}%".format(form_level)]}
+	if "disabled" in course_fields:
+		filters["disabled"] = 0
+	courses.update(frappe.get_all("Course", filters=filters, pluck="name"))
+	for title_field in ("course_name", "course_title"):
+		if title_field in course_fields:
+			title_filters = {title_field: ["like", "Form {0}%".format(form_level)]}
+			if "disabled" in course_fields:
+				title_filters["disabled"] = 0
+			courses.update(frappe.get_all("Course", filters=title_filters, pluck="name"))
+	return {
+		"student_batch": student_batch,
+		"rows": [
+			{"student_batch": student_batch, "course": course}
+			for course in sorted(courses)
+		],
+	}
+
+
+def _selected_courses_by_batch(cycle, batch_context):
+	selected_batches = set(batch_context)
+	result = defaultdict(list)
+	errors = []
+	for row in cycle.courses:
+		explicit_batch = row.get("student_batch")
+		if explicit_batch:
+			if explicit_batch not in selected_batches:
+				errors.append(
+					_("Course {0} refers to Student Batch {1}, which is not selected in this cycle.").format(
+						row.course, explicit_batch
+					)
+				)
+			else:
+				result[explicit_batch].append(row.course)
+			continue
+
+		matching_batches = [
+			batch
+			for batch, context in batch_context.items()
+			if row.course in context["course_groups"]
+		]
+		if len(matching_batches) == 1:
+			inferred_batch = matching_batches[0]
+			result[inferred_batch].append(row.course)
+			row.student_batch = inferred_batch
+			if not row.is_new():
+				frappe.db.set_value(
+					row.doctype,
+					row.name,
+					"student_batch",
+					inferred_batch,
+					update_modified=False,
+				)
+		elif not matching_batches:
+			errors.append(
+				_("Course {0} is not scheduled or mapped to any selected Student Batch. Select its Student Batch in the Courses table.").format(
+					row.course
+				)
+			)
+		else:
+			errors.append(
+				_("Course {0} appears in more than one selected Student Batch ({1}). Select its Student Batch explicitly.").format(
+					row.course, ", ".join(matching_batches)
+				)
+			)
+	if errors:
+		frappe.throw("<br>".join(errors), title=_("Selected Course Batch Mapping Required"))
+	return result
 
 
 def _same_group_names(requirement, group_names):
@@ -95,28 +292,58 @@ def generate_exam_paper_requirements(cycle):
 	if not cycle.student_batches:
 		frappe.throw(_("Add at least one Student Batch before generating paper requirements."))
 
-	selected_courses = [row.course for row in cycle.courses]
 	created = 0
 	updated = 0
 	without_groups = 0
+	without_hod = 0
+	hod_mapping_issues = []
 	hod_by_department = {row.department: row.hod_user for row in cycle.hod_assignments}
-
+	batch_context = {}
 	for batch_row in cycle.student_batches:
 		groups = _student_groups_for_batch(cycle.academic_year, batch_row.student_batch)
-		course_groups = _course_group_map(cycle.academic_year, groups)
-		courses = selected_courses if cycle.course_selection_policy == "Selected Courses" else sorted(course_groups)
+		batch_context[batch_row.student_batch] = {
+			"groups": groups,
+			"course_groups": _course_group_map(cycle.academic_year, groups),
+		}
+	selected_by_batch = (
+		_selected_courses_by_batch(cycle, batch_context)
+		if cycle.course_selection_policy == "Selected Courses"
+		else None
+	)
+	desired_pairs = set()
+
+	for batch_row in cycle.student_batches:
+		context = batch_context[batch_row.student_batch]
+		course_groups = context["course_groups"]
+		courses = (
+			selected_by_batch.get(batch_row.student_batch, [])
+			if cycle.course_selection_policy == "Selected Courses"
+			else sorted(course_groups)
+		)
 		if not courses:
-			frappe.throw(
-				_("No scheduled Courses were found for Student Batch {0}. Use Selected Courses or prepare Course Schedules first.").format(
-					batch_row.student_batch
-				)
-			)
+			if cycle.course_selection_policy == "Selected Courses":
+				continue
+			frappe.throw(_("No scheduled Courses were found for Student Batch {0}.").format(batch_row.student_batch))
 
 		for course in courses:
+			desired_pairs.add((batch_row.student_batch, course))
 			group_names = sorted(course_groups.get(course, set()))
 			without_groups += int(not group_names)
-			department = _department_for_course(course)
+			department, department_issue = _department_for_course(
+				course,
+				academic_year=cycle.academic_year,
+				group_names=group_names,
+				mapped_departments=set(hod_by_department),
+			)
 			mapped_hod = hod_by_department.get(department)
+			without_hod += int(not mapped_hod)
+			if not mapped_hod:
+				hod_mapping_issues.append(
+					department_issue
+					or _("No HOD User is mapped for Department {0} ({1} / {2}).").format(
+						department, batch_row.student_batch, course
+					)
+				)
 			name = frappe.db.get_value(
 				"Exam Paper Requirement",
 				{
@@ -154,8 +381,26 @@ def generate_exam_paper_requirements(cycle):
 			requirement.insert(ignore_permissions=True)
 			created += 1
 
+	existing_pairs = {
+		(row.student_batch, row.course)
+		for row in frappe.get_all(
+			"Exam Paper Requirement",
+			filters={"examination_cycle": cycle.name},
+			fields=["student_batch", "course"],
+		)
+	}
+	out_of_scope = sorted(existing_pairs - desired_pairs)
+
 	cycle.db_set("status", "Requirements Generated", update_modified=True)
-	return {"created": created, "updated": updated, "without_groups": without_groups}
+	return {
+		"created": created,
+		"updated": updated,
+		"without_groups": without_groups,
+		"without_hod": without_hod,
+		"hod_mapping_issues": hod_mapping_issues[:20],
+		"out_of_scope": len(out_of_scope),
+		"out_of_scope_requirements": ["{0} / {1}".format(*pair) for pair in out_of_scope[:20]],
+	}
 
 
 def _is_manager(user=None):

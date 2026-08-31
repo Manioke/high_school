@@ -3,8 +3,16 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["course"],
+ "field_order": ["student_batch", "course"],
  "fields": [
+  {
+   "description": "Limits this selected Course to one of the Student Batches included in the cycle.",
+   "fieldname": "student_batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Batch",
+   "options": "Student Batch Name"
+  },
   {
    "fieldname": "course",
    "fieldtype": "Link",
