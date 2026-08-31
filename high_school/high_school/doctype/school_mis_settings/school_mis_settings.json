@@ -13,6 +13,10 @@
   "minimum_student_attendance_records",
   "track_daily_attendance",
   "track_course_attendance",
+  "academic_mis_section",
+  "exam_preparation_target",
+  "assessment_plan_coverage_target",
+  "assessment_result_submission_target",
   "assessment_management_section",
   "submit_assessment_plans_from_exam_requirements",
   "protect_performance_summaries_until_results_complete"
@@ -79,13 +83,36 @@
    "fieldname": "protect_performance_summaries_until_results_complete",
    "fieldtype": "Check",
    "label": "Require Complete Result Submission Before Performance Summaries"
+  },
+  {
+   "fieldname": "academic_mis_section",
+   "fieldtype": "Section Break",
+   "label": "Executive Academic Targets"
+  },
+  {
+   "default": "95",
+   "fieldname": "exam_preparation_target",
+   "fieldtype": "Percent",
+   "label": "Exam Preparation Target"
+  },
+  {
+   "default": "100",
+   "fieldname": "assessment_plan_coverage_target",
+   "fieldtype": "Percent",
+   "label": "Assessment Plan Coverage Target"
+  },
+  {
+   "default": "95",
+   "fieldname": "assessment_result_submission_target",
+   "fieldtype": "Percent",
+   "label": "Assessment Result Submission Target"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-20 14:35:59.363385",
+ "modified": "2026-08-31 22:47:50.415311",
  "modified_by": "Administrator",
  "module": "High School",
  "name": "School MIS Settings",

@@ -177,6 +177,54 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
 
             <!-- ============================================= -->
+            <!-- Assessment Operations -->
+            <!-- ============================================= -->
+
+            <div
+                id="academic-operations-container"
+                class="card"
+                style="
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    display: none;
+                "
+            >
+
+                <h4 style="margin-top: 0;">
+                    Assessment Operations
+                </h4>
+
+                <div id="academic-operations-content">
+                </div>
+
+            </div>
+
+
+            <!-- ============================================= -->
+            <!-- Academic Performance -->
+            <!-- ============================================= -->
+
+            <div
+                id="academic-performance-container"
+                class="card"
+                style="
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    display: none;
+                "
+            >
+
+                <h4 style="margin-top: 0;">
+                    Academic Performance
+                </h4>
+
+                <div id="academic-performance-content">
+                </div>
+
+            </div>
+
+
+            <!-- ============================================= -->
             <!-- Insights -->
             <!-- ============================================= -->
 
@@ -271,6 +319,15 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             case 'no_data':
                 return 'No Data';
 
+            case 'ready':
+                return 'Ready';
+
+            case 'incomplete':
+                return 'Incomplete';
+
+            case 'data_issue':
+                return 'Data Issue';
+
             default:
                 return '';
 
@@ -291,6 +348,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
             case 'no_data':
                 return '#6c757d';
+
+            case 'ready':
+                return '#28a745';
+
+            case 'incomplete':
+            case 'data_issue':
+                return '#dc3545';
 
             default:
                 return '#dee2e6';
@@ -618,6 +682,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             .hide();
 
 
+        $('#academic-operations-container')
+            .hide();
+
+
+        $('#academic-performance-container')
+            .hide();
+
+
         frappe.call({
 
             method:
@@ -697,6 +769,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             data
         );
 
+        renderAcademicOperations(
+            data
+        );
+
+        renderAcademicPerformance(
+            data
+        );
+
         renderInsights();
 
     }
@@ -721,6 +801,26 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         const persistent =
             data.persistent_absence || {};
+
+
+        const academics =
+            data.academics || {};
+
+
+        const preparation =
+            academics.preparation || {};
+
+
+        const plans =
+            preparation.assessment_plans || {};
+
+
+        const resultSubmission =
+            academics.result_submission || {};
+
+
+        const performanceSummary =
+            academics.performance || {};
 
 
         // -----------------------------------------------------
@@ -931,6 +1031,94 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                             ? 'warning'
                             : 'healthy'
                     )
+
+            })
+        );
+
+
+        // -----------------------------------------------------
+        // Assessment Operations
+        // -----------------------------------------------------
+
+        cards.push(
+            createKpiCard({
+
+                title:
+                    'Exam Preparation',
+
+                value:
+                    formatPercent(
+                        preparation.coverage_rate
+                    ),
+
+                subtitle:
+                    `Target: ${preparation.target ?? 95}%`,
+
+                status:
+                    preparation.status || 'no_data'
+
+            })
+        );
+
+
+        cards.push(
+            createKpiCard({
+
+                title:
+                    'Assessment Plan Coverage',
+
+                value:
+                    formatPercent(
+                        plans.coverage_rate
+                    ),
+
+                subtitle:
+                    `${formatNumber(plans.created)} of ${formatNumber(plans.expected)} created`,
+
+                status:
+                    plans.status || 'no_data'
+
+            })
+        );
+
+
+        cards.push(
+            createKpiCard({
+
+                title:
+                    'Result Submission',
+
+                value:
+                    formatPercent(
+                        resultSubmission.submission_rate
+                    ),
+
+                subtitle:
+                    `${formatNumber(resultSubmission.overdue_trackers)} overdue plan(s)`,
+
+                status:
+                    resultSubmission.status || 'no_data'
+
+            })
+        );
+
+
+        cards.push(
+            createKpiCard({
+
+                title:
+                    'School Average',
+
+                value:
+                    formatPercent(
+                        performanceSummary.school_average
+                    ),
+
+                subtitle:
+                    `${formatNumber(performanceSummary.students_analysed)} student(s) analysed`,
+
+                status:
+                    performanceSummary.status || 'no_data'
 
             })
         );
@@ -2009,6 +2197,425 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
 
         dialog.show();
+
+    }
+
+
+    // =========================================================
+    // Assessment Operations
+    // =========================================================
+
+    function renderAcademicOperations(data) {
+
+        const academics = data.academics || {};
+        const preparation = academics.preparation || {};
+        const plans = preparation.assessment_plans || {};
+        const results = academics.result_submission || {};
+        const cycles = academics.cycles || [];
+
+        const cycleNames = cycles.length
+            ? cycles
+                .map(cycle => escapeHtml(
+                    cycle.cycle_name || cycle.name
+                ))
+                .join(', ')
+            : 'No examination cycle configured';
+
+        const attentionCount =
+            Number(preparation.outstanding_requirements || 0)
+            + Number(results.outstanding_due_trackers || 0)
+            + Number(results.awaiting_plan_submission || 0)
+            + Number(results.instructor_mapping_errors || 0);
+
+        $('#academic-operations-content').html(`
+
+            <div
+                style="
+                    color: #6c757d;
+                    margin-bottom: 16px;
+                "
+            >
+                ${formatNumber(academics.cycle_count || 0)} cycle(s):
+                ${cycleNames}
+            </div>
+
+            <div
+                style="
+                    display: grid;
+                    grid-template-columns:
+                        repeat(auto-fit, minmax(220px, 1fr));
+                    gap: 14px;
+                    margin-bottom: 18px;
+                "
+            >
+
+                ${createKpiCard({
+                    title: 'Exam Requirements Ready',
+                    value: `${formatNumber(preparation.fully_ready_requirements)} / ${formatNumber(preparation.total_requirements)}`,
+                    subtitle: `${formatNumber(preparation.overdue_requirements)} overdue`,
+                    status: preparation.status || 'no_data'
+                })}
+
+                ${createKpiCard({
+                    title: 'Assessment Plans Created',
+                    value: `${formatNumber(plans.created)} / ${formatNumber(plans.expected)}`,
+                    subtitle: `${formatNumber(plans.missing)} missing`,
+                    status: plans.status || 'no_data'
+                })}
+
+                ${createKpiCard({
+                    title: 'Due Results Complete',
+                    value: `${formatNumber(results.complete_due_trackers)} / ${formatNumber(results.due_trackers)}`,
+                    subtitle: `${formatNumber(results.missing_students_due)} unresolved student result(s)`,
+                    status: results.status || 'no_data'
+                })}
+
+                ${createKpiCard({
+                    title: 'Teachers Outstanding',
+                    value: formatNumber(results.teachers_outstanding),
+                    subtitle: `${formatNumber(results.instructor_mapping_errors)} instructor mapping error(s)`,
+                    status: (
+                        Number(results.teachers_outstanding || 0)
+                        + Number(results.instructor_mapping_errors || 0)
+                    ) > 0 ? 'warning' : 'healthy'
+                })}
+
+            </div>
+
+            <div
+                style="
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                "
+            >
+
+                <button
+                    id="review-academic-attention-btn"
+                    class="btn btn-primary btn-sm"
+                    ${attentionCount ? '' : 'disabled'}
+                >
+                    Review ${formatNumber(attentionCount)} Attention Item(s)
+                </button>
+
+                <button
+                    id="open-exam-coverage-report-btn"
+                    class="btn btn-default btn-sm"
+                >
+                    Exam Preparation Coverage
+                </button>
+
+                <button
+                    id="open-result-coverage-report-btn"
+                    class="btn btn-default btn-sm"
+                >
+                    Result Submission Coverage
+                </button>
+
+            </div>
+
+        `);
+
+        $('#academic-operations-container').show();
+
+        $('#review-academic-attention-btn')
+            .off('click')
+            .on('click', function() {
+                showAcademicAttentionDialog(academics);
+            });
+
+        $('#open-exam-coverage-report-btn')
+            .off('click')
+            .on('click', function() {
+                frappe.set_route(
+                    'query-report',
+                    'Exam Preparation Coverage'
+                );
+            });
+
+        $('#open-result-coverage-report-btn')
+            .off('click')
+            .on('click', function() {
+                frappe.set_route(
+                    'query-report',
+                    'Assessment Result Submission Coverage',
+                    {school_term: data.school_term.name}
+                );
+            });
+
+    }
+
+
+    function showAcademicAttentionDialog(academics) {
+
+        const preparation = academics.preparation || {};
+        const results = academics.result_submission || {};
+
+        const preparationRows = (
+            preparation.attention_items || []
+        ).map(item => `
+            <tr>
+                <td>Exam Preparation</td>
+                <td>${escapeHtml(item.cycle_name || item.examination_cycle)}</td>
+                <td>${escapeHtml(item.course)}</td>
+                <td>${escapeHtml(item.student_batch)}</td>
+                <td>${escapeHtml((item.attention_reasons || []).join(', '))}</td>
+                <td>
+                    ${item.requirement ? `
+                        <button
+                            class="btn btn-xs btn-default open-exam-requirement"
+                            data-name="${escapeHtml(item.requirement)}"
+                        >Open</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `);
+
+        const resultRows = (
+            results.attention_items || []
+        ).map(item => `
+            <tr>
+                <td>Result Submission</td>
+                <td>${escapeHtml(item.examination_cycle)}</td>
+                <td>${escapeHtml(item.course)}</td>
+                <td>${escapeHtml(item.student_group)}</td>
+                <td>${escapeHtml(item.attention_reason)}</td>
+                <td>
+                    ${item.name ? `
+                        <button
+                            class="btn btn-xs btn-default open-result-tracker"
+                            data-name="${escapeHtml(item.name)}"
+                        >Open</button>
+                    ` : ''}
+                </td>
+            </tr>
+        `);
+
+        const rows = preparationRows
+            .concat(resultRows)
+            .join('');
+
+        const dialog = new frappe.ui.Dialog({
+            title: 'Assessment Attention',
+            size: 'extra-large',
+            fields: [{
+                fieldname: 'details',
+                fieldtype: 'HTML'
+            }]
+        });
+
+        dialog.fields_dict.details.$wrapper.html(`
+            <div style="overflow-x: auto;">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Area</th>
+                            <th>Cycle</th>
+                            <th>Course</th>
+                            <th>Group / Batch</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows || `
+                            <tr>
+                                <td colspan="6">
+                                    No assessment items currently require attention.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        `);
+
+        dialog.$wrapper
+            .off('click', '.open-exam-requirement')
+            .on('click', '.open-exam-requirement', function() {
+                dialog.hide();
+                frappe.set_route(
+                    'Form',
+                    'Exam Paper Requirement',
+                    $(this).data('name')
+                );
+            });
+
+        dialog.$wrapper
+            .off('click', '.open-result-tracker')
+            .on('click', '.open-result-tracker', function() {
+                dialog.hide();
+                frappe.set_route(
+                    'Form',
+                    'Assessment Result Submission Tracker',
+                    $(this).data('name')
+                );
+            });
+
+        dialog.show();
+
+    }
+
+
+    // =========================================================
+    // Academic Performance
+    // =========================================================
+
+    function renderAcademicPerformance(data) {
+
+        const performance = (
+            data.academics || {}
+        ).performance || {};
+
+        if (!performance.available) {
+
+            $('#academic-performance-content').html(`
+                <div style="color: #6c757d; margin-bottom: 14px;">
+                    No School Performance Period has been configured
+                    for this term yet.
+                </div>
+                <button
+                    id="setup-performance-periods-btn"
+                    class="btn btn-primary btn-sm"
+                >
+                    Set Up Performance Periods
+                </button>
+            `);
+
+            $('#academic-performance-container').show();
+
+            $('#setup-performance-periods-btn')
+                .off('click')
+                .on('click', function() {
+                    frappe.set_route('school-performance-period-setup');
+                });
+
+            return;
+
+        }
+
+        const groupRows = (performance.groups || [])
+            .map(group => `
+                <tr>
+                    <td>${escapeHtml(group.student_group)}</td>
+                    <td>${formatNumber(group.students)}</td>
+                    <td>${formatNumber(group.complete_students)}</td>
+                    <td>${formatNumber(group.incomplete_students)}</td>
+                    <td>${formatPercent(group.average)}</td>
+                    <td>${formatPercent(group.highest)}</td>
+                    <td>${formatPercent(group.lowest)}</td>
+                    <td>
+                        <button
+                            class="btn btn-xs btn-default open-merit-list"
+                            data-period="${escapeHtml(group.performance_period)}"
+                        >
+                            Merit List
+                        </button>
+                    </td>
+                </tr>
+            `)
+            .join('');
+
+        const configurationWarning = (
+            Number(performance.duplicate_students || 0) > 0
+            || (performance.duplicate_group_periods || []).length > 0
+        ) ? `
+            <div class="alert alert-danger" style="margin-bottom: 15px;">
+                Performance configuration needs review:
+                ${formatNumber(performance.duplicate_students || 0)} student(s)
+                appear in more than one period, and
+                ${formatNumber((performance.duplicate_group_periods || []).length)}
+                group(s) have duplicate periods.
+            </div>
+        ` : '';
+
+        $('#academic-performance-content').html(`
+
+            ${configurationWarning}
+
+            <div
+                style="
+                    display: flex;
+                    gap: 22px;
+                    flex-wrap: wrap;
+                    margin-bottom: 16px;
+                    color: #6c757d;
+                "
+            >
+                <span>
+                    <b>${formatNumber(performance.students_analysed)}</b>
+                    student(s) analysed
+                </span>
+                <span>
+                    <b>${formatNumber(performance.complete_students)}</b>
+                    complete
+                </span>
+                <span>
+                    <b>${formatNumber(performance.incomplete_students)}</b>
+                    incomplete
+                </span>
+                <span>
+                    School average:
+                    <b>${formatPercent(performance.school_average)}</b>
+                </span>
+            </div>
+
+            <div style="overflow-x: auto; margin-bottom: 14px;">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student Group</th>
+                            <th>Students</th>
+                            <th>Complete</th>
+                            <th>Incomplete</th>
+                            <th>Average</th>
+                            <th>Highest</th>
+                            <th>Lowest</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${groupRows || `
+                            <tr>
+                                <td colspan="8">
+                                    No performance summaries have been generated.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+
+            <button
+                id="open-performance-periods-btn"
+                class="btn btn-default btn-sm"
+            >
+                Open Performance Periods
+            </button>
+
+        `);
+
+        $('#academic-performance-container').show();
+
+        $('#open-performance-periods-btn')
+            .off('click')
+            .on('click', function() {
+                frappe.set_route(
+                    'List',
+                    'School Performance Period',
+                    {school_term: data.school_term.name}
+                );
+            });
+
+        $('#academic-performance-content')
+            .off('click', '.open-merit-list')
+            .on('click', '.open-merit-list', function() {
+                frappe.set_route(
+                    'query-report',
+                    'School Performance Merit List',
+                    {performance_period: $(this).data('period')}
+                );
+            });
 
     }
 

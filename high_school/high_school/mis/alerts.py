@@ -65,6 +65,24 @@ SETTING_ALIASES = {
 
     "Minimum Student Attendance Records":
         "minimum_student_attendance_records",
+
+    "exam_preparation_target":
+        "exam_preparation_target",
+
+    "Exam Preparation Target":
+        "exam_preparation_target",
+
+    "assessment_plan_coverage_target":
+        "assessment_plan_coverage_target",
+
+    "Assessment Plan Coverage Target":
+        "assessment_plan_coverage_target",
+
+    "assessment_result_submission_target":
+        "assessment_result_submission_target",
+
+    "Assessment Result Submission Target":
+        "assessment_result_submission_target",
 }
 
 
@@ -243,6 +261,31 @@ def get_metric_candidates(
             "persistent_absence",
             {},
         )
+    )
+
+    academics = data.get(
+        "academics",
+        {},
+    )
+
+    preparation = academics.get(
+        "preparation",
+        {},
+    )
+
+    assessment_plans = preparation.get(
+        "assessment_plans",
+        {},
+    )
+
+    result_submission = academics.get(
+        "result_submission",
+        {},
+    )
+
+    performance = academics.get(
+        "performance",
+        {},
     )
 
     candidates = []
@@ -476,6 +519,220 @@ def get_metric_candidates(
                     ),
 
                     context="student",
+                )
+            )
+
+        # -------------------------------------------------
+        # Assessment Operations
+        # -------------------------------------------------
+
+        elif metric == "Exam Preparation Coverage":
+
+            candidates.append(
+                _candidate(
+                    value=preparation.get(
+                        "coverage_rate"
+                    ),
+                    subject="Exam Preparation",
+                    context="assessment",
+                )
+            )
+
+        elif metric == "Assessment Plan Coverage":
+
+            candidates.append(
+                _candidate(
+                    value=assessment_plans.get(
+                        "coverage_rate"
+                    ),
+                    subject="Assessment Plan Coverage",
+                    context="assessment",
+                )
+            )
+
+        elif metric == "Outstanding Exam Requirements":
+
+            candidates.append(
+                _candidate(
+                    value=preparation.get(
+                        "outstanding_requirements",
+                        0,
+                    ),
+                    subject="Outstanding Exam Requirements",
+                    context="assessment",
+                )
+            )
+
+        elif metric == "Overdue Exam Requirements":
+
+            candidates.append(
+                _candidate(
+                    value=preparation.get(
+                        "overdue_requirements",
+                        0,
+                    ),
+                    subject="Overdue Exam Requirements",
+                    context="assessment",
+                )
+            )
+
+        elif metric == "Result Submission Compliance":
+
+            candidates.append(
+                _candidate(
+                    value=result_submission.get(
+                        "submission_rate"
+                    ),
+                    subject="Assessment Result Submission",
+                    context="assessment_results",
+                )
+            )
+
+        elif metric == "Overdue Result Trackers":
+
+            candidates.append(
+                _candidate(
+                    value=result_submission.get(
+                        "overdue_trackers",
+                        0,
+                    ),
+                    subject="Overdue Assessment Results",
+                    context="assessment_results",
+                )
+            )
+
+        elif metric == "Missing Student Results":
+
+            candidates.append(
+                _candidate(
+                    value=result_submission.get(
+                        "missing_students_due",
+                        0,
+                    ),
+                    subject="Missing Student Results",
+                    context="assessment_results",
+                )
+            )
+
+        elif metric == "Instructor Mapping Errors":
+
+            candidates.append(
+                _candidate(
+                    value=result_submission.get(
+                        "instructor_mapping_errors",
+                        0,
+                    ),
+                    subject="Assessment Instructor Mapping",
+                    context="assessment_results",
+                )
+            )
+
+        elif metric == "Incomplete Performance Students":
+
+            candidates.append(
+                _candidate(
+                    value=performance.get(
+                        "incomplete_students",
+                        0,
+                    ),
+                    subject="Incomplete Performance Summaries",
+                    context="academic_performance",
+                )
+            )
+
+        return candidates
+
+    # =====================================================
+    # Assessment Operations
+    # =====================================================
+
+    if scope == "Assessment Operations":
+
+        metric_map = {
+            "Exam Preparation Coverage": (
+                preparation.get("coverage_rate"),
+                "Exam Preparation",
+            ),
+            "Assessment Plan Coverage": (
+                assessment_plans.get("coverage_rate"),
+                "Assessment Plan Coverage",
+            ),
+            "Outstanding Exam Requirements": (
+                preparation.get("outstanding_requirements", 0),
+                "Outstanding Exam Requirements",
+            ),
+            "Overdue Exam Requirements": (
+                preparation.get("overdue_requirements", 0),
+                "Overdue Exam Requirements",
+            ),
+        }
+
+        resolved = metric_map.get(metric)
+
+        if resolved:
+            candidates.append(
+                _candidate(
+                    value=resolved[0],
+                    subject=resolved[1],
+                    context="assessment",
+                )
+            )
+
+        return candidates
+
+    # =====================================================
+    # Assessment Results
+    # =====================================================
+
+    if scope == "Assessment Results":
+
+        metric_map = {
+            "Result Submission Compliance": (
+                result_submission.get("submission_rate"),
+                "Assessment Result Submission",
+            ),
+            "Overdue Result Trackers": (
+                result_submission.get("overdue_trackers", 0),
+                "Overdue Assessment Results",
+            ),
+            "Missing Student Results": (
+                result_submission.get("missing_students_due", 0),
+                "Missing Student Results",
+            ),
+            "Instructor Mapping Errors": (
+                result_submission.get("instructor_mapping_errors", 0),
+                "Assessment Instructor Mapping",
+            ),
+        }
+
+        resolved = metric_map.get(metric)
+
+        if resolved:
+            candidates.append(
+                _candidate(
+                    value=resolved[0],
+                    subject=resolved[1],
+                    context="assessment_results",
+                )
+            )
+
+        return candidates
+
+    # =====================================================
+    # Academic Performance
+    # =====================================================
+
+    if scope == "Academic Performance":
+
+        if metric == "Incomplete Performance Students":
+            candidates.append(
+                _candidate(
+                    value=performance.get(
+                        "incomplete_students",
+                        0,
+                    ),
+                    subject="Incomplete Performance Summaries",
+                    context="academic_performance",
                 )
             )
 

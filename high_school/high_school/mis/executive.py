@@ -22,6 +22,10 @@ from high_school.high_school.mis.persistent_absence import (
     get_student_absence_analysis,
 )
 
+from high_school.high_school.mis.academic import (
+    get_academic_mis,
+)
+
 from high_school.high_school.mis.alerts import (
     evaluate_alert_rules,
 )
@@ -33,16 +37,30 @@ CLOSED_ISSUE_STATUSES = {
 }
 
 
+# =========================================================
+# Executive MIS
+# =========================================================
+
 def get_executive_summary(
     school_term=None,
 ):
     """
     Build structured Executive MIS data.
+
+    No HTML is generated here.
     """
+
+    # =====================================================
+    # Settings
+    # =====================================================
 
     settings = (
         get_mis_settings()
     )
+
+    # =====================================================
+    # School Term
+    # =====================================================
 
     term = get_school_term(
         school_term
@@ -83,9 +101,11 @@ def get_executive_summary(
             **analyse_attendance(
                 start_date=start_date,
                 end_date=end_date,
+
                 attendance_type=(
                     DAILY_ATTENDANCE
                 ),
+
                 settings=settings,
             ),
         }
@@ -107,9 +127,11 @@ def get_executive_summary(
             analyse_attendance(
                 start_date=start_date,
                 end_date=end_date,
+
                 attendance_type=(
                     COURSE_ATTENDANCE
                 ),
+
                 settings=settings,
             )
         )
@@ -147,10 +169,6 @@ def get_executive_summary(
             )
         )
 
-        # ---------------------------------------------
-        # Only unresolved problems require attention
-        # ---------------------------------------------
-
         attention_sessions = []
 
         for session in sessions:
@@ -165,6 +183,7 @@ def get_executive_summary(
                     "data_issue",
                 )
             ):
+
                 continue
 
             issue = (
@@ -180,6 +199,7 @@ def get_executive_summary(
                 )
                 in CLOSED_ISSUE_STATUSES
             ):
+
                 continue
 
             attention_sessions.append(
@@ -200,7 +220,9 @@ def get_executive_summary(
                 submission,
 
             "session_count":
-                len(sessions),
+                len(
+                    sessions
+                ),
 
             "attention_sessions":
                 attention_sessions[:20],
@@ -314,7 +336,18 @@ def get_executive_summary(
     )
 
     # =====================================================
-    # Payload
+    # Academic Operations + Performance
+    # =====================================================
+
+    academics = (
+        get_academic_mis(
+            school_term=term.name,
+            settings=settings,
+        )
+    )
+
+    # =====================================================
+    # Executive Payload
     # =====================================================
 
     result = {
@@ -352,7 +385,14 @@ def get_executive_summary(
 
         "persistent_absence":
             persistent_absence,
+
+        "academics":
+            academics,
     }
+
+    # =====================================================
+    # Dynamic Alert Rules
+    # =====================================================
 
     result[
         "alerts"

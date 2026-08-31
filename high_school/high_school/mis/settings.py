@@ -27,7 +27,7 @@ def _int_setting(value, default):
 
 def get_mis_settings():
     """
-    Return the school's MIS configuration.
+    Return the school's Executive MIS configuration.
     """
 
     settings = frappe.get_single(
@@ -35,49 +35,97 @@ def get_mis_settings():
     )
 
     return {
+        # =================================================
+        # Attendance
+        # =================================================
+
         "attendance_target":
             _float_setting(
-                settings.attendance_target,
+                settings.get(
+                    "attendance_target"
+                ),
                 90,
             ),
 
         "attendance_coverage_target":
             _float_setting(
-                settings.attendance_coverage_target,
+                settings.get(
+                    "attendance_coverage_target"
+                ),
                 95,
             ),
 
         "attendance_submission_target":
             _float_setting(
-                settings.attendance_submission_target,
+                settings.get(
+                    "attendance_submission_target"
+                ),
                 95,
             ),
 
         "persistent_absence_threshold":
             _float_setting(
-                settings.persistent_absence_threshold,
+                settings.get(
+                    "persistent_absence_threshold"
+                ),
                 10,
             ),
 
         "minimum_group_attendance_records":
             _int_setting(
-                settings.minimum_group_attendance_records,
+                settings.get(
+                    "minimum_group_attendance_records"
+                ),
                 10,
             ),
 
         "minimum_student_attendance_records":
             _int_setting(
-                settings.minimum_student_attendance_records,
+                settings.get(
+                    "minimum_student_attendance_records"
+                ),
                 10,
             ),
 
         "track_daily_attendance":
             bool(
-                settings.track_daily_attendance
+                settings.get(
+                    "track_daily_attendance"
+                )
             ),
 
         "track_course_attendance":
             bool(
-                settings.track_course_attendance
+                settings.get(
+                    "track_course_attendance"
+                )
+            ),
+
+        # =================================================
+        # Academic Operations
+        # =================================================
+
+        "exam_preparation_target":
+            _float_setting(
+                settings.get(
+                    "exam_preparation_target"
+                ),
+                95,
+            ),
+
+        "assessment_plan_coverage_target":
+            _float_setting(
+                settings.get(
+                    "assessment_plan_coverage_target"
+                ),
+                100,
+            ),
+
+        "assessment_result_submission_target":
+            _float_setting(
+                settings.get(
+                    "assessment_result_submission_target"
+                ),
+                95,
             ),
     }
