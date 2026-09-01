@@ -18,6 +18,7 @@ frappe.pages['school-performance-period-setup'].on_page_load = function (wrapper
 		options: 'Academic Year',
 		reqd: 1,
 	});
+
 	add_field({
 		fieldname: 'school_term',
 		label: __('School Term'),
@@ -38,6 +39,15 @@ frappe.pages['school-performance-period-setup'].on_page_load = function (wrapper
 		fieldtype: 'Link',
 		options: 'Student Batch Name',
 	});
+
+	const route_options = frappe.route_options || {};
+	if (route_options.academic_year) {
+		fields.academic_year.set_value(route_options.academic_year);
+	}
+	if (route_options.school_term) {
+		fields.school_term.set_value(route_options.school_term);
+	}
+	frappe.route_options = null;
 
 	const $body = $(
 		`<div class="school-performance-period-setup" style="padding: 18px 0; max-width: 980px;">

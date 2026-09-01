@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "student",
+  "student_name",
+  "school_term",
+  "academic_year",
+  "attendance_type",
+  "absence_rate",
+  "attendance_records",
+  "case_management_section",
+  "status",
+  "assigned_to",
+  "review_date",
+  "meeting_section",
+  "meeting_with",
+  "meeting_date",
+  "meeting_location",
+  "parent_or_guardian",
+  "participants",
+  "meeting_notes",
+  "action_plan",
+  "resolution_section",
+  "resolution_notes"
+ ],
+ "fields": [
+  {
+   "default": "ATT-FOLLOW-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "ATT-FOLLOW-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "student",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student",
+   "options": "Student",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "student.student_name",
+   "fieldname": "student_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Student Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "School Term",
+   "options": "School Term",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "school_term.academic_year",
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Attendance Type",
+   "options": "Daily\nCourse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "absence_rate",
+   "fieldtype": "Percent",
+   "label": "Absence Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance_records",
+   "fieldtype": "Int",
+   "label": "Attendance Records Reviewed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "case_management_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up Management"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nMeeting Scheduled\nMonitoring\nResolved\nDismissed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Responsible Staff Member",
+   "options": "User"
+  },
+  {
+   "fieldname": "review_date",
+   "fieldtype": "Date",
+   "label": "Next Review Date"
+  },
+  {
+   "fieldname": "meeting_section",
+   "fieldtype": "Section Break",
+   "label": "Student / Parent Meeting"
+  },
+  {
+   "default": "Student and Parent / Guardian",
+   "fieldname": "meeting_with",
+   "fieldtype": "Select",
+   "label": "Meeting With",
+   "options": "Student\nParent / Guardian\nStudent and Parent / Guardian"
+  },
+  {
+   "fieldname": "meeting_date",
+   "fieldtype": "Datetime",
+   "label": "Meeting Date and Time"
+  },
+  {
+   "fieldname": "meeting_location",
+   "fieldtype": "Data",
+   "label": "Meeting Location"
+  },
+  {
+   "description": "Name and contact details can be entered after confirming the correct parent or guardian.",
+   "fieldname": "parent_or_guardian",
+   "fieldtype": "Data",
+   "label": "Parent / Guardian"
+  },
+  {
+   "fieldname": "participants",
+   "fieldtype": "Small Text",
+   "label": "Participants"
+  },
+  {
+   "fieldname": "meeting_notes",
+   "fieldtype": "Text Editor",
+   "label": "Meeting Notes"
+  },
+  {
+   "fieldname": "action_plan",
+   "fieldtype": "Text Editor",
+   "label": "Agreed Action Plan"
+  },
+  {
+   "fieldname": "resolution_section",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "resolution_notes",
+   "fieldtype": "Text Editor",
+   "label": "Resolution Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "High School",
+ "name": "Student Attendance Intervention",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
+

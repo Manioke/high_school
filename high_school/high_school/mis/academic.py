@@ -9,6 +9,10 @@ from high_school.high_school.report.exam_preparation_coverage.exam_preparation_c
     get_data as get_exam_preparation_rows,
 )
 
+from high_school.high_school.performance_period_setup import (
+    get_main_group_coverage,
+)
+
 
 # =========================================================
 # Constants
@@ -875,6 +879,29 @@ def get_performance_summary(
     This function does NOT recalculate ranking.
     """
 
+    academic_year = frappe.db.get_value(
+        "School Term",
+        school_term,
+        "academic_year",
+    )
+
+    setup_coverage = (
+        get_main_group_coverage(
+            academic_year=academic_year,
+            school_term=school_term,
+        )
+        if academic_year
+        else {
+            "complete": False,
+            "expected_group_count": 0,
+            "covered_group_count": 0,
+            "missing_group_count": 0,
+            "covered_groups": [],
+            "missing_groups": [],
+            "detection_reliable": False,
+        }
+    )
+
     periods = frappe.get_all(
         "School Performance Period",
 
@@ -936,6 +963,9 @@ def get_performance_summary(
 
             "groups":
                 [],
+
+            "setup":
+                setup_coverage,
         }
 
     period_names = [
@@ -1320,6 +1350,9 @@ def get_performance_summary(
 
         "groups":
             group_results,
+
+        "setup":
+            setup_coverage,
     }
 
 

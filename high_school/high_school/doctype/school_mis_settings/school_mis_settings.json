@@ -17,6 +17,10 @@
   "exam_preparation_target",
   "assessment_plan_coverage_target",
   "assessment_result_submission_target",
+  "finance_mis_section",
+  "track_student_finance",
+  "fee_collection_target",
+  "overdue_fee_target",
   "assessment_management_section",
   "submit_assessment_plans_from_exam_requirements",
   "protect_performance_summaries_until_results_complete"
@@ -106,6 +110,31 @@
    "fieldname": "assessment_result_submission_target",
    "fieldtype": "Percent",
    "label": "Assessment Result Submission Target"
+  },
+  {
+   "fieldname": "finance_mis_section",
+   "fieldtype": "Section Break",
+   "label": "Executive Finance Targets"
+  },
+  {
+   "default": "1",
+   "description": "Summarize submitted student Sales Invoices linked through Academic Year, Fee Schedule, or Student fields.",
+   "fieldname": "track_student_finance",
+   "fieldtype": "Check",
+   "label": "Track Student Fee Invoices"
+  },
+  {
+   "default": "90",
+   "fieldname": "fee_collection_target",
+   "fieldtype": "Percent",
+   "label": "Fee Collection Target"
+  },
+  {
+   "default": "5",
+   "description": "Warn when overdue student fees exceed this percentage of invoiced fees.",
+   "fieldname": "overdue_fee_target",
+   "fieldtype": "Percent",
+   "label": "Maximum Overdue Fee Rate"
   }
  ],
  "grid_page_length": 50,

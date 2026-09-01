@@ -74,6 +74,66 @@ def _main_group_filters(academic_year, program=None, student_batch=None):
 	return filters, batch_field
 
 
+def get_main_group_coverage(academic_year, school_term):
+	"""Return coverage of active Batch-based main groups by performance periods."""
+	group_fields = _meta_fields("Student Group")
+	filters, batch_field = _main_group_filters(academic_year)
+	query_fields = ["name"]
+	if batch_field and batch_field not in query_fields:
+		query_fields.append(batch_field)
+
+	groups = frappe.get_all(
+		"Student Group",
+		filters=filters,
+		fields=query_fields,
+		order_by="name asc",
+	)
+	expected = []
+	for group in groups:
+		student_count = _active_student_count(group.name)
+		if not student_count:
+			continue
+		expected.append(
+			{
+				"student_group": group.name,
+				"student_batch": group.get(batch_field) if batch_field else None,
+				"student_count": student_count,
+			}
+		)
+
+	periods = frappe.get_all(
+		"School Performance Period",
+		filters={
+			"academic_year": academic_year,
+			"school_term": school_term,
+		},
+		fields=["name", "main_student_group"],
+	)
+	period_by_group = {
+		row.main_student_group: row.name
+		for row in periods
+		if row.main_student_group
+	}
+	covered = []
+	missing = []
+	for group in expected:
+		item = {
+			**group,
+			"performance_period": period_by_group.get(group["student_group"]),
+		}
+		(covered if item["performance_period"] else missing).append(item)
+
+	return {
+		"complete": bool(expected) and not missing,
+		"expected_group_count": len(expected),
+		"covered_group_count": len(covered),
+		"missing_group_count": len(missing),
+		"covered_groups": covered,
+		"missing_groups": missing,
+		"detection_reliable": "group_based_on" in group_fields and bool(batch_field),
+	}
+
+
 @frappe.whitelist()
 def get_main_group_candidates(academic_year, school_term, program=None, student_batch=None):
 	frappe.only_for(MANAGER_ROLES)

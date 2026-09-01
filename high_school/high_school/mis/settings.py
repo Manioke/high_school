@@ -128,4 +128,37 @@ def get_mis_settings():
                 ),
                 95,
             ),
+
+        # =================================================
+        # Student Finance
+        # =================================================
+
+        "track_student_finance":
+            (
+                True
+                if settings.get(
+                    "track_student_finance"
+                ) is None
+                else bool(
+                    settings.get(
+                        "track_student_finance"
+                    )
+                )
+            ),
+
+        "fee_collection_target":
+            _float_setting(
+                settings.get(
+                    "fee_collection_target"
+                ),
+                90,
+            ),
+
+        "overdue_fee_target":
+            _float_setting(
+                settings.get(
+                    "overdue_fee_target"
+                ),
+                5,
+            ),
     }

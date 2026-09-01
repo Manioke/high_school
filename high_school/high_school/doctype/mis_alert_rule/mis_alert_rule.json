@@ -36,14 +36,14 @@
    "fieldname": "metric",
    "fieldtype": "Select",
    "label": "Metric",
-   "options": "Attendance Rate\nAttendance Coverage\nAttendance Submission Compliance\nMissing Attendance Sessions\nTeachers Below Submission Target\nPersistent Absence Rate\nPersistent Absence Students\nExam Preparation Coverage\nAssessment Plan Coverage\nOutstanding Exam Requirements\nOverdue Exam Requirements\nResult Submission Compliance\nOverdue Result Trackers\nMissing Student Results\nInstructor Mapping Errors\nIncomplete Performance Students",
+   "options": "Attendance Rate\nAttendance Coverage\nAttendance Submission Compliance\nMissing Attendance Sessions\nTeachers Below Submission Target\nPersistent Absence Rate\nPersistent Absence Students\nExam Preparation Coverage\nAssessment Plan Coverage\nOutstanding Exam Requirements\nOverdue Exam Requirements\nResult Submission Compliance\nOverdue Result Trackers\nMissing Student Results\nInstructor Mapping Errors\nIncomplete Performance Students\nFee Collection Rate\nOverdue Fee Rate\nOutstanding Student Fees\nStudents with Overdue Fees",
    "sort_options": 1
   },
   {
    "fieldname": "scope",
    "fieldtype": "Select",
    "label": "Scope",
-   "options": "Overall\nDaily Attendance\nCourse Attendance\nStudent Group\nInstructor\nStudent\nAssessment Operations\nAssessment Results\nAcademic Performance"
+   "options": "Overall\nDaily Attendance\nCourse Attendance\nStudent Group\nInstructor\nStudent\nAssessment Operations\nAssessment Results\nAcademic Performance\nStudent Finance"
   },
   {
    "fieldname": "operator",
@@ -61,7 +61,7 @@
    "fieldname": "threshold_setting",
    "fieldtype": "Select",
    "label": "Threshold Setting",
-   "options": "attendance_target\nattendance_coverage_target\nattendance_submission_target\npersistent_absence_threshold\nminimum_group_attendance_records\nminimum_student_attendance_records\nexam_preparation_target\nassessment_plan_coverage_target\nassessment_result_submission_target"
+   "options": "attendance_target\nattendance_coverage_target\nattendance_submission_target\npersistent_absence_threshold\nminimum_group_attendance_records\nminimum_student_attendance_records\nexam_preparation_target\nassessment_plan_coverage_target\nassessment_result_submission_target\nfee_collection_target\noverdue_fee_target"
   },
   {
    "fieldname": "custom_threshold",

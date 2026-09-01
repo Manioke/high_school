@@ -83,6 +83,18 @@ SETTING_ALIASES = {
 
     "Assessment Result Submission Target":
         "assessment_result_submission_target",
+
+    "fee_collection_target":
+        "fee_collection_target",
+
+    "Fee Collection Target":
+        "fee_collection_target",
+
+    "overdue_fee_target":
+        "overdue_fee_target",
+
+    "Maximum Overdue Fee Rate":
+        "overdue_fee_target",
 }
 
 
@@ -285,6 +297,11 @@ def get_metric_candidates(
 
     performance = academics.get(
         "performance",
+        {},
+    )
+
+    finance = data.get(
+        "finance",
         {},
     )
 
@@ -640,6 +657,46 @@ def get_metric_candidates(
                 )
             )
 
+        elif metric == "Fee Collection Rate":
+
+            candidates.append(
+                _candidate(
+                    value=finance.get("collection_rate"),
+                    subject="Student Fee Collection",
+                    context="finance",
+                )
+            )
+
+        elif metric == "Overdue Fee Rate":
+
+            candidates.append(
+                _candidate(
+                    value=finance.get("overdue_rate"),
+                    subject="Overdue Student Fees",
+                    context="finance",
+                )
+            )
+
+        elif metric == "Outstanding Student Fees":
+
+            candidates.append(
+                _candidate(
+                    value=finance.get("outstanding", 0),
+                    subject="Outstanding Student Fees",
+                    context="finance",
+                )
+            )
+
+        elif metric == "Students with Overdue Fees":
+
+            candidates.append(
+                _candidate(
+                    value=finance.get("overdue_student_count", 0),
+                    subject="Students with Overdue Fees",
+                    context="finance",
+                )
+            )
+
         return candidates
 
     # =====================================================
@@ -733,6 +790,43 @@ def get_metric_candidates(
                     ),
                     subject="Incomplete Performance Summaries",
                     context="academic_performance",
+                )
+            )
+
+        return candidates
+
+    # =====================================================
+    # Student Finance
+    # =====================================================
+
+    if scope == "Student Finance":
+
+        metric_map = {
+            "Fee Collection Rate": (
+                finance.get("collection_rate"),
+                "Student Fee Collection",
+            ),
+            "Overdue Fee Rate": (
+                finance.get("overdue_rate"),
+                "Overdue Student Fees",
+            ),
+            "Outstanding Student Fees": (
+                finance.get("outstanding", 0),
+                "Outstanding Student Fees",
+            ),
+            "Students with Overdue Fees": (
+                finance.get("overdue_student_count", 0),
+                "Students with Overdue Fees",
+            ),
+        }
+
+        resolved = metric_map.get(metric)
+        if resolved:
+            candidates.append(
+                _candidate(
+                    value=resolved[0],
+                    subject=resolved[1],
+                    context="finance",
                 )
             )
 

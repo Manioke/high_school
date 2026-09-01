@@ -26,6 +26,14 @@ from high_school.high_school.mis.academic import (
     get_academic_mis,
 )
 
+from high_school.high_school.mis.finance import (
+    get_financial_mis,
+)
+
+from high_school.high_school.mis.direction import (
+    get_school_direction,
+)
+
 from high_school.high_school.mis.alerts import (
     evaluate_alert_rules,
 )
@@ -347,6 +355,15 @@ def get_executive_summary(
     )
 
     # =====================================================
+    # Student Finance
+    # =====================================================
+
+    finance = get_financial_mis(
+        term=term,
+        settings=settings,
+    )
+
+    # =====================================================
     # Executive Payload
     # =====================================================
 
@@ -388,7 +405,20 @@ def get_executive_summary(
 
         "academics":
             academics,
+
+        "finance":
+            finance,
     }
+
+    # =====================================================
+    # School Direction
+    # =====================================================
+
+    result["direction"] = get_school_direction(
+        term=term,
+        current_data=result,
+        settings=settings,
+    )
 
     # =====================================================
     # Dynamic Alert Rules
