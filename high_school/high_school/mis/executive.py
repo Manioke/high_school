@@ -33,6 +33,9 @@ from high_school.high_school.mis.finance import (
 from high_school.high_school.mis.direction import (
     get_school_direction,
 )
+from high_school.high_school.mis.interventions import (
+    apply_attendance_interventions,
+)
 
 from high_school.high_school.mis.alerts import (
     evaluate_alert_rules,
@@ -341,6 +344,11 @@ def get_executive_summary(
         "unique_students_flagged"
     ] = len(
         flagged_student_ids
+    )
+
+    persistent_absence = apply_attendance_interventions(
+        persistent_absence,
+        term.name,
     )
 
     # =====================================================

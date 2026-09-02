@@ -180,6 +180,9 @@ has_permission = {
 # }
 
 doc_events = {
+	"Student Applicant": {
+		"before_insert": "high_school.high_school.naming.ensure_unique_student_applicant_name",
+	},
 	"Assessment Plan": {
 		"on_update": [
 			"high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",

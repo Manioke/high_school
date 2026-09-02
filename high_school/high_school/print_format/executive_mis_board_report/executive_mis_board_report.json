@@ -1,0 +1,9 @@
+{
+ "doc_type": "Executive MIS Board Report",
+ "doctype": "Print Format",
+ "html": "<div class=\"print-format\">{{ doc.executive_summary | safe }}</div><hr><p class=\"text-muted\">Generated {{ frappe.utils.format_datetime(doc.generated_on) }} by {{ doc.generated_by }}</p>",
+ "module": "High School",
+ "name": "Executive MIS Board Report",
+ "print_format_type": "Jinja",
+ "standard": "Yes"
+}

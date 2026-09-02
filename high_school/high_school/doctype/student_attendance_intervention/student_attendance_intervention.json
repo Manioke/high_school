@@ -26,7 +26,9 @@
   "meeting_notes",
   "action_plan",
   "resolution_section",
-  "resolution_notes"
+  "resolution_notes",
+  "resolved_on",
+  "resolved_attendance_records"
  ],
  "fields": [
   {
@@ -167,6 +169,19 @@
    "fieldname": "resolution_notes",
    "fieldtype": "Text Editor",
    "label": "Resolution Notes"
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Datetime",
+   "label": "Resolved On",
+   "read_only": 1
+  },
+  {
+   "description": "Attendance evidence count when this case was closed. New records can make the risk actionable again.",
+   "fieldname": "resolved_attendance_records",
+   "fieldtype": "Int",
+   "label": "Attendance Records at Resolution",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -203,4 +218,3 @@
  "sort_order": "DESC",
  "states": []
 }
-

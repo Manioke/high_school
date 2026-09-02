@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import getdate, today
 
 
 PRIVILEGED_ROLES = {
@@ -135,6 +136,25 @@ def validate_student_attendance(doc, method=None):
     if schedule_instructor != instructor:
         frappe.throw(
             _("You can only mark attendance for your own Course Schedule."),
+            frappe.PermissionError,
+        )
+
+    restrict_to_today = frappe.db.get_single_value(
+        "School MIS Settings", "restrict_instructor_attendance_to_today"
+    )
+    if not restrict_to_today:
+        return
+
+    schedule_date = frappe.db.get_value(
+        "Course Schedule", doc.course_schedule, "schedule_date"
+    )
+    if not schedule_date or getdate(schedule_date) != getdate(today()):
+        frappe.throw(
+            _(
+                "Your school only allows instructors to mark Course Attendance "
+                "for today's Course Schedules. Ask an Education Manager to "
+                "review or correct historical attendance."
+            ),
             frappe.PermissionError,
         )
 

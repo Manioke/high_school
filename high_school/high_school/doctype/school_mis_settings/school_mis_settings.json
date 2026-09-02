@@ -13,6 +13,14 @@
   "minimum_student_attendance_records",
   "track_daily_attendance",
   "track_course_attendance",
+  "attendance_management_section",
+  "restrict_instructor_attendance_to_today",
+  "missing_attendance_reminder_threshold",
+  "attendance_reminder_action",
+  "insights_section",
+  "attendance_insights_dashboard_url",
+  "assessment_insights_dashboard_url",
+  "finance_insights_dashboard_url",
   "academic_mis_section",
   "exam_preparation_target",
   "assessment_plan_coverage_target",
@@ -62,6 +70,58 @@
    "fieldname": "track_course_attendance",
    "fieldtype": "Check",
    "label": "Track Course Schedule Attendance"
+  },
+  {
+   "fieldname": "attendance_management_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance Entry and Follow-up"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, Instructor-only users can create or edit Course Attendance only for Course Schedules dated today. Education Managers and System Managers can still correct historical records.",
+   "fieldname": "restrict_instructor_attendance_to_today",
+   "fieldtype": "Check",
+   "label": "Restrict Instructors to Today's Course Attendance"
+  },
+  {
+   "default": "10",
+   "description": "Show the attendance reminder action when an instructor has at least this many unresolved missing or incomplete historical classes.",
+   "fieldname": "missing_attendance_reminder_threshold",
+   "fieldtype": "Int",
+   "label": "Missing Class Reminder Threshold"
+  },
+  {
+   "default": "Email Reminder",
+   "fieldname": "attendance_reminder_action",
+   "fieldtype": "Select",
+   "label": "Attendance Follow-up Action",
+   "options": "Email Reminder\nRequest Office Meeting"
+  },
+  {
+   "fieldname": "insights_section",
+   "fieldtype": "Section Break",
+   "label": "Optional Frappe Insights Dashboards"
+  },
+  {
+   "description": "Optional same-site or HTTPS Frappe Insights dashboard URL embedded in Attendance & Students.",
+   "fieldname": "attendance_insights_dashboard_url",
+   "fieldtype": "Data",
+   "label": "Attendance Insights Dashboard URL",
+   "options": "URL"
+  },
+  {
+   "description": "Optional same-site or HTTPS Frappe Insights dashboard URL embedded in Exams & Assessments.",
+   "fieldname": "assessment_insights_dashboard_url",
+   "fieldtype": "Data",
+   "label": "Assessment Insights Dashboard URL",
+   "options": "URL"
+  },
+  {
+   "description": "Optional same-site or HTTPS Frappe Insights dashboard URL embedded in Fees & Finance.",
+   "fieldname": "finance_insights_dashboard_url",
+   "fieldtype": "Data",
+   "label": "Finance Insights Dashboard URL",
+   "options": "URL"
   },
   {
    "default": "10",

@@ -101,6 +101,30 @@ def get_mis_settings():
                 )
             ),
 
+        "restrict_instructor_attendance_to_today": bool(
+            settings.get("restrict_instructor_attendance_to_today")
+        ),
+
+        "missing_attendance_reminder_threshold": _int_setting(
+            settings.get("missing_attendance_reminder_threshold"), 10
+        ),
+
+        "attendance_reminder_action": (
+            settings.get("attendance_reminder_action") or "Email Reminder"
+        ),
+
+        "attendance_insights_dashboard_url": (
+            settings.get("attendance_insights_dashboard_url") or ""
+        ),
+
+        "assessment_insights_dashboard_url": (
+            settings.get("assessment_insights_dashboard_url") or ""
+        ),
+
+        "finance_insights_dashboard_url": (
+            settings.get("finance_insights_dashboard_url") or ""
+        ),
+
         # =================================================
         # Academic Operations
         # =================================================

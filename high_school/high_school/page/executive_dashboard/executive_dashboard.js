@@ -8,13 +8,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
 
     // =========================================================
-    // Configuration
-    // =========================================================
-
-    const INSIGHTS_DASHBOARD_URL = '';
-
-
-    // =========================================================
     // Page Layout
     // =========================================================
 
@@ -78,7 +71,12 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 class="card"
                 style="padding: 20px; margin-bottom: 20px;"
             >
-                <h4 style="margin-top: 0;">School Direction</h4>
+                <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <h4 style="margin: 0;">School Direction</h4>
+                    <div>
+                        <button id="create-board-report-btn" class="btn btn-primary btn-sm">Create Board Report</button>
+                    </div>
+                </div>
                 <div id="school-direction-content" class="text-muted">
                     Comparing this term with the previous School Term...
                 </div>
@@ -326,6 +324,26 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
                 </div>
 
+            </div>
+
+            <div
+                id="assessment-insights-card"
+                data-dashboard-section="assessment"
+                class="card"
+                style="padding: 10px; display: none;"
+            >
+                <h4 style="padding: 10px;">Assessment Analytics</h4>
+                <div id="assessment-insights-container"></div>
+            </div>
+
+            <div
+                id="finance-insights-card"
+                data-dashboard-section="finance"
+                class="card"
+                style="padding: 10px; display: none;"
+            >
+                <h4 style="padding: 10px;">Finance Analytics</h4>
+                <div id="finance-insights-container"></div>
             </div>
 
         </div>
@@ -949,7 +967,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             data
         );
 
-        renderInsights();
+        renderInsights(data.settings || {});
 
     }
 
@@ -1003,7 +1021,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         let narrative = 'There is not enough previous-term information to establish a direction yet.';
         if (direction.status === 'improving') {
-            narrative = 'The available attendance and academic measures are moving in a positive direction.';
+            narrative = 'The available attendance, academic, and finance measures are moving in a positive direction.';
         } else if (direction.status === 'declining') {
             narrative = 'The comparable school measures are moving downward and require management action.';
         } else if (direction.status === 'mixed') {
@@ -1048,6 +1066,20 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 `}
             </div>
         `);
+
+        $('#create-board-report-btn').off('click').on('click', function() {
+            frappe.call({
+                method: 'high_school.high_school.mis.board_report.create_board_report',
+                args: {school_term: data.school_term.name},
+                freeze: true,
+                freeze_message: __('Creating board report snapshot...'),
+                callback(r) {
+                    if (r.message && r.message.name) {
+                        frappe.set_route('Form', 'Executive MIS Board Report', r.message.name);
+                    }
+                }
+            });
+        });
 
     }
 
@@ -1299,7 +1331,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     ),
 
                 subtitle:
-                    'Students requiring review',
+                    `${formatNumber(persistent.managed_students_count || 0)} managed / resolved`,
 
                 status:
                     (
@@ -1800,6 +1832,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                         Investigate Attendance
                     </button>
 
+                    <button id="attendance-reminders-btn" class="btn btn-default btn-sm">
+                        ${escapeHtml((data.settings || {}).attendance_reminder_action || 'Email Reminder')}
+                    </button>
+
                 </div>
 
             `);
@@ -1825,6 +1861,49 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 }
             );
 
+        $('#attendance-reminders-btn').off('click').on('click', function() {
+            showAttendanceReminderPreview(data.school_term.name);
+        });
+
+    }
+
+
+    function showAttendanceReminderPreview(schoolTerm) {
+        frappe.call({
+            method: 'high_school.high_school.mis.actions.get_attendance_reminder_preview',
+            args: {school_term: schoolTerm}, freeze: true,
+            freeze_message: __('Preparing attendance follow-up...'),
+            callback(r) {
+                const preview = r.message || {};
+                const rows = (preview.recipients || []).map(recipient => `
+                    <tr><td><input type="checkbox" class="attendance-reminder-recipient" data-user="${escapeHtml(recipient.user)}" checked></td>
+                    <td>${escapeHtml(recipient.full_name)}</td><td>${escapeHtml(recipient.email)}</td>
+                    <td>${formatNumber(recipient.missing_count)}</td><td>${formatNumber(recipient.incomplete_count)}</td></tr>
+                `).join('');
+                const dialog = new frappe.ui.Dialog({
+                    title: __(preview.action || 'Attendance Follow-up'), size: 'large',
+                    fields: [{fieldname:'preview', fieldtype:'HTML'}],
+                    primary_action_label: __('Queue Selected Emails'),
+                    primary_action() {
+                        const users = dialog.$wrapper.find('.attendance-reminder-recipient:checked').map(function(){return $(this).data('user');}).get();
+                        if (!users.length) { frappe.msgprint(__('Select at least one instructor.')); return; }
+                        frappe.confirm(__('Queue {0} attendance follow-up email(s)?', [users.length]), () => frappe.call({
+                            method: 'high_school.high_school.mis.actions.send_attendance_reminders',
+                            args: {school_term: schoolTerm, selected_users: JSON.stringify(users)},
+                            freeze: true, freeze_message: __('Queueing attendance follow-up...'),
+                            callback(sendResult) { if (!sendResult.exc) { dialog.hide(); frappe.msgprint(__('Attendance follow-up emails queued.')); } }
+                        }));
+                    }
+                });
+                dialog.fields_dict.preview.$wrapper.html(`
+                    <p class="text-muted">Only instructors with at least ${formatNumber(preview.threshold)} unresolved historical classes are listed. Action: <b>${escapeHtml(preview.action)}</b>.</p>
+                    <table class="table table-bordered"><thead><tr><th>Send</th><th>Instructor</th><th>Email</th><th>Missing</th><th>Incomplete</th></tr></thead>
+                    <tbody>${rows || '<tr><td colspan="5">No instructor currently meets the configured threshold.</td></tr>'}</tbody></table>
+                `);
+                if (!(preview.recipients || []).length) dialog.disable_primary_action();
+                dialog.show();
+            }
+        });
     }
 
     // =========================================================
@@ -1863,7 +1942,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
                 .map(teacher => `
 
-                    <tr>
+                    <tr data-instructor="${escapeHtml(teacher.instructor || '')}">
 
                         <td>
                             ${escapeHtml(
@@ -1921,7 +2000,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
                     return `
 
-                        <tr>
+                        <tr data-instructor="${escapeHtml(session.instructor || '')}">
 
                             <td>
                                 ${escapeHtml(
@@ -2049,6 +2128,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     management outcome.
                 </div>
 
+                <div style="max-width: 320px; margin-bottom: 15px;">
+                    <label>Instructor</label>
+                    <select id="attendance-instructor-filter" class="form-control">
+                        <option value="">All instructors</option>
+                        ${teachers.map(teacher => `<option value="${escapeHtml(teacher.instructor || '')}">${escapeHtml(teacher.instructor_name || teacher.instructor)}</option>`).join('')}
+                    </select>
+                </div>
+
 
                 <h5>
                     Scheduled Classes Requiring Attention
@@ -2164,6 +2251,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
 
         dialog.show();
+
+        dialog.$wrapper.find('#attendance-instructor-filter').on('change', function() {
+            const instructor = String($(this).val() || '');
+            dialog.$wrapper.find('tbody tr[data-instructor]').each(function() {
+                $(this).toggle(!instructor || String($(this).data('instructor')) === instructor);
+            });
+        });
 
 
         // =====================================================
@@ -2722,6 +2816,12 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     Email Teachers / HODs
                 </button>
 
+                ${!Number(academics.cycle_count || 0) ? `
+                    <button id="create-school-examination-cycle-btn" class="btn btn-primary btn-sm">
+                        Create School Examination Cycle
+                    </button>
+                ` : ''}
+
             </div>
 
         `);
@@ -2763,6 +2863,11 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     data.school_term.name
                 );
             });
+
+        $('#create-school-examination-cycle-btn').off('click').on('click', function() {
+            frappe.route_options = {school_term: data.school_term.name, academic_year: data.school_term.academic_year};
+            frappe.new_doc('School Examination Cycle');
+        });
 
     }
 
@@ -3052,6 +3157,9 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                         >
                             Merit List
                         </button>
+                        <button class="btn btn-xs btn-primary open-performance-period" data-period="${escapeHtml(group.performance_period)}">
+                            Generate Summaries
+                        </button>
                     </td>
                 </tr>
             `)
@@ -3196,6 +3304,12 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 );
             });
 
+        $('#academic-performance-content')
+            .off('click', '.open-performance-period')
+            .on('click', '.open-performance-period', function() {
+                frappe.set_route('Form', 'School Performance Period', $(this).data('period'));
+            });
+
     }
 
 
@@ -3270,8 +3384,9 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         container.html(`
             <div class="text-muted" style="margin-bottom: 16px;">
-                Academic Year ${escapeHtml(finance.academic_year)} student invoices,
-                identified through ${escapeHtml(finance.scope_source || 'the education invoice link')}.
+                ${escapeHtml(finance.school_term || data.school_term.name)} student invoices,
+                identified through ${escapeHtml(finance.scope_source || 'the education invoice link')}
+                and scoped by ${escapeHtml(finance.term_scope || 'the School Term')}.
             </div>
 
             <div style="display: grid; grid-template-columns: minmax(260px, 1fr) minmax(420px, 2fr); gap: 18px; margin-bottom: 20px;">
@@ -3344,46 +3459,30 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
     // Insights
     // =========================================================
 
-    function renderInsights() {
+    function renderInsights(settings) {
 
-        if (!INSIGHTS_DASHBOARD_URL) {
+        const dashboards = [
+            ['#attendance-insights-card', '#insights-container', settings.attendance_insights_dashboard_url],
+            ['#assessment-insights-card', '#assessment-insights-container', settings.assessment_insights_dashboard_url],
+            ['#finance-insights-card', '#finance-insights-container', settings.finance_insights_dashboard_url]
+        ];
 
-            $('#insights-container')
-                .html(`
+        dashboards.forEach(([card, selector, url]) => {
+            if (!url) {
+                setSectionVisibility(card, false);
+                return;
+            }
 
-                    <div
-                        style="
-                            padding: 20px;
-                            color: #6c757d;
-                        "
-                    >
-                        Insights dashboard URL
-                        has not been configured.
-                    </div>
-
-                `);
-
-            return;
-
-        }
-
-
-        $('#insights-container')
-            .html(`
-
+            setSectionVisibility(card, true);
+            $(selector).html(`
                 <iframe
-                    src="${escapeHtml(
-                        INSIGHTS_DASHBOARD_URL
-                    )}"
-                    style="
-                        width: 100%;
-                        height: 750px;
-                        border: none;
-                    "
-                >
-                </iframe>
-
+                    src="${escapeHtml(url)}"
+                    title="School analytics dashboard"
+                    loading="lazy"
+                    style="width: 100%; height: 750px; border: none;"
+                ></iframe>
             `);
+        });
 
     }
 

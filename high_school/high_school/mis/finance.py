@@ -25,11 +25,16 @@ def _meta_fields(doctype):
     }
 
 
-def _school_fee_filters(invoice_fields, academic_year):
+def _school_fee_filters(invoice_fields, term):
     filters = {"docstatus": 1}
+    if "is_return" in invoice_fields:
+        filters["is_return"] = 0
+
+    if "school_term" in invoice_fields:
+        filters["school_term"] = term.name
 
     if "academic_year" in invoice_fields:
-        filters["academic_year"] = academic_year
+        filters["academic_year"] = term.academic_year
         return filters, "Academic Year"
 
     if "fee_schedule" in invoice_fields:
@@ -37,7 +42,7 @@ def _school_fee_filters(invoice_fields, academic_year):
         if "academic_year" in schedule_fields:
             schedules = frappe.get_all(
                 "Fee Schedule",
-                filters={"academic_year": academic_year},
+                filters={"academic_year": term.academic_year},
                 pluck="name",
             )
             if not schedules:
@@ -52,6 +57,38 @@ def _school_fee_filters(invoice_fields, academic_year):
         return filters, "Student"
 
     return None, None
+
+
+def _apply_term_scope(filters, invoice_fields, term):
+    """Scope fees to a School Term without assuming a custom field exists."""
+    if "school_term" in invoice_fields:
+        filters["school_term"] = term.name
+        return "School Term"
+
+    date_field = "due_date" if "due_date" in invoice_fields else "posting_date"
+    if date_field in invoice_fields:
+        filters[date_field] = ["between", [term.start_date, term.end_date]]
+        return "{0} within School Term".format(
+            "Due Date" if date_field == "due_date" else "Posting Date"
+        )
+
+    return None
+
+
+def _invoice_amounts(invoice, total_field, outstanding_field):
+    """Return conservative submitted-invoice totals using status as a guard."""
+    total = max(0, flt(invoice.get(total_field)))
+    balance = max(0, flt(invoice.get(outstanding_field)))
+    status = (invoice.get("status") or "").strip().lower()
+
+    if status == "paid":
+        balance = 0
+    elif status in {"unpaid", "overdue"} and balance <= 0 and total > 0:
+        # Never report an explicitly unpaid invoice as collected merely because
+        # an outstanding field is absent, stale, or not populated.
+        balance = total
+
+    return total, min(balance, total) if total else balance
 
 
 def _student_batches(students, academic_year):
@@ -119,7 +156,7 @@ def get_financial_mis(term, settings):
 
     filters, scope_source = _school_fee_filters(
         invoice_fields,
-        term.academic_year,
+        term,
     )
     if filters is None:
         return {
@@ -130,6 +167,16 @@ def get_financial_mis(term, settings):
                 "Sales Invoice has no Student, Fee Schedule, or Academic Year "
                 "field that can identify school fees safely."
             ),
+            "target": target,
+        }
+
+    term_scope = _apply_term_scope(filters, invoice_fields, term)
+    if not term_scope:
+        return {
+            "enabled": True,
+            "available": False,
+            "status": "no_data",
+            "message": "Sales Invoice has no date field for School Term comparison.",
             "target": target,
         }
 
@@ -171,6 +218,8 @@ def get_financial_mis(term, settings):
             "target": target,
             "overdue_target": overdue_target,
             "scope_source": scope_source,
+            "term_scope": term_scope,
+            "school_term": term.name,
             "academic_year": term.academic_year,
             "invoice_count": 0,
             "student_count": 0,
@@ -189,7 +238,10 @@ def get_financial_mis(term, settings):
         }
 
     today = getdate(nowdate())
-    use_base = all("base_grand_total" in row for row in invoices)
+    use_base = (
+        "base_grand_total" in invoice_fields
+        and "base_outstanding_amount" in invoice_fields
+    )
     total_field = "base_grand_total" if use_base else "grand_total"
     outstanding_field = (
         "base_outstanding_amount"
@@ -211,8 +263,9 @@ def get_financial_mis(term, settings):
     }
 
     for invoice in invoices:
-        total = flt(invoice.get(total_field))
-        balance = max(0, flt(invoice.get(outstanding_field)))
+        total, balance = _invoice_amounts(
+            invoice, total_field, outstanding_field
+        )
         invoiced += total
         outstanding += balance
 
@@ -279,8 +332,11 @@ def get_financial_mis(term, settings):
         student = invoice.get("student")
         batch = batch_by_student.get(student) or "Unassigned"
         values = batch_totals[batch]
-        values["invoiced"] += flt(invoice.get(total_field))
-        values["outstanding"] += max(0, flt(invoice.get(outstanding_field)))
+        total, balance = _invoice_amounts(
+            invoice, total_field, outstanding_field
+        )
+        values["invoiced"] += total
+        values["outstanding"] += balance
         if student:
             values["students"].add(student)
 
@@ -341,6 +397,8 @@ def get_financial_mis(term, settings):
         "target": target,
         "overdue_target": overdue_target,
         "scope_source": scope_source,
+        "term_scope": term_scope,
+        "school_term": term.name,
         "academic_year": term.academic_year,
         "invoice_count": len(invoices),
         "student_count": len(students),

@@ -1,0 +1,49 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hs_header_1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Executive Management</b></span>\",\"col\":12}},{\"id\":\"hs_shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Executive Dashboard\",\"col\":4}},{\"id\":\"hs_shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Term\",\"col\":4}},{\"id\":\"hs_shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Board Reports\",\"col\":4}},{\"id\":\"hs_header_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>High School Operations</b></span>\",\"col\":12}},{\"id\":\"hs_card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"School Structure\",\"col\":4}},{\"id\":\"hs_card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment and Performance\",\"col\":4}},{\"id\":\"hs_card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance and Management\",\"col\":4}}]",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "education",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "High School",
+ "links": [
+  {"hidden":0,"is_query_report":0,"label":"School Structure","link_count":3,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"School Term","link_count":0,"link_to":"School Term","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Period","link_count":0,"link_to":"School Period","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Examination Cycle","link_count":0,"link_to":"School Examination Cycle","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Assessment and Performance","link_count":5,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"Exam Paper Requirement","link_count":0,"link_to":"Exam Paper Requirement","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Assessment Result Submission Tracker","link_count":0,"link_to":"Assessment Result Submission Tracker","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Performance Period","link_count":0,"link_to":"School Performance Period","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Student Performance Summary","link_count":0,"link_to":"Student Performance Summary","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Executive MIS Board Report","link_count":0,"link_to":"Executive MIS Board Report","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Attendance and Management","link_count":6,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"Student Attendance Intervention","link_count":0,"link_to":"Student Attendance Intervention","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Taliui Akonofo","link_count":0,"link_to":"Taliui Akonofo","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"MIS Issue","link_count":0,"link_to":"MIS Issue","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"MIS Alert Rule","link_count":0,"link_to":"MIS Alert Rule","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Ngaue Tanaki","link_count":0,"link_to":"Ngaue Tanaki","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School MIS Settings","link_count":0,"link_to":"School MIS Settings","link_type":"DocType","onboard":0,"type":"Link"}
+ ],
+ "module": "High School",
+ "name": "High School",
+ "number_cards": [],
+ "parent_page": "Education",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {"role":"Education Manager"},
+  {"role":"System Manager"}
+ ],
+ "sequence_id": 30.0,
+ "shortcuts": [
+  {"color":"Blue","doc_view":"","label":"School Executive Dashboard","link_to":"executive-dashboard","type":"Page"},
+  {"color":"Green","doc_view":"List","label":"School Term","link_to":"School Term","stats_filter":"[]","type":"DocType"},
+  {"color":"Orange","doc_view":"List","label":"Board Reports","link_to":"Executive MIS Board Report","stats_filter":"[]","type":"DocType"}
+ ],
+ "title": "High School"
+}

@@ -6,6 +6,7 @@ from high_school.high_school.mis.attendance import (
     analyse_attendance,
 )
 from high_school.high_school.mis.academic import get_performance_summary
+from high_school.high_school.mis.finance import get_financial_mis
 
 
 def _indicator(label, current, previous, unit="%", higher_is_better=True):
@@ -123,6 +124,17 @@ def get_school_direction(term, current_data, settings):
                 previous_average,
             )
         )
+
+        finance = current_data.get("finance", {})
+        if finance.get("enabled") and finance.get("available"):
+            previous_finance = get_financial_mis(previous, settings)
+            indicators.append(
+                _indicator(
+                    "Fee Collection",
+                    finance.get("collection_rate"),
+                    previous_finance.get("collection_rate"),
+                )
+            )
 
     finance = current_data.get("finance", {})
     finance_progress = None

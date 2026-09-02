@@ -12,6 +12,9 @@
  "page_name": "executive-dashboard",
  "roles": [
   {
+   "role": "Education Manager"
+  },
+  {
    "role": "System Manager"
   }
  ],
