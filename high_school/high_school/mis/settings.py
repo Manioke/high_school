@@ -154,8 +154,32 @@ def get_mis_settings():
             ),
 
         # =================================================
-        # Student Finance
+        # Whole-school Finance and Student Fees
         # =================================================
+
+        "track_school_finance": (
+            True
+            if settings.get("track_school_finance") is None
+            else bool(settings.get("track_school_finance"))
+        ),
+
+        "finance_company": settings.get("finance_company"),
+
+        "finance_cost_center": settings.get("finance_cost_center"),
+
+        "student_fee_income_account": settings.get(
+            "student_fee_income_account"
+        ),
+
+        "wage_expense_account": settings.get("wage_expense_account"),
+
+        "track_hr_payroll": (
+            True
+            if settings.get("track_hr_payroll") is None
+            else bool(settings.get("track_hr_payroll"))
+        ),
+
+        "payroll_payable_account": settings.get("payroll_payable_account"),
 
         "track_student_finance":
             (

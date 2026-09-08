@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series", "request_date", "requested_by", "company", "cost_center",
+  "purpose", "required_by", "request_section", "expense_account",
+  "requested_amount", "approved_amount", "disbursed_amount", "outstanding_amount",
+  "status", "progress", "approval_section", "approved_by", "approved_on",
+  "accounting_section", "purchase_invoice", "payment_entry", "journal_entry", "notes"
+ ],
+ "fields": [
+  {"default":"FUND-REQ-.YYYY.-.#####","fieldname":"naming_series","fieldtype":"Select","hidden":1,"label":"Naming Series","options":"FUND-REQ-.YYYY.-.#####","reqd":1},
+  {"default":"Today","fieldname":"request_date","fieldtype":"Date","in_list_view":1,"label":"Request Date","reqd":1},
+  {"default":"__user","fieldname":"requested_by","fieldtype":"Link","in_list_view":1,"label":"Requested By","options":"User","reqd":1},
+  {"fieldname":"company","fieldtype":"Link","in_list_view":1,"label":"Company","options":"Company","reqd":1},
+  {"fieldname":"cost_center","fieldtype":"Link","label":"Cost Center","options":"Cost Center"},
+  {"fieldname":"purpose","fieldtype":"Small Text","in_list_view":1,"label":"Purpose","reqd":1},
+  {"fieldname":"required_by","fieldtype":"Date","label":"Required By"},
+  {"fieldname":"request_section","fieldtype":"Section Break","label":"Requested Funding"},
+  {"fieldname":"expense_account","fieldtype":"Link","label":"Expected Expense Account","options":"Account"},
+  {"fieldname":"requested_amount","fieldtype":"Currency","in_list_view":1,"label":"Requested Amount","reqd":1},
+  {"fieldname":"approved_amount","fieldtype":"Currency","label":"Approved Amount"},
+  {"fieldname":"disbursed_amount","fieldtype":"Currency","label":"Disbursed Amount"},
+  {"fieldname":"outstanding_amount","fieldtype":"Currency","label":"Approved but Not Disbursed","read_only":1},
+  {"default":"Draft","fieldname":"status","fieldtype":"Select","in_list_view":1,"label":"Status","options":"Draft\nSubmitted\nUnder Review\nApproved\nPartly Disbursed\nDisbursed\nRejected\nCancelled","reqd":1},
+  {"fieldname":"progress","fieldtype":"Percent","in_list_view":1,"label":"Disbursement Progress","read_only":1},
+  {"fieldname":"approval_section","fieldtype":"Section Break","label":"Approval"},
+  {"fieldname":"approved_by","fieldtype":"Link","label":"Approved By","options":"User","read_only":1},
+  {"fieldname":"approved_on","fieldtype":"Datetime","label":"Approved On","read_only":1},
+  {"fieldname":"accounting_section","fieldtype":"Section Break","label":"ERPNext Accounting Evidence"},
+  {"description":"Use a submitted Purchase Invoice when the school owes a supplier.","fieldname":"purchase_invoice","fieldtype":"Link","label":"Purchase Invoice","options":"Purchase Invoice"},
+  {"description":"Use a submitted Payment Entry when money is paid or transferred.","fieldname":"payment_entry","fieldtype":"Link","label":"Payment Entry","options":"Payment Entry"},
+  {"description":"Use a submitted Journal Entry for accruals or accounting adjustments.","fieldname":"journal_entry","fieldtype":"Link","label":"Journal Entry","options":"Journal Entry"},
+  {"fieldname":"notes","fieldtype":"Text Editor","label":"Notes and Approval Evidence"}
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "High School",
+ "name": "School Fund Request",
+ "permissions": [
+  {"create":1,"email":1,"export":1,"print":1,"read":1,"report":1,"share":1,"write":1,"role":"System Manager"},
+  {"create":1,"email":1,"export":1,"print":1,"read":1,"report":1,"share":1,"write":1,"role":"Accounts Manager"},
+  {"create":1,"email":1,"export":1,"print":1,"read":1,"report":1,"share":1,"write":1,"role":"Education Manager"}
+ ],
+ "sort_field": "request_date",
+ "sort_order": "DESC",
+ "states": []
+}

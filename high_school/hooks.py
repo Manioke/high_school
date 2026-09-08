@@ -8,18 +8,18 @@ app_license = "mit"
 # Apps
 # ------------------
 
-required_apps = ["education"]
+required_apps = ["education", "hrms"]
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "high_school",
-# 		"logo": "/assets/high_school/logo.png",
-# 		"title": "High School",
-# 		"route": "/high_school",
-# 		"has_permission": "high_school.api.permission.has_app_permission"
-# 	}
-# ]
+# Each item in the list will be shown as an app in the apps page.
+add_to_apps_screen = [
+    {
+        "name": "high_school",
+        "logo": "/assets/high_school/images/high_school.svg",
+        "title": "High School",
+        "route": "/app/high-school",
+        "has_permission": "high_school.api.permissions.has_high_school_app_permission",
+    }
+]
 
 # Includes in <head>
 # ------------------

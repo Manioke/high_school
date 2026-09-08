@@ -10,6 +10,12 @@ PRIVILEGED_ROLES = {
 }
 
 
+def has_high_school_app_permission(user=None):
+    user = user or frappe.session.user
+    roles = set(frappe.get_roles(user))
+    return bool(roles.intersection({"Education Manager", "System Manager"}))
+
+
 def is_instructor_user(user):
     roles = set(frappe.get_roles(user))
     return "Instructor" in roles and not roles.intersection(PRIVILEGED_ROLES)

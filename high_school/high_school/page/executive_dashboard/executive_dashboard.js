@@ -988,6 +988,12 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 const changeText = change === null || change === undefined
                     ? 'No comparable result'
                     : `${change > 0 ? '+' : ''}${change}${indicator.unit || ''}`;
+                const currentValue = indicator.unit === '%'
+                    ? formatPercent(indicator.current)
+                    : `${formatNumber(indicator.current)}${indicator.unit || ''}`;
+                const previousValue = indicator.unit === '%'
+                    ? formatPercent(indicator.previous)
+                    : `${formatNumber(indicator.previous)}${indicator.unit || ''}`;
                 const arrow = indicator.direction === 'improving'
                     ? '↑'
                     : indicator.direction === 'declining'
@@ -1008,11 +1014,11 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                             ${escapeHtml(indicator.label)}
                         </div>
                         <div style="font-size: 22px; margin-top: 5px;">
-                            ${formatPercent(indicator.current)}
+                            ${currentValue}
                         </div>
                         <div style="color: #6c757d; margin-top: 4px;">
                             ${arrow} ${escapeHtml(changeText)} from
-                            ${formatPercent(indicator.previous)}
+                            ${previousValue}
                         </div>
                     </div>
                 `;
@@ -1128,10 +1134,18 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
         const finance =
             data.finance || {};
 
+        const financialOperations = finance.operations || {};
+        const payroll = financialOperations.payroll || {};
+
         const financeHasData = (
             finance.enabled
             && finance.available
             && Number(finance.invoice_count || 0) > 0
+        );
+
+        const operationsHaveData = (
+            financialOperations.enabled
+            && financialOperations.available
         );
 
 
@@ -1442,6 +1456,88 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         financeCards.push(
             createKpiCard({
+                title: 'Cash & Bank Available',
+                value: formatMoney(financialOperations.cash_and_bank, financialOperations.currency || finance.currency),
+                subtitle: operationsHaveData
+                    ? `As at ${financialOperations.as_of}`
+                    : 'Configure School Finance Company',
+                status: operationsHaveData ? 'healthy' : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Term Income',
+                value: formatMoney(financialOperations.term_income, financialOperations.currency || finance.currency),
+                subtitle: `Scope: ${financialOperations.scope || 'not configured'}`,
+                status: operationsHaveData ? 'healthy' : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Term Expenses',
+                value: formatMoney(financialOperations.term_expenses, financialOperations.currency || finance.currency),
+                subtitle: `Wages: ${formatMoney(financialOperations.wage_expense, financialOperations.currency || finance.currency)}`,
+                status: operationsHaveData ? financialOperations.status : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Operating Result',
+                value: formatMoney(financialOperations.operating_surplus, financialOperations.currency || finance.currency),
+                subtitle: `${formatPercent(financialOperations.operating_margin)} margin`,
+                status: operationsHaveData
+                    ? (Number(financialOperations.operating_surplus || 0) >= 0 ? 'healthy' : 'warning')
+                    : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Budget Used',
+                value: formatPercent((financialOperations.budget || {}).utilisation_rate),
+                subtitle: `${formatMoney((financialOperations.budget || {}).used, financialOperations.currency || finance.currency)} of ${formatMoney((financialOperations.budget || {}).budget_total, financialOperations.currency || finance.currency)}`,
+                status: operationsHaveData ? ((financialOperations.budget || {}).status || 'no_data') : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Payroll Processed',
+                value: formatMoney(payroll.net_pay, financialOperations.currency || finance.currency),
+                subtitle: `${formatNumber(payroll.employee_count)} employee(s), ${formatNumber(payroll.salary_slip_count)} submitted slip(s)`,
+                status: payroll.available ? (payroll.status || 'no_data') : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Payroll Payable',
+                value: payroll.payroll_payable_available
+                    ? formatMoney(payroll.payroll_payable, financialOperations.currency || finance.currency)
+                    : 'Not configured',
+                subtitle: 'Liability remaining after payroll bank entries',
+                status: payroll.payroll_payable_available
+                    ? (Number(payroll.payroll_payable || 0) > 0 ? 'warning' : 'healthy')
+                    : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
+                title: 'Open Fund Requests',
+                value: formatNumber((financialOperations.fund_requests || {}).open_count),
+                subtitle: `${formatMoney((financialOperations.fund_requests || {}).outstanding, financialOperations.currency || finance.currency)} approved, not disbursed`,
+                status: operationsHaveData
+                    ? (Number((financialOperations.fund_requests || {}).open_count || 0) ? 'warning' : 'healthy')
+                    : 'no_data'
+            })
+        );
+
+        financeCards.push(
+            createKpiCard({
                 title: 'Fee Collection',
                 value: formatPercent(finance.collection_rate),
                 subtitle: `Target: ${finance.target ?? 90}%`,
@@ -1451,29 +1547,9 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         financeCards.push(
             createKpiCard({
-                title: 'Collected',
-                value: formatMoney(finance.collected, finance.currency),
-                subtitle: `of ${formatMoney(finance.invoiced, finance.currency)} invoiced`,
-                status: financeHasData ? (finance.status || 'no_data') : 'no_data'
-            })
-        );
-
-        financeCards.push(
-            createKpiCard({
-                title: 'Outstanding Fees',
+                title: 'Outstanding / Overdue Fees',
                 value: formatMoney(finance.outstanding, finance.currency),
-                subtitle: `${formatNumber(finance.invoice_count)} invoice(s)`,
-                status: financeHasData
-                    ? (Number(finance.outstanding || 0) > 0 ? 'warning' : 'healthy')
-                    : 'no_data'
-            })
-        );
-
-        financeCards.push(
-            createKpiCard({
-                title: 'Overdue Students',
-                value: formatNumber(finance.overdue_student_count),
-                subtitle: formatMoney(finance.overdue, finance.currency),
+                subtitle: `${formatMoney(finance.overdue, finance.currency)} overdue across ${formatNumber(finance.overdue_student_count)} student(s)`,
                 status: financeHasData
                     ? (Number(finance.overdue_student_count || 0) > 0 ? 'warning' : 'healthy')
                     : 'no_data'
@@ -3320,27 +3396,106 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
     function renderFinanceManagement(data) {
 
         const finance = data.finance || {};
+        const operations = finance.operations || {};
+        const budget = operations.budget || {};
+        const fundRequests = operations.fund_requests || {};
+        const payroll = operations.payroll || {};
         const container = $('#finance-management-content');
+        const currency = operations.currency || finance.currency;
 
+        let operationsHtml = `
+            <div class="alert alert-warning">
+                ${escapeHtml(operations.message || 'Whole-school finance is disabled in School MIS Settings.')}
+                <button class="btn btn-xs btn-default open-finance-settings" style="margin-left: 8px;">Open Settings</button>
+            </div>
+        `;
+
+        if (operations.enabled && operations.available) {
+            const budgetStatus = budget.budget_count
+                ? `${formatPercent(budget.utilisation_rate)} used; ${formatMoney(budget.remaining, currency)} remaining`
+                : 'No submitted ERPNext Budget found for this fiscal year.';
+            const fundRows = (fundRequests.items || []).map(request => `
+                <tr>
+                    <td>${escapeHtml(request.name)}</td>
+                    <td>${escapeHtml(request.purpose)}</td>
+                    <td>${escapeHtml(request.status)}</td>
+                    <td class="text-right">${formatMoney(request.requested_amount, currency)}</td>
+                    <td class="text-right">${formatMoney(request.disbursed_amount, currency)}</td>
+                    <td>${formatPercent(request.progress)}</td>
+                    <td><button class="btn btn-xs btn-default open-fund-request" data-name="${escapeHtml(request.name)}">Open</button></td>
+                </tr>
+            `).join('');
+            const payrollRows = (payroll.payroll_entries || []).map(entry => `
+                <tr>
+                    <td>${escapeHtml(entry.name)}</td>
+                    <td>${escapeHtml(entry.payroll_frequency || '')}</td>
+                    <td>${escapeHtml(entry.start_date || '')} – ${escapeHtml(entry.end_date || '')}</td>
+                    <td>${escapeHtml(entry.status || (Number(entry.docstatus) === 1 ? 'Submitted' : 'Draft'))}</td>
+                    <td><button class="btn btn-xs btn-default open-payroll-entry" data-name="${escapeHtml(entry.name)}">Open</button></td>
+                </tr>
+            `).join('');
+
+            operationsHtml = `
+                <div style="margin-bottom: 18px;">
+                    <h4 style="margin-top: 0;">Whole-School Financial Position</h4>
+                    <div class="text-muted">
+                        Submitted ERPNext General Ledger entries for <b>${escapeHtml(operations.scope)}</b>,
+                        ${escapeHtml(data.school_term.name)} through ${escapeHtml(operations.as_of)}.
+                        Cash, income, expenses, and invoice collection are intentionally shown separately.
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                    <div class="card" style="padding: 14px;"><b>Income composition</b><div style="margin-top:8px;">Student fees: ${operations.student_fee_income_account_configured ? formatMoney(operations.student_fee_income, currency) : 'account not configured'}</div><div>Other income: ${formatMoney(operations.other_income, currency)}</div></div>
+                    <div class="card" style="padding: 14px;"><b>Expense composition</b><div style="margin-top:8px;">Employee wages: ${operations.wage_expense_account_configured ? formatMoney(operations.wage_expense, currency) : 'account not configured'}</div><div>Other expenses: ${formatMoney(operations.other_expenses, currency)}</div></div>
+                    <div class="card" style="padding: 14px;"><b>Budget (${escapeHtml(budget.fiscal_year || 'not set')})</b><div style="margin-top:8px;">${escapeHtml(budgetStatus)}</div><div>${formatMoney(budget.used, currency)} actual against ${formatMoney(budget.budget_total, currency)} budgeted</div></div>
+                    <div class="card" style="padding: 14px;"><b>Fund requests this term</b><div style="margin-top:8px;">${formatNumber(fundRequests.open_count)} open; ${formatMoney(fundRequests.outstanding, currency)} approved but not disbursed</div><div>${formatMoney(fundRequests.disbursed, currency)} disbursed</div></div>
+                </div>
+                <div style="margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 8px;">
+                    <button class="btn btn-primary btn-sm new-fund-request">New Fund Request</button>
+                    <button class="btn btn-default btn-sm open-budgets">Manage Budgets</button>
+                    <button class="btn btn-default btn-sm open-profit-loss">Profit and Loss</button>
+                    <button class="btn btn-default btn-sm open-balance-sheet">Balance Sheet</button>
+                    <button class="btn btn-default btn-sm open-cash-flow">Cash Flow</button>
+                    <button class="btn btn-default btn-sm open-general-ledger">General Ledger</button>
+                    <button class="btn btn-default btn-sm open-payables">Accounts Payable</button>
+                    <button class="btn btn-default btn-sm open-finance-settings">Finance Settings</button>
+                </div>
+                <h5>Frappe HR Payroll</h5>
+                <div class="text-muted" style="margin-bottom: 10px;">
+                    ${formatMoney(payroll.gross_pay, currency)} gross, ${formatMoney(payroll.deductions, currency)} deductions,
+                    and ${formatMoney(payroll.net_pay, currency)} net across ${formatNumber(payroll.salary_slip_count)} submitted Salary Slip(s).
+                    ${payroll.payroll_payable_available
+                        ? `Current Payroll Payable ledger balance: <b>${formatMoney(payroll.payroll_payable, currency)}</b>.`
+                        : 'Select the Payroll Payable Account in School MIS Settings to monitor the unpaid payroll liability.'}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                    <button class="btn btn-default btn-sm open-payroll-entries">Payroll Entries</button>
+                    <button class="btn btn-default btn-sm open-salary-slips">Salary Slips</button>
+                    <button class="btn btn-default btn-sm open-salary-structures">Salary Structures</button>
+                    <button class="btn btn-default btn-sm open-employees">Employees</button>
+                </div>
+                <div style="overflow-x: auto; margin-bottom: 22px;">
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Payroll Entry</th><th>Frequency</th><th>Period</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>${payrollRows || '<tr><td colspan="5">No Payroll Entries overlap this School Term.</td></tr>'}</tbody>
+                    </table>
+                </div>
+                <h5>Fund Request Progress</h5>
+                <div style="overflow-x: auto; margin-bottom: 22px;">
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Request</th><th>Purpose</th><th>Status</th><th>Requested</th><th>Disbursed</th><th>Progress</th><th>Action</th></tr></thead>
+                        <tbody>${fundRows || '<tr><td colspan="7">No fund requests for this School Term.</td></tr>'}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        let studentFeesHtml = '';
         if (!finance.enabled) {
-            container.html(`
-                <div class="text-muted">
-                    Student finance tracking is disabled in School MIS Settings.
-                </div>
-            `);
-            setSectionVisibility('#finance-management-container', true);
-            return;
-        }
-
-        if (!finance.available) {
-            container.html(`
-                <div class="alert alert-warning">
-                    ${escapeHtml(finance.message || 'Student fee invoice information is unavailable.')}
-                </div>
-            `);
-            setSectionVisibility('#finance-management-container', true);
-            return;
-        }
+            studentFeesHtml = '<div class="text-muted">Student fee invoice tracking is disabled in School MIS Settings.</div>';
+        } else if (!finance.available) {
+            studentFeesHtml = `<div class="alert alert-warning">${escapeHtml(finance.message || 'Student fee invoice information is unavailable.')}</div>`;
+        } else {
 
         const ageingRows = (finance.ageing || [])
             .map(row => `
@@ -3382,7 +3537,9 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             `)
             .join('');
 
-        container.html(`
+        studentFeesHtml = `
+            <hr>
+            <h4>Student Fees, Invoices, and Collection</h4>
             <div class="text-muted" style="margin-bottom: 16px;">
                 ${escapeHtml(finance.school_term || data.school_term.name)} student invoices,
                 identified through ${escapeHtml(finance.scope_source || 'the education invoice link')}
@@ -3436,7 +3593,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             <button id="open-student-invoices-btn" class="btn btn-default btn-sm">
                 Open Student Sales Invoices
             </button>
-        `);
+        `;
+        }
+
+        container.html(operationsHtml + studentFeesHtml);
 
         setSectionVisibility('#finance-management-container', true);
 
@@ -3451,6 +3611,21 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             .on('click', function() {
                 frappe.set_route('List', 'Sales Invoice');
             });
+
+        container.off('click', '.open-finance-settings').on('click', '.open-finance-settings', () => frappe.set_route('Form', 'School MIS Settings'));
+        container.off('click', '.new-fund-request').on('click', '.new-fund-request', () => frappe.new_doc('School Fund Request', {company: operations.company, cost_center: operations.cost_center}));
+        container.off('click', '.open-fund-request').on('click', '.open-fund-request', function() { frappe.set_route('Form', 'School Fund Request', $(this).data('name')); });
+        container.off('click', '.open-budgets').on('click', '.open-budgets', () => frappe.set_route('List', 'Budget'));
+        container.off('click', '.open-profit-loss').on('click', '.open-profit-loss', () => frappe.set_route('query-report', 'Profit and Loss Statement'));
+        container.off('click', '.open-balance-sheet').on('click', '.open-balance-sheet', () => frappe.set_route('query-report', 'Balance Sheet'));
+        container.off('click', '.open-cash-flow').on('click', '.open-cash-flow', () => frappe.set_route('query-report', 'Cash Flow'));
+        container.off('click', '.open-general-ledger').on('click', '.open-general-ledger', () => frappe.set_route('query-report', 'General Ledger'));
+        container.off('click', '.open-payables').on('click', '.open-payables', () => frappe.set_route('query-report', 'Accounts Payable'));
+        container.off('click', '.open-payroll-entry').on('click', '.open-payroll-entry', function() { frappe.set_route('Form', 'Payroll Entry', $(this).data('name')); });
+        container.off('click', '.open-payroll-entries').on('click', '.open-payroll-entries', () => frappe.set_route('List', 'Payroll Entry'));
+        container.off('click', '.open-salary-slips').on('click', '.open-salary-slips', () => frappe.set_route('List', 'Salary Slip'));
+        container.off('click', '.open-salary-structures').on('click', '.open-salary-structures', () => frappe.set_route('List', 'Salary Structure'));
+        container.off('click', '.open-employees').on('click', '.open-employees', () => frappe.set_route('List', 'Employee'));
 
     }
 

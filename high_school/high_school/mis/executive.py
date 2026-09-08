@@ -29,6 +29,9 @@ from high_school.high_school.mis.academic import (
 from high_school.high_school.mis.finance import (
     get_financial_mis,
 )
+from high_school.high_school.mis.school_finance import (
+    get_school_financial_operations,
+)
 
 from high_school.high_school.mis.direction import (
     get_school_direction,
@@ -370,6 +373,12 @@ def get_executive_summary(
         term=term,
         settings=settings,
     )
+    finance["operations"] = get_school_financial_operations(
+        term=term,
+        settings=settings,
+    )
+    if not finance.get("currency"):
+        finance["currency"] = finance["operations"].get("currency")
 
     # =====================================================
     # Executive Payload

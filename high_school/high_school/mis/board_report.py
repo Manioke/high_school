@@ -49,6 +49,28 @@ def _recommendations(data):
         recommendations.append(
             "Follow up overdue student accounts and monitor collection against the {0}% target.".format(finance.get("target"))
         )
+    operations = finance.get("operations") or {}
+    if operations.get("available") and operations.get("operating_surplus", 0) < 0:
+        recommendations.append(
+            "Review the term operating deficit and defer non-essential spending until an approved recovery plan is recorded."
+        )
+    budget = operations.get("budget") or {}
+    if budget.get("utilisation_rate") is not None and budget.get("utilisation_rate") > 100:
+        recommendations.append(
+            "Investigate expenditure above the submitted annual budget and record the approved budget revision or corrective action."
+        )
+    fund_requests = operations.get("fund_requests") or {}
+    if fund_requests.get("open_count"):
+        recommendations.append(
+            "Review {0} open school fund request(s), including approval and disbursement evidence.".format(
+                fund_requests.get("open_count")
+            )
+        )
+    payroll = operations.get("payroll") or {}
+    if payroll.get("payroll_payable") and payroll.get("payroll_payable") > 0:
+        recommendations.append(
+            "Review the remaining payroll payable balance and submit the authorised Frappe HR Bank Entry when salaries have actually been paid."
+        )
     return recommendations or ["Maintain current controls and continue monitoring the next School Term comparison."]
 
 
@@ -63,6 +85,10 @@ def _report_html(data):
     results = academics.get("result_submission") or {}
     performance = academics.get("performance") or {}
     finance = data.get("finance") or {}
+    operations = finance.get("operations") or {}
+    budget = operations.get("budget") or {}
+    fund_requests = operations.get("fund_requests") or {}
+    payroll = operations.get("payroll") or {}
     indicator_rows = "".join(
         "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>".format(
             escape_html(row.get("label")), _value(row.get("current")),
@@ -81,6 +107,11 @@ def _report_html(data):
        <tr><th>School academic average</th><td>{average}</td><th>Actionable persistent absence</th><td>{absence}</td></tr>
        <tr><th>Fees invoiced</th><td>{invoiced}</td><th>Fees collected</th><td>{collected} ({collection})</td></tr>
        <tr><th>Outstanding / overdue</th><td colspan="3">{outstanding} outstanding; {overdue} overdue</td></tr>
+       <tr><th>Cash and bank available</th><td>{cash}</td><th>Term income</th><td>{income}</td></tr>
+       <tr><th>Term expenses</th><td>{expenses}</td><th>Operating result</th><td>{surplus} ({margin})</td></tr>
+       <tr><th>Employee wages</th><td>{wages}</td><th>Annual budget used</th><td>{budget_used} of {budget_total} ({budget_rate})</td></tr>
+       <tr><th>Submitted payroll net pay</th><td>{payroll_net}</td><th>Payroll payable balance</th><td>{payroll_payable}</td></tr>
+       <tr><th>Open fund requests</th><td>{fund_count}</td><th>Approved, not disbursed</th><td>{fund_outstanding}</td></tr>
       </tbody></table>
       <h3>Recommended Management Actions</h3><ol>{recommendations}</ol>
     """.format(
@@ -96,6 +127,23 @@ def _report_html(data):
         invoiced=_money(finance.get("invoiced"), finance.get("currency")),
         collected=_money(finance.get("collected"), finance.get("currency")), collection=_value(finance.get("collection_rate")),
         outstanding=_money(finance.get("outstanding"), finance.get("currency")), overdue=_money(finance.get("overdue"), finance.get("currency")),
+        cash=_money(operations.get("cash_and_bank"), operations.get("currency") or finance.get("currency")),
+        income=_money(operations.get("term_income"), operations.get("currency") or finance.get("currency")),
+        expenses=_money(operations.get("term_expenses"), operations.get("currency") or finance.get("currency")),
+        surplus=_money(operations.get("operating_surplus"), operations.get("currency") or finance.get("currency")),
+        margin=_value(operations.get("operating_margin")),
+        wages=_money(operations.get("wage_expense"), operations.get("currency") or finance.get("currency")),
+        payroll_net=_money(payroll.get("net_pay"), operations.get("currency") or finance.get("currency")),
+        payroll_payable=(
+            _money(payroll.get("payroll_payable"), operations.get("currency") or finance.get("currency"))
+            if payroll.get("payroll_payable_available")
+            else "Not configured"
+        ),
+        budget_used=_money(budget.get("used"), operations.get("currency") or finance.get("currency")),
+        budget_total=_money(budget.get("budget_total"), operations.get("currency") or finance.get("currency")),
+        budget_rate=_value(budget.get("utilisation_rate")),
+        fund_count=fund_requests.get("open_count") or 0,
+        fund_outstanding=_money(fund_requests.get("outstanding"), operations.get("currency") or finance.get("currency")),
         recommendations=recommendations,
     )
 

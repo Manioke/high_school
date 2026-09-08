@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="High School">
+  <rect width="64" height="64" rx="15" fill="#1677ff"/>
+  <path d="M10 27 32 14l22 13-22 13L10 27Z" fill="#fff"/>
+  <path d="M17 34v12c8 6 22 6 30 0V34l-15 9-15-9Z" fill="#dcebff"/>
+  <path d="M53 28v15" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="53" cy="47" r="3" fill="#fff"/>
+</svg>

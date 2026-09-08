@@ -26,6 +26,13 @@
   "assessment_plan_coverage_target",
   "assessment_result_submission_target",
   "finance_mis_section",
+  "track_school_finance",
+  "finance_company",
+  "finance_cost_center",
+  "student_fee_income_account",
+  "wage_expense_account",
+  "track_hr_payroll",
+  "payroll_payable_account",
   "track_student_finance",
   "fee_collection_target",
   "overdue_fee_target",
@@ -175,6 +182,55 @@
    "fieldname": "finance_mis_section",
    "fieldtype": "Section Break",
    "label": "Executive Finance Targets"
+  },
+  {
+   "default": "1",
+   "description": "Use submitted ERPNext General Ledger entries, Budgets, and School Fund Requests for the executive financial position. This does not create a second ledger.",
+   "fieldname": "track_school_finance",
+   "fieldtype": "Check",
+   "label": "Track Whole-School Finance"
+  },
+  {
+   "description": "Company whose General Ledger represents this school. Required for whole-school financial reporting.",
+   "fieldname": "finance_company",
+   "fieldtype": "Link",
+   "label": "School Finance Company",
+   "options": "Company"
+  },
+  {
+   "description": "Optional Cost Center used to limit income, expenses, budgets, and fund requests to this school or campus.",
+   "fieldname": "finance_cost_center",
+   "fieldtype": "Link",
+   "label": "School Finance Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "description": "Optional income Account (or group Account) used to identify student fee income in the General Ledger.",
+   "fieldname": "student_fee_income_account",
+   "fieldtype": "Link",
+   "label": "Student Fee Income Account",
+   "options": "Account"
+  },
+  {
+   "description": "Expense Account (or group Account) used for weekly, fortnightly, or other employee wage postings.",
+   "fieldname": "wage_expense_account",
+   "fieldtype": "Link",
+   "label": "Employee Wages Expense Account",
+   "options": "Account"
+  },
+  {
+   "default": "1",
+   "description": "Summarize submitted Frappe HR Salary Slips and Payroll Entries for the selected School Term.",
+   "fieldname": "track_hr_payroll",
+   "fieldtype": "Check",
+   "label": "Track Frappe HR Payroll"
+  },
+  {
+   "description": "Optional Payroll Payable liability Account used by Frappe HR. Its ledger balance shows salaries accrued but not yet settled through the payroll Bank Entry.",
+   "fieldname": "payroll_payable_account",
+   "fieldtype": "Link",
+   "label": "Payroll Payable Account",
+   "options": "Account"
   },
   {
    "default": "1",

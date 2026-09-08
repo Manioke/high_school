@@ -7,6 +7,9 @@ from high_school.high_school.mis.attendance import (
 )
 from high_school.high_school.mis.academic import get_performance_summary
 from high_school.high_school.mis.finance import get_financial_mis
+from high_school.high_school.mis.school_finance import (
+    get_school_financial_operations,
+)
 
 
 def _indicator(label, current, previous, unit="%", higher_is_better=True):
@@ -133,6 +136,19 @@ def get_school_direction(term, current_data, settings):
                     "Fee Collection",
                     finance.get("collection_rate"),
                     previous_finance.get("collection_rate"),
+                )
+            )
+
+        operations = finance.get("operations") or {}
+        if operations.get("enabled") and operations.get("available"):
+            previous_operations = get_school_financial_operations(
+                previous, settings
+            )
+            indicators.append(
+                _indicator(
+                    "Operating Margin",
+                    operations.get("operating_margin"),
+                    previous_operations.get("operating_margin"),
                 )
             )
 
