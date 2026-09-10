@@ -2,7 +2,7 @@
  "app": "high_school",
  "charts": [],
  "content": "[{\"id\":\"hs_header_1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Executive Management</b></span>\",\"col\":12}},{\"id\":\"hs_shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Executive Dashboard\",\"col\":3}},{\"id\":\"hs_shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Term\",\"col\":3}},{\"id\":\"hs_shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Board Reports\",\"col\":3}},{\"id\":\"hs_shortcut_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bulk Report Cards\",\"col\":3}},{\"id\":\"hs_header_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>High School Operations</b></span>\",\"col\":12}},{\"id\":\"hs_card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"School Structure\",\"col\":3}},{\"id\":\"hs_card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment and Performance\",\"col\":3}},{\"id\":\"hs_card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance and Management\",\"col\":3}},{\"id\":\"hs_card_4\",\"type\":\"card\",\"data\":{\"card_name\":\"School Finance\",\"col\":3}}]",
- "creation": "2026-09-09 21:08:09.448122",
+ "creation": "2026-09-10 16:40:03.185001",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -256,7 +256,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-10 12:45:10.667102",
+ "modified": "2026-09-10 17:38:07.413331",
  "modified_by": "Administrator",
  "module": "High School",
  "name": "High School",

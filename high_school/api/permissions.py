@@ -17,6 +17,13 @@ def is_instructor_user(user):
 
 
 def get_instructor(user):
+    instructor_fields = {field.fieldname for field in frappe.get_meta("Instructor").fields}
+    for fieldname in ("user", "user_id"):
+        if fieldname in instructor_fields:
+            instructor = frappe.db.get_value("Instructor", {fieldname: user}, "name")
+            if instructor:
+                return instructor
+
     employee = frappe.db.get_value(
         "Employee",
         {"user_id": user},
@@ -301,10 +308,14 @@ def assessment_result_has_permission(
     }:
         return False
 
-    return instructor_teaches_assessment_plan(
-        doc.assessment_plan,
-        user,
-    )
+    assessment_plan = getattr(doc, "assessment_plan", None)
+    if (
+        permission_type == "create"
+        and not assessment_plan
+        and getattr(frappe.flags, "in_high_school_assessment_result_tool", False)
+    ):
+        return True
+    return instructor_teaches_assessment_plan(assessment_plan, user)
 
 
 def validate_assessment_result(doc, method=None):

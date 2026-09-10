@@ -170,9 +170,26 @@ def get_mis_settings():
             settings.get("academic_intervention_standard_deviations"), 1.5
         ),
 
+        "academic_intervention_consecutive_periods": _int_setting(
+            settings.get("academic_intervention_consecutive_periods"), 2
+        ),
+
         "auto_create_attendance_interventions": (
             True if settings.get("auto_create_attendance_interventions") is None
             else bool(settings.get("auto_create_attendance_interventions"))
+        ),
+
+        "course_attendance_absence_trigger_count": _int_setting(
+            settings.get("course_attendance_absence_trigger_count"), 3
+        ),
+
+        "course_attendance_escalation_absence_count": _int_setting(
+            settings.get("course_attendance_escalation_absence_count"), 3
+        ),
+
+        "send_intervention_email_notifications": (
+            True if settings.get("send_intervention_email_notifications") is None
+            else bool(settings.get("send_intervention_email_notifications"))
         ),
 
         "intervention_follow_up_days": _int_setting(

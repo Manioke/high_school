@@ -25,7 +25,14 @@ def apply_attendance_interventions(persistent_absence, school_term):
 
     plan_rows = frappe.get_all(
         "Student Intervention Plan",
-        filters={"school_term": school_term, "intervention_type": "Attendance"},
+        # Only legacy aggregate plans can suppress the aggregate persistent-
+        # absence list. New plans are course-specific, so closing Mathematics
+        # must not hide unresolved absence in another course.
+        filters={
+            "school_term": school_term,
+            "intervention_type": "Attendance",
+            "course": ["is", "not set"],
+        },
         fields=[
             "name", "student", "attendance_scope", "status",
             "evidence_count", "resolved_evidence_count", "closed_on",

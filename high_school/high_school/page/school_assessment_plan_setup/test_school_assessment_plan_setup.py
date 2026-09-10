@@ -23,3 +23,9 @@ class TestSchoolAssessmentPlanSetup(TestCase):
 		result = _deduplicate_candidates(rows)
 		self.assertEqual(result[0]["instructor_mapping_status"], "Conflicting")
 		self.assertIsNone(result[0]["instructor"])
+
+	def test_missing_room_stays_blank_during_candidate_deduplication(self):
+		result = _deduplicate_candidates([
+			{"student_group": "F5-A", "course": "English", "instructor": "Teacher 1"},
+		])
+		self.assertIsNone(result[0].get("room"))

@@ -1,11 +1,14 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate, now_datetime, nowdate
+from frappe.utils import now_datetime, nowdate
 
 
 CLOSED_STATUSES = {"Closed - Successful", "Closed - Not Required"}
-ACTION_REQUIRED_STATUSES = {"Action Planned", "In Progress", "Ready for Review", "Overdue", "Escalated"}
+ACTION_REQUIRED_STATUSES = {
+    "Action Planned", "In Progress", "Monitoring", "Ready for Review",
+    "Overdue", "Escalated",
+}
 
 
 class StudentInterventionPlan(Document):
@@ -13,25 +16,52 @@ class StudentInterventionPlan(Document):
         self.opened_on = self.opened_on or now_datetime()
 
     def validate(self):
+        if self.is_new() and not self.course:
+            frappe.throw(_("Course is required for every new Student Intervention Plan."))
+        self._set_monitoring_start()
         self._validate_management_evidence()
         self._validate_actions()
-        self._apply_follow_up_outcome()
         self._validate_closure()
 
+    def _set_monitoring_start(self):
+        before = self.get_doc_before_save()
+        previous_status = before.status if before else None
+        monitored = {"Action Planned", "In Progress", "Monitoring", "Ready for Review"}
+        if self.status in monitored and previous_status not in monitored:
+            self.monitoring_started_on = self.monitoring_started_on or now_datetime()
+
     def _validate_management_evidence(self):
+        before = self.get_doc_before_save()
+        if (
+            self.status == "Escalated"
+            and (not before or before.status != "Escalated")
+            and not self.escalation_reason
+        ):
+            frappe.throw(_("Use the Escalate button so an escalation reason and notifications are recorded."))
+        automatic_close = (
+            self.status == "Closed - Successful"
+            and self.comparison_summary
+            and float(self.percentage_point_change or 0) > 0
+        )
+        automatic_escalation = self.status == "Escalated" and self.escalation_reason
+        if automatic_close or automatic_escalation:
+            return
         if self.status in ACTION_REQUIRED_STATUSES | CLOSED_STATUSES:
             if not self.root_cause:
                 frappe.throw(_("Select the Primary Root Cause before moving this plan forward."))
             if not self.diagnosis_notes:
                 frappe.throw(_("Diagnosis Evidence and Notes are required before moving this plan forward."))
-            if not self.review_date:
-                frappe.throw(_("A Mandatory Review Date is required."))
-
-        if self.review_date and getdate(self.review_date) < getdate(self.opened_on or nowdate()):
-            frappe.throw(_("The Mandatory Review Date cannot be before the plan was opened."))
 
     def _validate_actions(self):
-        if self.status in ACTION_REQUIRED_STATUSES | {"Closed - Successful"} and not self.actions:
+        automatic_outcome = (
+            (self.status == "Closed - Successful" and self.comparison_summary)
+            or (self.status == "Escalated" and self.escalation_reason)
+        )
+        if (
+            self.status in ACTION_REQUIRED_STATUSES | {"Closed - Successful"}
+            and not self.actions
+            and not automatic_outcome
+        ):
             frappe.throw(_("Add at least one concrete intervention action."))
         for action in self.actions or []:
             if action.status == "Completed":
@@ -42,30 +72,6 @@ class StudentInterventionPlan(Document):
             elif action.status != "Cancelled":
                 action.completed_on = None
 
-    def _apply_follow_up_outcome(self):
-        if self.status != "Ready for Review" or self.follow_up_value in (None, ""):
-            return
-        if not self.follow_up_evidence:
-            frappe.throw(_("Enter the follow-up assessment or attendance evidence before recording its result."))
-        improved = (
-            float(self.follow_up_value) > float(self.baseline_value or 0)
-            if self.metric_direction == "Higher is Better"
-            else float(self.follow_up_value) < float(self.baseline_value or 0)
-        )
-        if improved:
-            self.outcome = self.outcome or "Improved - Continue Monitoring"
-            return
-
-        # A completed review that did not improve is an escalation, not a
-        # successful closure. The principal becomes accountable immediately.
-        from high_school.high_school.mis.settings import get_mis_settings
-
-        principal = get_mis_settings().get("school_principal_user")
-        self.status = "Escalated"
-        self.outcome = "No Improvement - Escalated"
-        self.escalated_to = principal or self.hod_user or self.assigned_to
-        self.escalated_on = self.escalated_on or now_datetime()
-
     def _validate_closure(self):
         if self.status not in CLOSED_STATUSES:
             self.closed_on = None
@@ -74,23 +80,11 @@ class StudentInterventionPlan(Document):
             frappe.throw(_("Resolution / Next-step Notes are required before closing the plan."))
 
         if self.status == "Closed - Successful":
-            incomplete = [row for row in self.actions if row.status not in {"Completed", "Cancelled"}]
-            if incomplete:
-                frappe.throw(_("Complete or cancel every assigned action before closing this plan as successful."))
-            if self.follow_up_value is None or self.follow_up_value == "":
-                frappe.throw(_("Enter the Follow-up Value before closing this plan as successful."))
-            if not self.follow_up_evidence:
-                frappe.throw(_("Link or describe the follow-up assessment or attendance evidence."))
-            improved = (
-                float(self.follow_up_value) > float(self.baseline_value or 0)
-                if self.metric_direction == "Higher is Better"
-                else float(self.follow_up_value) < float(self.baseline_value or 0)
-            )
-            if not improved:
-                frappe.throw(
-                    _("The follow-up result has not improved from the baseline. Continue the plan or escalate it.")
-                )
-            self.outcome = self.outcome or "Improved - Target Met"
+            if self.intervention_type != "Academic" or not self.comparison_summary:
+                frappe.throw(_("Successful closure is set automatically from the next submitted Student Performance Summary."))
+            if float(self.percentage_point_change or 0) <= 0:
+                frappe.throw(_("The next overall performance result did not improve."))
+            self.outcome = self.outcome or "Improved - Continue Monitoring"
 
         self.closed_on = self.closed_on or now_datetime()
         self.resolved_evidence_count = self.evidence_count or 0
@@ -113,7 +107,7 @@ class StudentInterventionPlan(Document):
                 action.due_date,
             )
         was_escalated = before and before.status == "Escalated"
-        if self.status == "Escalated" and not was_escalated:
+        if self.status == "Escalated" and not was_escalated and not self.escalation_reason:
             escalation_owner = self.escalated_to or self.hod_user or self.assigned_to
             _notify_user(escalation_owner, _("Student intervention escalated after review"), self)
             from high_school.high_school.student_interventions import assign_plan_todo
@@ -122,7 +116,7 @@ class StudentInterventionPlan(Document):
                 escalation_owner,
                 self,
                 _("Review escalated student intervention"),
-                self.review_date,
+                nowdate(),
             )
         if self.status in CLOSED_STATUSES:
             for todo in frappe.get_all(

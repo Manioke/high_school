@@ -45,7 +45,7 @@ def _course_schedule_candidates(group_names, academic_year, course):
 		return []
 
 	query_fields = ["student_group", "course"]
-	for fieldname in ("instructor", "room"):
+	for fieldname in ("instructor",):
 		if fieldname in fields:
 			query_fields.append(fieldname)
 
@@ -100,8 +100,6 @@ def _deduplicate_candidates(rows):
 		else:
 			if row.get("instructor"):
 				current["instructors"].add(row.get("instructor"))
-			if not current.get("room") and row.get("room"):
-				current["room"] = row.get("room")
 
 	result = []
 	for row in by_key.values():
@@ -190,7 +188,7 @@ def get_setup_candidates(
 					"course": course,
 					"instructor": assignment.instructor,
 					"instructor_mapping_status": assignment.instructor_mapping_status,
-					"room": requirement.room or assignment.room,
+					"room": None,
 					"existing_plan": existing,
 					"create_plan": 0 if existing else 1,
 				}
@@ -209,7 +207,7 @@ def get_setup_candidates(
 				"schedule_date": requirement.examination_date,
 				"from_time": requirement.from_time,
 				"to_time": requirement.to_time,
-				"room": requirement.room,
+				"room": None,
 				"grading_scale": requirement.grading_scale,
 			},
 			"message": _(

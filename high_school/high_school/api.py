@@ -417,10 +417,12 @@ def mark_assessment_result(assessment_plan, scores):
         mark_assessment_result as standard_method,
     )
 
-    return standard_method(
-        assessment_plan,
-        scores,
-    )
+    previous = getattr(frappe.flags, "in_high_school_assessment_result_tool", False)
+    frappe.flags.in_high_school_assessment_result_tool = True
+    try:
+        return standard_method(assessment_plan, scores)
+    finally:
+        frappe.flags.in_high_school_assessment_result_tool = previous
 
 
 @frappe.whitelist()
@@ -434,7 +436,9 @@ def submit_assessment_results(
         submit_assessment_results as standard_method,
     )
 
-    return standard_method(
-        assessment_plan,
-        student_group,
-    )
+    previous = getattr(frappe.flags, "in_high_school_assessment_result_tool", False)
+    frappe.flags.in_high_school_assessment_result_tool = True
+    try:
+        return standard_method(assessment_plan, student_group)
+    finally:
+        frappe.flags.in_high_school_assessment_result_tool = previous

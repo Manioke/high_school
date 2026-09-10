@@ -2442,18 +2442,20 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
         const interventions = data.interventions || {};
         const attendancePlanCount = Number(interventions.attendance_open || 0);
-
-
-        if (count <= 0 && attendancePlanCount <= 0) {
-
-            setSectionVisibility(
-                '#student-management-container',
-                false
-            );
-
-            return;
-
-        }
+        const attendanceRows = (interventions.items || [])
+            .filter(plan => plan.intervention_type === 'Attendance')
+            .slice(0, 10)
+            .map(plan => `
+                <tr>
+                    <td>${escapeHtml(plan.student_name || plan.student)}</td>
+                    <td>${escapeHtml(plan.course || '')}</td>
+                    <td>${escapeHtml(plan.student_group || '')}</td>
+                    <td>${escapeHtml(plan.instructor || '')}</td>
+                    <td>${escapeHtml(plan.status || '')}</td>
+                    <td>${formatNumber(plan.post_plan_absence_count || 0)}</td>
+                    <td><button class="btn btn-xs btn-default open-attendance-intervention" data-name="${escapeHtml(plan.name)}">Open</button></td>
+                </tr>
+            `).join('');
 
 
         $('#student-management-content')
@@ -2489,20 +2491,16 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                             "
                         >
 
-                            ${count} student(s) currently exceed the persistent-absence threshold.
-                            ${attendancePlanCount} attendance plan(s) remain active.
+                            ${count} student(s) currently exceed the whole-term persistent-absence threshold.
+                            ${attendancePlanCount} course-specific attendance plan(s) remain active.
 
                         </div>
 
                     </div>
 
 
-                    <button
-                        id="investigate-students-btn"
-                        class="btn btn-primary btn-sm"
-                        ${count ? '' : 'disabled'}
-                    >
-                        Investigate Students
+                    <button id="refresh-attendance-interventions-btn" class="btn btn-primary btn-sm">
+                        Detect / Refresh Course Plans
                     </button>
 
                     <button
@@ -2514,6 +2512,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
                 </div>
 
+                <div style="overflow-x:auto; margin-top:16px;">
+                    <table class="table table-bordered table-hover">
+                        <thead><tr><th>Student</th><th>Course</th><th>Group</th><th>Instructor</th><th>Status</th><th>New Absences</th><th>Action</th></tr></thead>
+                        <tbody>${attendanceRows || '<tr><td colspan="7">No active course-attendance intervention plans for this term.</td></tr>'}</tbody>
+                    </table>
+                </div>
+
             `);
 
 
@@ -2523,19 +2528,21 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
         );
 
 
-        $('#investigate-students-btn')
-            .off('click')
-            .on(
-                'click',
-                function() {
-
-                    showStudentInvestigation(
-                        persistent,
-                        data.school_term.name
-                    );
-
+        $('#refresh-attendance-interventions-btn').off('click').on('click', function() {
+            frappe.call({
+                method: 'high_school.high_school.student_interventions.refresh_intervention_plans',
+                args: {school_term: data.school_term.name},
+                freeze: true,
+                freeze_message: __('Checking course-attendance evidence...'),
+                callback(r) {
+                    if (!r.exc) loadDashboard();
                 }
-            );
+            });
+        });
+
+        $('#student-management-content').off('click', '.open-attendance-intervention').on('click', '.open-attendance-intervention', function() {
+            frappe.set_route('Form', 'Student Intervention Plan', $(this).data('name'));
+        });
 
         $('#open-student-follow-ups-btn')
             .off('click')
@@ -2549,246 +2556,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
     }
 
-
-    // =========================================================
-    // Student Investigation Dialog
-    // =========================================================
-
-    function showStudentInvestigation(
-        persistent,
-        schoolTerm
-    ) {
-
-        const records = [];
-
-
-        for (
-            const mode
-            of ['daily', 'course']
-        ) {
-
-            const modeData =
-                persistent[mode] || {};
-
-
-            if (!modeData.enabled) {
-                continue;
-            }
-
-
-            for (
-                const student
-                of (
-                    modeData
-                        .flagged_students
-                    || []
-                )
-            ) {
-
-                records.push({
-                    ...student,
-                    attendance_type:
-                        mode
-                });
-
-            }
-
-        }
-
-
-        const rows =
-            records
-
-                .map(student => `
-
-                    <tr>
-
-                        <td>
-                            ${escapeHtml(
-                                student.student_name
-                                || student.student
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                student.attendance_type
-                            )}
-                        </td>
-
-                        <td>
-                            ${student.present}
-                        </td>
-
-                        <td>
-                            ${student.absent}
-                        </td>
-
-                        <td>
-                            ${student.leave}
-                        </td>
-
-                        <td>
-                            ${student.counted_records}
-                        </td>
-
-                        <td>
-                            ${formatPercent(
-                                student.absence_rate
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatPercent(
-                                student.threshold
-                            )}
-                        </td>
-
-                        <td>
-                            <button
-                                class="btn btn-xs btn-primary create-student-follow-up"
-                                data-student="${escapeHtml(student.student)}"
-                                data-attendance-type="${escapeHtml(student.attendance_type)}"
-                                data-absence-rate="${escapeHtml(student.absence_rate)}"
-                                data-records="${escapeHtml(student.counted_records)}"
-                            >
-                                Follow Up
-                            </button>
-                        </td>
-
-                    </tr>
-
-                `)
-
-                .join('');
-
-
-        const dialog =
-            new frappe.ui.Dialog({
-
-                title:
-                    'Persistent Absence Investigation',
-
-                size:
-                    'extra-large',
-
-                fields: [
-
-                    {
-                        fieldname:
-                            'details',
-
-                        fieldtype:
-                            'HTML'
-                    }
-
-                ]
-
-            });
-
-
-        dialog.fields_dict
-            .details
-            .$wrapper
-            .html(`
-
-                <div
-                    style="
-                        margin-bottom: 15px;
-                        color: #6c757d;
-                    "
-                >
-                    Only students meeting the configured
-                    minimum attendance-record requirement
-                    and persistent absence threshold are
-                    shown.
-                </div>
-
-
-                <div style="overflow-x: auto;">
-
-                    <table
-                        class="
-                            table
-                            table-bordered
-                            table-hover
-                        "
-                    >
-
-                        <thead>
-
-                            <tr>
-                                <th>Student</th>
-                                <th>Attendance Type</th>
-                                <th>Present</th>
-                                <th>Absent</th>
-                                <th>Leave</th>
-                                <th>Counted</th>
-                                <th>Absence Rate</th>
-                                <th>Threshold</th>
-                                <th>Action</th>
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            ${
-                                rows
-                                ||
-
-                                `
-                                    <tr>
-                                        <td colspan="9">
-                                            No students currently
-                                            require investigation.
-                                        </td>
-                                    </tr>
-                                `
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            `);
-
-
-        dialog.show();
-
-        dialog.$wrapper
-            .off('click', '.create-student-follow-up')
-            .on('click', '.create-student-follow-up', function() {
-                const button = $(this);
-                frappe.call({
-                    method: 'high_school.high_school.mis.interventions.get_or_create_attendance_intervention',
-                    args: {
-                        student: button.data('student'),
-                        school_term: schoolTerm,
-                        attendance_type: button.data('attendance-type'),
-                        absence_rate: button.data('absence-rate'),
-                        attendance_records: button.data('records')
-                    },
-                    freeze: true,
-                    freeze_message: __('Opening student follow-up...'),
-                    callback(r) {
-                        if (!r.message || !r.message.name) return;
-                        dialog.hide();
-                        frappe.set_route(
-                            'Form',
-                            'Student Intervention Plan',
-                            r.message.name
-                        );
-                    }
-                });
-            });
-
-    }
-
-
     // =========================================================
     // Assessment Operations
     // =========================================================
@@ -2801,6 +2568,7 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
         const results = academics.result_submission || {};
         const cycles = academics.cycles || [];
         const interventions = data.interventions || {};
+        const academicOutcomes = interventions.academic_outcomes || {};
 
         const cycleNames = cycles.length
             ? cycles
@@ -2823,10 +2591,12 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 <tr>
                     <td>${escapeHtml(plan.student_name || plan.student)}</td>
                     <td>${escapeHtml(plan.course || '')}</td>
+                    <td>${escapeHtml(plan.instructor || '')}</td>
                     <td>${formatPercent(plan.baseline_value)}</td>
+                    <td>${formatPercent(plan.baseline_overall_percentage)}</td>
+                    <td>${formatNumber(plan.consecutive_low_periods || 0)}</td>
                     <td>${escapeHtml(plan.status)}</td>
                     <td>${escapeHtml(plan.assigned_to || '')}</td>
-                    <td>${escapeHtml(plan.review_date || '')}</td>
                     <td><button class="btn btn-xs btn-default open-student-intervention" data-name="${escapeHtml(plan.name)}">Open</button></td>
                 </tr>
             `).join('');
@@ -2891,6 +2661,17 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     status: Number(interventions.overdue || 0) > 0 ? 'warning' : 'healthy'
                 })}
 
+                ${createKpiCard({
+                    title: 'Outcome Since Previous Term',
+                    value: academicOutcomes.evaluated_students
+                        ? `${formatNumber(academicOutcomes.improved_students)} improved / ${formatNumber(academicOutcomes.not_improved_students)} not improved`
+                        : 'N/A',
+                    subtitle: academicOutcomes.average_change === null || academicOutcomes.average_change === undefined
+                        ? 'Term 1 establishes the baseline'
+                        : `${academicOutcomes.average_change >= 0 ? '+' : ''}${formatNumber(academicOutcomes.average_change)} percentage points on average`,
+                    status: Number(academicOutcomes.not_improved_students || 0) > 0 ? 'warning' : (academicOutcomes.evaluated_students ? 'healthy' : 'no_data')
+                })}
+
             </div>
 
             <div
@@ -2950,11 +2731,11 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             <div style="margin-top:18px;">
                 <h5>Student Academic Intervention Workflow</h5>
                 <div class="text-muted" style="margin-bottom:8px;">
-                    Low result detected → HOD diagnosis → assigned actions → follow-up assessment → successful closure or principal escalation.
+                    Low overall result → one plan for each weak course → scheduled instructor action plan → next official term summary automatically measures improvement or escalation.
                 </div>
                 <div style="overflow-x:auto"><table class="table table-bordered table-hover">
-                    <thead><tr><th>Student</th><th>Course</th><th>Baseline</th><th>Status</th><th>Owner</th><th>Review Date</th><th>Action</th></tr></thead>
-                    <tbody>${academicPlanRows || '<tr><td colspan="7">No active academic intervention plans for this term.</td></tr>'}</tbody>
+                    <thead><tr><th>Student</th><th>Course</th><th>Instructor</th><th>Course Baseline</th><th>Overall Baseline</th><th>Low Terms</th><th>Status</th><th>Responsible User</th><th>Action</th></tr></thead>
+                    <tbody>${academicPlanRows || '<tr><td colspan="9">No active academic intervention plans for this term.</td></tr>'}</tbody>
                 </table></div>
             </div>
 

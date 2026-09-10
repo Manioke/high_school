@@ -147,6 +147,7 @@ permission_query_conditions = {
     "Student Attendance": "high_school.api.permissions.student_attendance_query",
     "Assessment Plan": "high_school.api.permissions.assessment_plan_query",
     "Assessment Result": "high_school.api.permissions.assessment_result_query",
+    "Assessment Result Submission Tracker": "high_school.high_school.result_submission.get_tracker_permission_query_conditions",
     "Student Intervention Plan": "high_school.high_school.student_interventions.intervention_permission_query",
 }
 
@@ -156,6 +157,7 @@ has_permission = {
     "Student Attendance": "high_school.api.permissions.student_attendance_has_permission",
     "Assessment Plan": "high_school.api.permissions.assessment_plan_has_permission",
     "Assessment Result": "high_school.api.permissions.assessment_result_has_permission",
+    "Assessment Result Submission Tracker": "high_school.high_school.result_submission.has_tracker_permission",
     "Student Intervention Plan": "high_school.high_school.student_interventions.has_intervention_permission",
 }
 

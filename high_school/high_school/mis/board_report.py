@@ -135,6 +135,7 @@ def _report_html(data):
     performance = academics.get("performance") or {}
     settings = data.get("settings") or {}
     interventions = data.get("interventions") or {}
+    academic_outcomes = interventions.get("academic_outcomes") or {}
     finance = data.get("finance") or {}
     operations = finance.get("operations") or {}
     operations_currency = operations.get("currency") or finance.get("currency")
@@ -174,10 +175,10 @@ def _report_html(data):
        <tr><td>Overdue fees</td><td>{overdue_rate}</td><td>Maximum {overdue_target}</td><td>{outstanding} outstanding; {overdue} overdue</td></tr>
       </tbody></table>
       <h3>Student Intervention Management</h3>
-      <table class="table table-bordered"><thead><tr><th>Active Academic</th><th>Active Attendance</th><th>Overdue / Escalated</th><th>Closed Successfully</th></tr></thead><tbody>
-       <tr><td>{academic_interventions}</td><td>{attendance_interventions}</td><td>{overdue_interventions}</td><td>{successful_interventions}</td></tr>
+      <table class="table table-bordered"><thead><tr><th>Active Academic</th><th>Active Attendance</th><th>Escalated</th><th>Students Improved Since Previous Term</th><th>Students Not Improved</th></tr></thead><tbody>
+       <tr><td>{academic_interventions}</td><td>{attendance_interventions}</td><td>{overdue_interventions}</td><td>{improved_students}</td><td>{not_improved_students}</td></tr>
       </tbody></table>
-      <p><b>Average academic improvement after successful intervention:</b> {academic_improvement}</p>
+      <p><b>Average overall change across evaluated students:</b> {academic_improvement}. Term 1 establishes the baseline; later terms are compared with the immediately preceding official Student Performance Summary.</p>
       <h3>Whole-School Finance</h3>
       <table class="table table-bordered"><tbody>
        <tr><th>Cash and bank</th><td>{cash}</td><th>Term income</th><td>{term_income}</td></tr>
@@ -252,8 +253,9 @@ def _report_html(data):
         academic_interventions=int(interventions.get("academic_open") or 0),
         attendance_interventions=int(interventions.get("attendance_open") or 0),
         overdue_interventions=int(interventions.get("overdue") or 0),
-        successful_interventions=int(interventions.get("closed_successful") or 0),
-        academic_improvement=_value(interventions.get("average_academic_improvement"), " percentage points"),
+        improved_students=int(academic_outcomes.get("improved_students") or 0),
+        not_improved_students=int(academic_outcomes.get("not_improved_students") or 0),
+        academic_improvement=_value(academic_outcomes.get("average_change"), " percentage points"),
         cash=_money(operations.get("cash_and_bank"), operations_currency),
         term_income=_money(operations.get("term_income"), operations_currency),
         term_expenses=_money(operations.get("term_expenses"), operations_currency),

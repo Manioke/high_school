@@ -5,7 +5,7 @@ from frappe import _
 from frappe.utils import add_days, getdate
 
 
-MANAGER_ROLES = {"System Manager", "Education Manager"}
+MANAGER_ROLES = {"System Manager", "Education Manager", "Academics User"}
 
 
 def _doctype_fields(doctype):
@@ -242,17 +242,16 @@ def get_tracker_permission_query_conditions(user=None):
 	if not user or user == "Administrator" or _is_manager(user):
 		return ""
 	escaped = frappe.db.escape(user)
-	return """(
-		`tabAssessment Result Submission Tracker`.`responsible_user` = {user}
-		or `tabAssessment Result Submission Tracker`.`hod_user` = {user}
-	)""".format(user=escaped)
+	return "`tabAssessment Result Submission Tracker`.`responsible_user` = {user}".format(
+		user=escaped
+	)
 
 
 def has_tracker_permission(doc, user=None, permission_type=None):
 	user = user or frappe.session.user
 	if user == "Administrator" or _is_manager(user):
 		return True
-	if user not in {doc.responsible_user, doc.hod_user}:
+	if user != doc.responsible_user:
 		return False
 	if permission_type in {"create", "delete", "submit", "cancel", "amend"}:
 		return False

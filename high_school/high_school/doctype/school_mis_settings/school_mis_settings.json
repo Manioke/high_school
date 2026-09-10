@@ -30,11 +30,15 @@
   "auto_create_academic_interventions",
   "academic_intervention_threshold",
   "academic_intervention_standard_deviations",
+  "academic_intervention_consecutive_periods",
   "auto_create_attendance_interventions",
-  "intervention_follow_up_days",
+  "course_attendance_absence_trigger_count",
+  "course_attendance_escalation_absence_count",
+  "send_intervention_email_notifications",
   "default_intervention_owner",
   "school_principal_user",
   "school_counselor_user",
+  "intervention_follow_up_days",
   "finance_mis_section",
   "track_school_finance",
   "finance_company",
@@ -221,39 +225,68 @@
    "label": "Below Class Average Standard Deviations"
   },
   {
+   "default": "2",
+   "description": "Escalate when the student's submitted overall performance remains below the intervention threshold for this many consecutive School Terms.",
+   "fieldname": "academic_intervention_consecutive_periods",
+   "fieldtype": "Int",
+   "label": "Consecutive Low Performance Terms for Escalation"
+  },
+  {
    "default": "1",
-   "description": "Create attendance intervention plans automatically when a student reaches the persistent-absence threshold.",
+   "description": "Create course-specific attendance intervention plans automatically when a student reaches the configured consecutive-absence count.",
    "fieldname": "auto_create_attendance_interventions",
    "fieldtype": "Check",
    "label": "Automatically Create Attendance Intervention Plans"
   },
   {
-   "default": "21",
-   "description": "Default number of days allowed for diagnosis, action, and follow-up before an open plan is escalated.",
-   "fieldname": "intervention_follow_up_days",
+   "default": "3",
+   "description": "Create a course attendance intervention after this many consecutive submitted Absent records for the same student, course, group, and instructor.",
+   "fieldname": "course_attendance_absence_trigger_count",
    "fieldtype": "Int",
-   "label": "Intervention Follow-up Days"
+   "label": "Consecutive Course Absences to Create Plan"
   },
   {
-   "description": "Fallback owner when no course HOD or responsible user can be resolved.",
+   "default": "3",
+   "description": "After an action plan starts, escalate when this many additional Absent records are submitted for the same student and course.",
+   "fieldname": "course_attendance_escalation_absence_count",
+   "fieldtype": "Int",
+   "label": "Additional Course Absences to Escalate"
+  },
+  {
+   "default": "1",
+   "description": "Email the responsible instructor when a plan is created and email the counselor and academic management when it is escalated.",
+   "fieldname": "send_intervention_email_notifications",
+   "fieldtype": "Check",
+   "label": "Send Automatic Intervention Emails"
+  },
+  {
+   "description": "Fallback owner only when no single enabled User can be resolved from the scheduled course Instructor. Correcting the Instructor/User mapping is preferred.",
    "fieldname": "default_intervention_owner",
    "fieldtype": "Link",
    "label": "Default Intervention Owner",
    "options": "User"
   },
   {
-   "description": "Receives escalations when intervention plans become overdue.",
+   "description": "Receives automatic intervention escalations in addition to the configured counselor and academic management roles.",
    "fieldname": "school_principal_user",
    "fieldtype": "Link",
    "label": "School Principal User",
    "options": "User"
   },
   {
-   "description": "Suggested assignee when academic risk is connected to attendance, behavior, wellbeing, or home circumstances.",
+   "description": "Receives automatic academic and attendance escalations, including the original trigger and recorded action-plan details.",
    "fieldname": "school_counselor_user",
    "fieldtype": "Link",
    "label": "School Counselor User",
    "options": "User"
+  },
+  {
+   "default": "21",
+   "description": "Legacy setting retained for existing records. New intervention outcomes are evaluated from later performance summaries or attendance evidence instead of a manual review date.",
+   "fieldname": "intervention_follow_up_days",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Legacy Intervention Follow-up Days"
   },
   {
    "fieldname": "finance_mis_section",
