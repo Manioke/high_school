@@ -1,0 +1,21 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["action_type", "description", "assigned_to", "due_date", "status", "completed_on", "completion_notes"],
+ "fields": [
+  {"fieldname":"action_type","fieldtype":"Select","in_list_view":1,"label":"Intervention Action","options":"Targeted Worksheet / Practice Pack\nPeer-Assisted Learning\nAfter-School Revision Clinic\nAssessment Format Adaptation\nCounselor Referral\nParent / Guardian Meeting\nGuardian Contact\nAttendance Improvement Agreement\nCatch-up Attendance Session\nFront-Row Seating / Focus Adjustment\nLearning Support Referral\nTeacher Check-in\nOther","reqd":1},
+  {"fieldname":"description","fieldtype":"Small Text","in_list_view":1,"label":"Specific Action and Expected Result","reqd":1},
+  {"fieldname":"assigned_to","fieldtype":"Link","in_list_view":1,"label":"Responsible User","options":"User","reqd":1},
+  {"fieldname":"due_date","fieldtype":"Date","in_list_view":1,"label":"Due Date","reqd":1},
+  {"default":"Not Started","fieldname":"status","fieldtype":"Select","in_list_view":1,"label":"Status","options":"Not Started\nIn Progress\nCompleted\nCancelled","reqd":1},
+  {"fieldname":"completed_on","fieldtype":"Date","label":"Completed On"},
+  {"fieldname":"completion_notes","fieldtype":"Small Text","label":"Completion Evidence / Notes"}
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "module": "High School",
+ "name": "Student Intervention Action",
+ "permissions": []
+}

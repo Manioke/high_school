@@ -13,10 +13,16 @@ frappe.ui.form.on('Course Scheduling Tool', {
         if (frm.doc.custom_period) {
             frappe.db.get_value('School Period', frm.doc.custom_period, ['from_time', 'to_time'], (r) => {
                 if (r) {
-                    frm.set_value('from_time', r.from_time);
-                    frm.set_value('to_time', r.to_time);
+                    frm.set_value('from_time', normalise_school_time(r.from_time));
+                    frm.set_value('to_time', normalise_school_time(r.to_time));
                 }
             });
         }
     }
 });
+
+function normalise_school_time(value) {
+    const parts = String(value || '').split(':');
+    if (parts.length < 2) return value;
+    return [parts[0].padStart(2, '0'), parts[1].padStart(2, '0'), (parts[2] || '00').padStart(2, '0')].join(':');
+}

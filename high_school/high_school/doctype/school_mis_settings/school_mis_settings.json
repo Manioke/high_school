@@ -25,6 +25,16 @@
   "exam_preparation_target",
   "assessment_plan_coverage_target",
   "assessment_result_submission_target",
+  "academic_performance_target",
+  "student_intervention_section",
+  "auto_create_academic_interventions",
+  "academic_intervention_threshold",
+  "academic_intervention_standard_deviations",
+  "auto_create_attendance_interventions",
+  "intervention_follow_up_days",
+  "default_intervention_owner",
+  "school_principal_user",
+  "school_counselor_user",
   "finance_mis_section",
   "track_school_finance",
   "finance_company",
@@ -179,40 +189,107 @@
    "label": "Assessment Result Submission Target"
   },
   {
+   "default": "60",
+   "description": "Target for the official school average calculated from complete Student Performance Summaries.",
+   "fieldname": "academic_performance_target",
+   "fieldtype": "Percent",
+   "label": "School Academic Average Target"
+  },
+  {
+   "fieldname": "student_intervention_section",
+   "fieldtype": "Section Break",
+   "label": "Student Intervention Automation"
+  },
+  {
+   "default": "1",
+   "description": "Create or refresh an Academic Student Intervention Plan when a submitted performance summary falls below the configured trigger.",
+   "fieldname": "auto_create_academic_interventions",
+   "fieldtype": "Check",
+   "label": "Automatically Create Academic Intervention Plans"
+  },
+  {
+   "default": "50",
+   "fieldname": "academic_intervention_threshold",
+   "fieldtype": "Percent",
+   "label": "Academic Intervention Score Threshold"
+  },
+  {
+   "default": "1.5",
+   "description": "Also trigger when a score is this many standard deviations below the course-group mean. At least five complete scores are required.",
+   "fieldname": "academic_intervention_standard_deviations",
+   "fieldtype": "Float",
+   "label": "Below Class Average Standard Deviations"
+  },
+  {
+   "default": "1",
+   "description": "Create attendance intervention plans automatically when a student reaches the persistent-absence threshold.",
+   "fieldname": "auto_create_attendance_interventions",
+   "fieldtype": "Check",
+   "label": "Automatically Create Attendance Intervention Plans"
+  },
+  {
+   "default": "21",
+   "description": "Default number of days allowed for diagnosis, action, and follow-up before an open plan is escalated.",
+   "fieldname": "intervention_follow_up_days",
+   "fieldtype": "Int",
+   "label": "Intervention Follow-up Days"
+  },
+  {
+   "description": "Fallback owner when no course HOD or responsible user can be resolved.",
+   "fieldname": "default_intervention_owner",
+   "fieldtype": "Link",
+   "label": "Default Intervention Owner",
+   "options": "User"
+  },
+  {
+   "description": "Receives escalations when intervention plans become overdue.",
+   "fieldname": "school_principal_user",
+   "fieldtype": "Link",
+   "label": "School Principal User",
+   "options": "User"
+  },
+  {
+   "description": "Suggested assignee when academic risk is connected to attendance, behavior, wellbeing, or home circumstances.",
+   "fieldname": "school_counselor_user",
+   "fieldtype": "Link",
+   "label": "School Counselor User",
+   "options": "User"
+  },
+  {
    "fieldname": "finance_mis_section",
    "fieldtype": "Section Break",
    "label": "Executive Finance Targets"
   },
   {
    "default": "1",
-   "description": "Use submitted ERPNext General Ledger entries, Budgets, and School Fund Requests for the executive financial position. This does not create a second ledger.",
+   "description": "Use submitted ERPNext General Ledger entries, Budgets, Frappe HR payroll records, and School Fund Requests. This does not create a second ledger.",
    "fieldname": "track_school_finance",
    "fieldtype": "Check",
    "label": "Track Whole-School Finance"
   },
   {
-   "description": "Company whose General Ledger represents this school. Required for whole-school financial reporting.",
+   "description": "Company whose General Ledger represents this school.",
    "fieldname": "finance_company",
    "fieldtype": "Link",
    "label": "School Finance Company",
    "options": "Company"
   },
   {
-   "description": "Optional Cost Center used to limit income, expenses, budgets, and fund requests to this school or campus.",
+   "description": "Optional school or campus Cost Center. When a group Cost Center is selected, the dashboard includes all of its descendant Cost Centers.",
    "fieldname": "finance_cost_center",
    "fieldtype": "Link",
    "label": "School Finance Cost Center",
    "options": "Cost Center"
   },
   {
-   "description": "Optional income Account (or group Account) used to identify student fee income in the General Ledger.",
+   "description": "Income Account or group Account used to identify student fee income in the General Ledger.",
    "fieldname": "student_fee_income_account",
    "fieldtype": "Link",
    "label": "Student Fee Income Account",
    "options": "Account"
   },
   {
-   "description": "Expense Account (or group Account) used for weekly, fortnightly, or other employee wage postings.",
+   "description": "Expense Account or group Account containing the Salary Component expense accounts used by Frappe HR.",
    "fieldname": "wage_expense_account",
    "fieldtype": "Link",
    "label": "Employee Wages Expense Account",
@@ -220,13 +297,13 @@
   },
   {
    "default": "1",
-   "description": "Summarize submitted Frappe HR Salary Slips and Payroll Entries for the selected School Term.",
+   "description": "Summarize submitted Frappe HR Salary Slips and Payroll Entries overlapping the selected School Term.",
    "fieldname": "track_hr_payroll",
    "fieldtype": "Check",
    "label": "Track Frappe HR Payroll"
   },
   {
-   "description": "Optional Payroll Payable liability Account used by Frappe HR. Its ledger balance shows salaries accrued but not yet settled through the payroll Bank Entry.",
+   "description": "Payroll Payable liability Account used by Frappe HR. The balance remains until the salary Bank Entry is submitted.",
    "fieldname": "payroll_payable_account",
    "fieldtype": "Link",
    "label": "Payroll Payable Account",

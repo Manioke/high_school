@@ -3,7 +3,7 @@ from collections import defaultdict
 import frappe
 
 from frappe import _
-from frappe.utils import escape_html
+from frappe.utils import escape_html, flt
 
 from high_school.high_school.mis.academic import (
     get_exam_preparation_summary,
@@ -15,9 +15,10 @@ from high_school.high_school.mis.school_term import get_school_term
 from high_school.high_school.mis.course_attendance import (
     get_course_attendance_sessions,
 )
+from high_school.high_school.mis.finance import get_financial_mis
 
 
-MANAGER_ROLES = ("Education Manager", "System Manager")
+MANAGER_ROLES = ("Academics User", "Education Manager", "System Manager")
 CLOSED_ISSUE_STATUSES = {"Resolved", "Dismissed"}
 
 
@@ -338,3 +339,154 @@ def send_assessment_reminders(school_term, selected_users):
         "recipient_count": len(queued),
         "item_count": sum(row["item_count"] for row in queued),
     }
+
+
+def _table_columns(doctype):
+    if not frappe.db.exists("DocType", doctype):
+        return set()
+    return set(frappe.db.get_table_columns(doctype) or [])
+
+
+def _student_guardian_recipients(student):
+    child_columns = _table_columns("Student Guardian")
+    guardian_columns = _table_columns("Guardian")
+    if not student or not {"parent", "guardian"}.issubset(child_columns):
+        return []
+    guardian_ids = frappe.get_all(
+        "Student Guardian",
+        filters={"parent": student, "parenttype": "Student"},
+        pluck="guardian",
+        limit_page_length=0,
+    )
+    recipients = []
+    for guardian in guardian_ids:
+        wanted = [field for field in ("guardian_name", "user", "user_id", "email_address", "email") if field in guardian_columns]
+        details = frappe.db.get_value("Guardian", guardian, wanted, as_dict=True) if wanted else None
+        details = details or {}
+        linked_user = details.get("user") or details.get("user_id")
+        user = None
+        if linked_user:
+            user = frappe.db.get_value("User", linked_user, ["name", "email", "enabled"], as_dict=True)
+        if not user:
+            guardian_email = details.get("email_address") or details.get("email")
+            if guardian_email:
+                user = frappe.db.get_value(
+                    "User", {"email": guardian_email, "enabled": 1}, ["name", "email", "enabled"], as_dict=True
+                )
+        if user and user.enabled and user.email:
+            recipients.append({
+                "guardian": guardian,
+                "guardian_name": details.get("guardian_name") or guardian,
+                "user": user.name,
+                "email": user.email,
+            })
+    return recipients
+
+
+def _guardian_fee_preview(school_term):
+    settings = get_mis_settings()
+    term = get_school_term(school_term)
+    if not term:
+        frappe.throw(_("School Term {0} does not exist.").format(school_term))
+    # The dashboard deliberately shows only the first 50 overdue invoices, but
+    # the mailing workflow must not silently omit families in a large school.
+    finance = get_financial_mis(term, settings, attention_limit=0)
+    grouped = {}
+    without_guardian_email = 0
+    for invoice in finance.get("attention_items") or []:
+        guardians = _student_guardian_recipients(invoice.get("student"))
+        if not guardians:
+            without_guardian_email += 1
+            continue
+        for guardian in guardians:
+            item = grouped.setdefault(guardian["email"], {
+                **guardian,
+                "students": {},
+                "invoices": [],
+                "total_outstanding": 0.0,
+            })
+            item["students"][invoice.get("student")] = invoice.get("student_name") or invoice.get("student")
+            item["invoices"].append({
+                "name": invoice.get("name"),
+                "student": invoice.get("student"),
+                "student_name": invoice.get("student_name"),
+                "due_date": str(invoice.get("due_date") or ""),
+                "days_overdue": int(invoice.get("days_overdue") or 0),
+                "outstanding": flt(invoice.get("outstanding")),
+            })
+            item["total_outstanding"] += flt(invoice.get("outstanding"))
+    recipients = []
+    for item in grouped.values():
+        item["student_names"] = list(item.pop("students").values())
+        item["invoice_count"] = len(item["invoices"])
+        item["total_outstanding"] = round(item["total_outstanding"], 2)
+        recipients.append(item)
+    recipients.sort(key=lambda row: (-row["total_outstanding"], row["guardian_name"]))
+    return {
+        "school_term": school_term,
+        "currency": finance.get("currency"),
+        "recipients": recipients,
+        "recipient_count": len(recipients),
+        "invoice_count": sum(row["invoice_count"] for row in recipients),
+        "invoices_without_guardian_email": without_guardian_email,
+    }
+
+
+@frappe.whitelist()
+def get_guardian_fee_reminder_preview(school_term):
+    frappe.only_for(MANAGER_ROLES)
+    return _guardian_fee_preview(school_term)
+
+
+def _guardian_fee_message(term_label, recipient, currency):
+    rows = "".join(
+        "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td style='text-align:right'>{3} {4:,.2f}</td></tr>".format(
+            escape_html(item.get("student_name") or item.get("student") or ""),
+            escape_html(item.get("name") or ""),
+            escape_html(item.get("due_date") or ""),
+            escape_html(currency or ""),
+            flt(item.get("outstanding")),
+        )
+        for item in recipient["invoices"]
+    )
+    return """
+        <p>Dear {guardian},</p>
+        <p>This is a school account reminder for <strong>{term}</strong>. The following student fee balance(s) are overdue:</p>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+          <thead><tr><th>Student</th><th>Invoice</th><th>Due Date</th><th>Outstanding</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table>
+        <p><strong>Total outstanding: {currency} {total:,.2f}</strong></p>
+        <p>Please contact the school finance office if payment has already been made, if the balance is disputed, or if you need to discuss a payment arrangement.</p>
+    """.format(
+        guardian=escape_html(recipient["guardian_name"]),
+        term=escape_html(term_label), rows=rows,
+        currency=escape_html(currency or ""), total=flt(recipient["total_outstanding"]),
+    )
+
+
+@frappe.whitelist()
+def send_guardian_fee_reminders(school_term, selected_emails):
+    frappe.only_for(MANAGER_ROLES)
+    selected = set(frappe.parse_json(selected_emails) or [])
+    if not selected:
+        frappe.throw(_("Select at least one guardian."))
+    preview = _guardian_fee_preview(school_term)
+    allowed = {row["email"]: row for row in preview["recipients"]}
+    if selected - set(allowed):
+        frappe.throw(_("The guardian reminder list is no longer current. Reload the preview."))
+    term = frappe.db.get_value("School Term", school_term, ["academic_year", "term"], as_dict=True)
+    term_label = "{0} - {1}".format(term.academic_year, term.term)
+    queued = []
+    for email in sorted(selected):
+        recipient = allowed[email]
+        frappe.sendmail(
+            recipients=[email],
+            subject=_("Overdue school fee reminder: {0}").format(term_label),
+            message=_guardian_fee_message(term_label, recipient, preview.get("currency")),
+            reference_doctype="School Term",
+            reference_name=school_term,
+            now=False,
+        )
+        queued.append({"email": email, "invoice_count": recipient["invoice_count"]})
+    return {"queued": queued, "recipient_count": len(queued)}

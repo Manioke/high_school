@@ -10,15 +10,15 @@ app_license = "mit"
 
 required_apps = ["education", "hrms"]
 
-# Each item in the list will be shown as an app in the apps page.
+# Each item in the list will be shown as an app in the apps page
 add_to_apps_screen = [
-    {
-        "name": "high_school",
-        "logo": "/assets/high_school/images/high_school.svg",
-        "title": "High School",
-        "route": "/app/high-school",
-        "has_permission": "high_school.api.permissions.has_high_school_app_permission",
-    }
+	{
+		"name": "high_school",
+		"logo": "/assets/high_school/images/high_school.svg",
+		"title": "High School",
+		"route": "/app/high-school",
+		"has_permission": "high_school.api.permissions.has_high_school_app_permission",
+	}
 ]
 
 # Includes in <head>
@@ -119,7 +119,8 @@ doctype_calendar_js = {
 
 
 after_migrate = [
-    "high_school.high_school.student_utils.create_education_settings_custom_fields"
+    "high_school.high_school.student_utils.create_education_settings_custom_fields",
+    "high_school.high_school.student_utils.create_student_leaving_fields",
 ]
 
 # Integration Cleanup
@@ -146,6 +147,7 @@ permission_query_conditions = {
     "Student Attendance": "high_school.api.permissions.student_attendance_query",
     "Assessment Plan": "high_school.api.permissions.assessment_plan_query",
     "Assessment Result": "high_school.api.permissions.assessment_result_query",
+    "Student Intervention Plan": "high_school.high_school.student_interventions.intervention_permission_query",
 }
 
 has_permission = {
@@ -154,15 +156,16 @@ has_permission = {
     "Student Attendance": "high_school.api.permissions.student_attendance_has_permission",
     "Assessment Plan": "high_school.api.permissions.assessment_plan_has_permission",
     "Assessment Result": "high_school.api.permissions.assessment_result_has_permission",
+    "Student Intervention Plan": "high_school.high_school.student_interventions.has_intervention_permission",
 }
 
 # DocType Class
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Course Scheduling Tool": "high_school.high_school.course_scheduling.HighSchoolCourseSchedulingTool",
+}
 
 #override_doctype_class = {
 #    "Student Leave Application": "high_school.high_school.api.HighSchoolLeaveApplication"
@@ -180,6 +183,9 @@ has_permission = {
 # }
 
 doc_events = {
+	"Course Schedule": {
+		"before_validate": "high_school.high_school.course_scheduling.normalise_course_schedule_times",
+	},
 	"Student Applicant": {
 		"before_insert": "high_school.high_school.naming.ensure_unique_student_applicant_name",
 	},
@@ -215,8 +221,14 @@ doc_events = {
             "high_school.high_school.attendance_utils.process_standard_attendance_punishment",
             "high_school.api.permissions.validate_student_attendance"
         ],
-        "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+        "on_submit": [
+            "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+            "high_school.high_school.student_interventions.queue_attendance_intervention_refresh",
+        ],
         "on_cancel": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
+    },
+    "Student Performance Summary": {
+        "on_submit": "high_school.high_school.student_interventions.sync_academic_interventions_from_summary",
     },
     "Taliui Akonofo": {
         "on_submit": "high_school.high_school.attendance_utils.trigger_standard_attendance_recalc",
@@ -245,6 +257,8 @@ scheduler_events = {
 	"daily": [
 		"high_school.high_school.exam_preparation.send_exam_preparation_reminders",
 		"high_school.high_school.result_submission.refresh_open_result_trackers",
+		"high_school.high_school.student_interventions.refresh_overdue_intervention_plans",
+		"high_school.high_school.student_interventions.refresh_current_intervention_plans",
 	],
 # 	"hourly": [
 # 		"high_school.tasks.hourly"

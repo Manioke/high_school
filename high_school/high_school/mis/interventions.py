@@ -3,14 +3,14 @@ import frappe
 from frappe import _
 
 
-MANAGER_ROLES = ("Education Manager", "System Manager")
+MANAGER_ROLES = ("Academics User", "Education Manager", "System Manager")
 OPEN_STATUSES = ("Open", "Meeting Scheduled", "Monitoring")
 CLOSED_STATUSES = ("Resolved", "Dismissed")
 
 
 def apply_attendance_interventions(persistent_absence, school_term):
     """Hide a resolved risk until later attendance creates new evidence."""
-    rows = frappe.get_all(
+    legacy_rows = frappe.get_all(
         "Student Attendance Intervention",
         filters={"school_term": school_term},
         fields=[
@@ -20,8 +20,30 @@ def apply_attendance_interventions(persistent_absence, school_term):
         order_by="modified desc",
     )
     latest = {}
-    for row in rows:
+    for row in legacy_rows:
         latest.setdefault((row.student, row.attendance_type), row)
+
+    plan_rows = frappe.get_all(
+        "Student Intervention Plan",
+        filters={"school_term": school_term, "intervention_type": "Attendance"},
+        fields=[
+            "name", "student", "attendance_scope", "status",
+            "evidence_count", "resolved_evidence_count", "closed_on",
+        ],
+        order_by="modified desc",
+        limit_page_length=0,
+    )
+    for row in plan_rows:
+        key = (row.student, row.attendance_scope)
+        if key in latest:
+            continue
+        row.attendance_type = row.attendance_scope
+        row.attendance_records = row.evidence_count
+        row.resolved_attendance_records = row.resolved_evidence_count
+        row.resolved_on = row.closed_on
+        if row.status in {"Closed - Successful", "Closed - Not Required"}:
+            row.status = "Resolved"
+        latest[key] = row
 
     managed = []
     for mode, attendance_type in (("daily", "Daily"), ("course", "Course")):
@@ -93,36 +115,8 @@ def get_or_create_attendance_intervention(
     if not frappe.db.exists("School Term", school_term):
         frappe.throw(_("School Term {0} does not exist.").format(school_term))
 
-    existing = frappe.db.get_value(
-        "Student Attendance Intervention",
-        {
-            "student": student,
-            "school_term": school_term,
-            "attendance_type": normalized_type,
-            "status": ["in", OPEN_STATUSES],
-        },
-    )
+    from high_school.high_school.student_interventions import get_or_create_attendance_plan
 
-    if existing:
-        doc = frappe.get_doc("Student Attendance Intervention", existing)
-        if absence_rate is not None:
-            doc.absence_rate = absence_rate
-        if attendance_records is not None:
-            doc.attendance_records = attendance_records
-        doc.save()
-        return {"name": doc.name, "created": False}
-
-    doc = frappe.new_doc("Student Attendance Intervention")
-    doc.update(
-        {
-            "student": student,
-            "school_term": school_term,
-            "attendance_type": normalized_type,
-            "absence_rate": absence_rate,
-            "attendance_records": attendance_records,
-            "status": "Open",
-            "assigned_to": frappe.session.user,
-        }
+    return get_or_create_attendance_plan(
+        student, school_term, normalized_type, absence_rate, attendance_records
     )
-    doc.insert()
-    return {"name": doc.name, "created": True}

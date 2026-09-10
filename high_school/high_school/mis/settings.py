@@ -153,6 +153,36 @@ def get_mis_settings():
                 95,
             ),
 
+        "academic_performance_target": _float_setting(
+            settings.get("academic_performance_target"), 60
+        ),
+
+        "auto_create_academic_interventions": (
+            True if settings.get("auto_create_academic_interventions") is None
+            else bool(settings.get("auto_create_academic_interventions"))
+        ),
+
+        "academic_intervention_threshold": _float_setting(
+            settings.get("academic_intervention_threshold"), 50
+        ),
+
+        "academic_intervention_standard_deviations": _float_setting(
+            settings.get("academic_intervention_standard_deviations"), 1.5
+        ),
+
+        "auto_create_attendance_interventions": (
+            True if settings.get("auto_create_attendance_interventions") is None
+            else bool(settings.get("auto_create_attendance_interventions"))
+        ),
+
+        "intervention_follow_up_days": _int_setting(
+            settings.get("intervention_follow_up_days"), 21
+        ),
+
+        "default_intervention_owner": settings.get("default_intervention_owner"),
+        "school_principal_user": settings.get("school_principal_user"),
+        "school_counselor_user": settings.get("school_counselor_user"),
+
         # =================================================
         # Whole-school Finance and Student Fees
         # =================================================

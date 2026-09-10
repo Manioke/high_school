@@ -19,7 +19,6 @@ class SchoolFundRequest(Document):
             frappe.throw(_("Approved Amount cannot exceed Requested Amount."))
         if disbursed > approved:
             frappe.throw(_("Disbursed Amount cannot exceed Approved Amount."))
-
         if self.status in APPROVED_STATUSES and not approved:
             frappe.throw(_("Approved Amount is required for this status."))
         if self.status in {"Partly Disbursed", "Disbursed"} and not disbursed:
@@ -43,12 +42,12 @@ class SchoolFundRequest(Document):
             ("Journal Entry", self.journal_entry),
         ):
             if name and frappe.db.get_value(doctype, name, "docstatus") != 1:
-                frappe.throw(_("Linked {0} {1} must be submitted.").format(doctype, name))
-
+                frappe.throw(
+                    _("Linked {0} {1} must be submitted.").format(doctype, name)
+                )
         if self.status in APPROVED_STATUSES and not self.approved_on:
             self.approved_on = now_datetime()
             self.approved_by = frappe.session.user
-
         self.outstanding_amount = (
             0
             if self.status in {"Rejected", "Cancelled"}

@@ -1,0 +1,15 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "module": "High School",
+ "name": "student-report-card-tool",
+ "page_name": "student-report-card-tool",
+ "roles": [
+  {"role": "Academics User"},
+  {"role": "Education Manager"},
+  {"role": "System Manager"}
+ ],
+ "standard": "Yes",
+ "system_page": 0,
+ "title": "Student Report Card Tool"
+}

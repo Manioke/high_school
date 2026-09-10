@@ -1,6 +1,7 @@
 {
  "actions": [],
  "autoname": "format:PERF-{academic_year}-{student}-{#####}",
+ "default_print_format": "Student Performance Report Card",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -169,6 +170,17 @@
    "report": 1,
    "role": "Education Manager",
    "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Academics User",
    "submit": 1,
    "write": 1
   }

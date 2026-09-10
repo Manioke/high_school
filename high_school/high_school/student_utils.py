@@ -123,3 +123,36 @@ def create_education_settings_custom_fields():
         ).insert(ignore_permissions=True)
 
     frappe.db.commit()
+
+
+def create_student_leaving_fields():
+    """Add a portable reporting category without destroying the existing notes."""
+
+    if frappe.db.exists(
+        "Custom Field",
+        {
+            "dt": "Student",
+            "fieldname": "custom_standardized_leaving_reason",
+        },
+    ):
+        return
+
+    frappe.get_doc(
+        {
+            "doctype": "Custom Field",
+            "dt": "Student",
+            "module": "High School",
+            "fieldname": "custom_standardized_leaving_reason",
+            "label": "Standard Leaving Reason",
+            "fieldtype": "Select",
+            "insert_after": "reason_for_leaving",
+            "depends_on": 'eval:doc.status == "Disabled"',
+            "options": "\nGraduated / Completed School\nTransferred to Another School\nRelocation\nFinancial Reasons\nAcademic Reasons\nHealth Reasons\nFamily Reasons\nDisciplinary Dismissal\nDeceased\nOther",
+            "description": (
+                "Select one reporting category. Keep Reason for Leaving for "
+                "specific notes and supporting details."
+            ),
+        }
+    ).insert(ignore_permissions=True)
+
+    frappe.db.commit()

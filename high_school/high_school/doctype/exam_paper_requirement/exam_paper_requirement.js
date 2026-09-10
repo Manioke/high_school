@@ -71,7 +71,21 @@ function add_request_changes_button(frm) {
 	frm.add_custom_button(__('Request Changes'), () => {
 		frappe.prompt(
 			[{ fieldname: 'notes', fieldtype: 'Small Text', label: __('Changes Required'), reqd: 1 }],
-			(values) => frm.call('request_changes', { notes: values.notes }).then(() => frm.reload_doc()),
+			(values) => frm.call('request_changes', { notes: values.notes }).then((r) => {
+				const result = r.message || {};
+				if (result.email_sent) {
+					const auditReference = result.communication
+						? ` (${__('Communication')}: ${result.communication})`
+						: '';
+					frappe.show_alert({
+						message: __('Changes requested email sent to {0}', [(result.email_recipients || []).join(', ')]) + auditReference,
+						indicator: 'green',
+					}, 7);
+				} else {
+					frappe.show_alert({ message: __('Changes were recorded, but the Lead Teacher email was not sent.'), indicator: 'orange' }, 7);
+				}
+				return frm.reload_doc();
+			}),
 			__('Request Paper Changes'),
 			__('Send Back'),
 		);

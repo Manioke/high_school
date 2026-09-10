@@ -31,9 +31,9 @@
   {"fieldname":"approved_by","fieldtype":"Link","label":"Approved By","options":"User","read_only":1},
   {"fieldname":"approved_on","fieldtype":"Datetime","label":"Approved On","read_only":1},
   {"fieldname":"accounting_section","fieldtype":"Section Break","label":"ERPNext Accounting Evidence"},
-  {"description":"Use a submitted Purchase Invoice when the school owes a supplier.","fieldname":"purchase_invoice","fieldtype":"Link","label":"Purchase Invoice","options":"Purchase Invoice"},
-  {"description":"Use a submitted Payment Entry when money is paid or transferred.","fieldname":"payment_entry","fieldtype":"Link","label":"Payment Entry","options":"Payment Entry"},
-  {"description":"Use a submitted Journal Entry for accruals or accounting adjustments.","fieldname":"journal_entry","fieldtype":"Link","label":"Journal Entry","options":"Journal Entry"},
+  {"fieldname":"purchase_invoice","fieldtype":"Link","label":"Purchase Invoice","options":"Purchase Invoice"},
+  {"fieldname":"payment_entry","fieldtype":"Link","label":"Payment Entry","options":"Payment Entry"},
+  {"fieldname":"journal_entry","fieldtype":"Link","label":"Journal Entry","options":"Journal Entry"},
   {"fieldname":"notes","fieldtype":"Text Editor","label":"Notes and Approval Evidence"}
  ],
  "index_web_pages_for_search": 1,

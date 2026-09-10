@@ -17,7 +17,7 @@ def get_executive_summary(
     high_school.high_school.mis
     """
 
-    frappe.only_for(("Education Manager", "System Manager"))
+    frappe.only_for(("Academics User", "Education Manager", "System Manager"))
 
     return build_executive_summary(
         school_term=school_term

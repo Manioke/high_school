@@ -7,13 +7,8 @@ PRIVILEGED_ROLES = {
     "Administrator",
     "System Manager",
     "Education Manager",
+    "Academics User",
 }
-
-
-def has_high_school_app_permission(user=None):
-    user = user or frappe.session.user
-    roles = set(frappe.get_roles(user))
-    return bool(roles.intersection({"Education Manager", "System Manager"}))
 
 
 def is_instructor_user(user):
@@ -323,13 +318,11 @@ def validate_assessment_result(doc, method=None):
             _("Your user account is not connected to an Instructor."),
             frappe.PermissionError,
         )
-
     if not doc.assessment_plan:
         frappe.throw(
             _("An Assessment Plan is required."),
             frappe.PermissionError,
         )
-
     if not instructor_teaches_assessment_plan(
         doc.assessment_plan,
         user,
@@ -341,3 +334,11 @@ def validate_assessment_result(doc, method=None):
             ),
             frappe.PermissionError,
         )
+
+
+def has_high_school_app_permission(user=None):
+    """Show the High School app tile to school managers and administrators."""
+    user = user or frappe.session.user
+    if user == "Administrator":
+        return True
+    return bool({"Academics User", "Education Manager", "System Manager"} & set(frappe.get_roles(user)))

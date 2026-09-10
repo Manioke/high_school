@@ -132,7 +132,7 @@ def _student_batches(students, academic_year):
     return result
 
 
-def get_financial_mis(term, settings):
+def get_financial_mis(term, settings, attention_limit=50):
     """Summarize the existing student Sales Invoices for an academic year."""
     target = flt(settings.get("fee_collection_target") or 90)
     overdue_target = flt(settings.get("overdue_fee_target") or 5)
@@ -419,5 +419,9 @@ def get_financial_mis(term, settings):
             for bucket, amount in ageing.items()
         ],
         "batches": batches,
-        "attention_items": overdue_invoices[:50],
+        "attention_items": (
+            overdue_invoices[:attention_limit]
+            if attention_limit
+            else overdue_invoices
+        ),
     }

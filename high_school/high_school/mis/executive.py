@@ -39,6 +39,7 @@ from high_school.high_school.mis.direction import (
 from high_school.high_school.mis.interventions import (
     apply_attendance_interventions,
 )
+from high_school.high_school.student_interventions import get_intervention_summary
 
 from high_school.high_school.mis.alerts import (
     evaluate_alert_rules,
@@ -436,6 +437,7 @@ def get_executive_summary(
         current_data=result,
         settings=settings,
     )
+    result["interventions"] = get_intervention_summary(term.name)
 
     # =====================================================
     # Dynamic Alert Rules

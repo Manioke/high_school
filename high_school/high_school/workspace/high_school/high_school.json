@@ -1,8 +1,8 @@
 {
  "app": "high_school",
  "charts": [],
- "content": "[{\"id\":\"hs_header_1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Executive Management</b></span>\",\"col\":12}},{\"id\":\"hs_shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Executive Dashboard\",\"col\":4}},{\"id\":\"hs_shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Term\",\"col\":4}},{\"id\":\"hs_shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Board Reports\",\"col\":4}},{\"id\":\"hs_header_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>High School Operations</b></span>\",\"col\":12}},{\"id\":\"hs_card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"School Structure\",\"col\":4}},{\"id\":\"hs_card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment and Performance\",\"col\":4}},{\"id\":\"hs_card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance and Management\",\"col\":4}},{\"id\":\"hs_card_4\",\"type\":\"card\",\"data\":{\"card_name\":\"School Finance\",\"col\":4}},{\"id\":\"xaKjgFb_QR\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"sRwyJ0YBeI\",\"type\":\"card\",\"data\":{\"card_name\":\"Student Management\",\"col\":4}}]",
- "creation": "2026-09-02 17:29:04.654860",
+ "content": "[{\"id\":\"hs_header_1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Executive Management</b></span>\",\"col\":12}},{\"id\":\"hs_shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Executive Dashboard\",\"col\":3}},{\"id\":\"hs_shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Term\",\"col\":3}},{\"id\":\"hs_shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Board Reports\",\"col\":3}},{\"id\":\"hs_shortcut_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bulk Report Cards\",\"col\":3}},{\"id\":\"hs_header_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>High School Operations</b></span>\",\"col\":12}},{\"id\":\"hs_card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"School Structure\",\"col\":3}},{\"id\":\"hs_card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment and Performance\",\"col\":3}},{\"id\":\"hs_card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance and Management\",\"col\":3}},{\"id\":\"hs_card_4\",\"type\":\"card\",\"data\":{\"card_name\":\"School Finance\",\"col\":3}}]",
+ "creation": "2026-09-09 21:08:09.448122",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -55,7 +55,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Assessment and Performance",
-   "link_count": 5,
+   "link_count": 6,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -102,6 +102,16 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Bulk Student Report Cards",
+   "link_count": 0,
+   "link_to": "student-report-card-tool",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Executive MIS Board Report",
    "link_count": 0,
    "link_to": "Executive MIS Board Report",
@@ -112,76 +122,17 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "School Finance",
-   "link_count": 5,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Fund Request",
-   "link_count": 0,
-   "link_to": "School Fund Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Budget",
-   "link_count": 0,
-   "link_to": "Budget",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Payment Entry",
-   "link_count": 0,
-   "link_to": "Payment Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Payroll Entry",
-   "link_count": 0,
-   "link_to": "Payroll Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Salary Slip",
-   "link_count": 0,
-   "link_to": "Salary Slip",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Attendance and Management",
-   "link_count": 7,
-   "link_type": "DocType",
+   "link_count": 6,
    "onboard": 0,
    "type": "Card Break"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Student Attendance Intervention",
+   "label": "Student Intervention Plan",
    "link_count": 0,
-   "link_to": "Student Attendance Intervention",
+   "link_to": "Student Intervention Plan",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -239,28 +190,17 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Course Schedule",
-   "link_count": 0,
-   "link_to": "Course Schedule",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Tools",
-   "link_count": 2,
-   "link_type": "DocType",
+   "label": "School Finance",
+   "link_count": 6,
    "onboard": 0,
    "type": "Card Break"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Student Attendance Tool",
+   "label": "School Fund Request",
    "link_count": 0,
-   "link_to": "Student Attendance Tool",
+   "link_to": "School Fund Request",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -268,28 +208,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "School Performance Period Setup Tool",
+   "label": "Budget",
    "link_count": 0,
-   "link_to": "school-performance-period-setup",
-   "link_type": "Page",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Student Management",
-   "link_count": 3,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Student",
-   "link_count": 0,
-   "link_to": "Student",
+   "link_to": "Budget",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -297,9 +218,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Student Batch Name",
+   "label": "Payment Entry",
    "link_count": 0,
-   "link_to": "Student Batch Name",
+   "link_to": "Payment Entry",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -307,15 +228,35 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Student Group",
+   "label": "Payroll Entry",
    "link_count": 0,
-   "link_to": "Student Group",
+   "link_to": "Payroll Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Salary Slip",
+   "link_count": 0,
+   "link_to": "Salary Slip",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Salary Structure",
+   "link_count": 0,
+   "link_to": "Salary Structure",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-09-08 01:57:07.700284",
+ "modified": "2026-09-10 12:45:10.667102",
  "modified_by": "Administrator",
  "module": "High School",
  "name": "High School",
@@ -326,10 +267,16 @@
  "quick_lists": [],
  "roles": [
   {
+   "role": "Academics User"
+  },
+  {
    "role": "Education Manager"
   },
   {
    "role": "System Manager"
+  },
+  {
+   "role": "Instructor"
   }
  ],
  "sequence_id": 30.0,
@@ -356,6 +303,13 @@
    "link_to": "Executive MIS Board Report",
    "stats_filter": "[]",
    "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "label": "Bulk Report Cards",
+   "link_to": "student-report-card-tool",
+   "type": "Page"
   }
  ],
  "title": "High School",
