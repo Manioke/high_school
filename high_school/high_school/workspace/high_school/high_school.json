@@ -1,8 +1,6 @@
 {
- "app": "high_school",
  "charts": [],
  "content": "[{\"id\":\"hs_header_1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Executive Management</b></span>\",\"col\":12}},{\"id\":\"hs_shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Executive Dashboard\",\"col\":3}},{\"id\":\"hs_shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"School Term\",\"col\":3}},{\"id\":\"hs_shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Board Reports\",\"col\":3}},{\"id\":\"hs_shortcut_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bulk Report Cards\",\"col\":3}},{\"id\":\"hs_header_2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>High School Operations</b></span>\",\"col\":12}},{\"id\":\"hs_card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"School Structure\",\"col\":3}},{\"id\":\"hs_card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Assessment and Performance\",\"col\":3}},{\"id\":\"hs_card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance and Management\",\"col\":3}},{\"id\":\"hs_card_4\",\"type\":\"card\",\"data\":{\"card_name\":\"School Finance\",\"col\":3}}]",
- "creation": "2026-09-10 16:40:03.185001",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -13,305 +11,49 @@
  "is_hidden": 0,
  "label": "High School",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Structure",
-   "link_count": 3,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Term",
-   "link_count": 0,
-   "link_to": "School Term",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Period",
-   "link_count": 0,
-   "link_to": "School Period",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Examination Cycle",
-   "link_count": 0,
-   "link_to": "School Examination Cycle",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Assessment and Performance",
-   "link_count": 6,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Exam Paper Requirement",
-   "link_count": 0,
-   "link_to": "Exam Paper Requirement",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Assessment Result Submission Tracker",
-   "link_count": 0,
-   "link_to": "Assessment Result Submission Tracker",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Performance Period",
-   "link_count": 0,
-   "link_to": "School Performance Period",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Student Performance Summary",
-   "link_count": 0,
-   "link_to": "Student Performance Summary",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Bulk Student Report Cards",
-   "link_count": 0,
-   "link_to": "student-report-card-tool",
-   "link_type": "Page",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Executive MIS Board Report",
-   "link_count": 0,
-   "link_to": "Executive MIS Board Report",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Attendance and Management",
-   "link_count": 6,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Student Intervention Plan",
-   "link_count": 0,
-   "link_to": "Student Intervention Plan",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Taliui Akonofo",
-   "link_count": 0,
-   "link_to": "Taliui Akonofo",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "MIS Issue",
-   "link_count": 0,
-   "link_to": "MIS Issue",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "MIS Alert Rule",
-   "link_count": 0,
-   "link_to": "MIS Alert Rule",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Ngaue Tanaki",
-   "link_count": 0,
-   "link_to": "Ngaue Tanaki",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School MIS Settings",
-   "link_count": 0,
-   "link_to": "School MIS Settings",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Finance",
-   "link_count": 6,
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "School Fund Request",
-   "link_count": 0,
-   "link_to": "School Fund Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Budget",
-   "link_count": 0,
-   "link_to": "Budget",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Payment Entry",
-   "link_count": 0,
-   "link_to": "Payment Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Payroll Entry",
-   "link_count": 0,
-   "link_to": "Payroll Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Salary Slip",
-   "link_count": 0,
-   "link_to": "Salary Slip",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Salary Structure",
-   "link_count": 0,
-   "link_to": "Salary Structure",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  }
+  {"hidden":0,"is_query_report":0,"label":"School Structure","link_count":3,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"School Term","link_count":0,"link_to":"School Term","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Period","link_count":0,"link_to":"School Period","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Examination Cycle","link_count":0,"link_to":"School Examination Cycle","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Assessment and Performance","link_count":6,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"Exam Paper Requirement","link_count":0,"link_to":"Exam Paper Requirement","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Assessment Result Submission Tracker","link_count":0,"link_to":"Assessment Result Submission Tracker","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Performance Period","link_count":0,"link_to":"School Performance Period","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Student Performance Summary","link_count":0,"link_to":"Student Performance Summary","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Bulk Student Report Cards","link_count":0,"link_to":"student-report-card-tool","link_type":"Page","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Executive MIS Board Report","link_count":0,"link_to":"Executive MIS Board Report","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Attendance and Management","link_count":6,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"Student Intervention Plan","link_count":0,"link_to":"Student Intervention Plan","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Taliui Akonofo","link_count":0,"link_to":"Taliui Akonofo","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"MIS Issue","link_count":0,"link_to":"MIS Issue","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"MIS Alert Rule","link_count":0,"link_to":"MIS Alert Rule","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Ngaue Tanaki","link_count":0,"link_to":"Ngaue Tanaki","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School MIS Settings","link_count":0,"link_to":"School MIS Settings","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"School Finance","link_count":6,"onboard":0,"type":"Card Break"},
+  {"hidden":0,"is_query_report":0,"label":"School Fund Request","link_count":0,"link_to":"School Fund Request","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Budget","link_count":0,"link_to":"Budget","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Payment Entry","link_count":0,"link_to":"Payment Entry","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Payroll Entry","link_count":0,"link_to":"Payroll Entry","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Salary Slip","link_count":0,"link_to":"Salary Slip","link_type":"DocType","onboard":0,"type":"Link"},
+  {"hidden":0,"is_query_report":0,"label":"Salary Structure","link_count":0,"link_to":"Salary Structure","link_type":"DocType","onboard":0,"type":"Link"}
  ],
- "modified": "2026-09-10 17:38:07.413331",
- "modified_by": "Administrator",
  "module": "High School",
  "name": "High School",
  "number_cards": [],
- "owner": "Administrator",
  "parent_page": "Education",
  "public": 1,
  "quick_lists": [],
  "roles": [
-  {
-   "role": "Academics User"
-  },
-  {
-   "role": "Education Manager"
-  },
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Instructor"
-  }
+  {"role":"Academics User"},
+  {"role":"Education Manager"},
+  {"role":"System Manager"}
  ],
  "sequence_id": 30.0,
  "shortcuts": [
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "label": "School Executive Dashboard",
-   "link_to": "executive-dashboard",
-   "type": "Page"
-  },
-  {
-   "color": "Green",
-   "doc_view": "List",
-   "label": "School Term",
-   "link_to": "School Term",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Orange",
-   "doc_view": "List",
-   "label": "Board Reports",
-   "link_to": "Executive MIS Board Report",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Purple",
-   "doc_view": "",
-   "label": "Bulk Report Cards",
-   "link_to": "student-report-card-tool",
-   "type": "Page"
-  }
+  {"color":"Blue","doc_view":"","label":"School Executive Dashboard","link_to":"executive-dashboard","type":"Page"},
+  {"color":"Green","doc_view":"List","label":"School Term","link_to":"School Term","stats_filter":"[]","type":"DocType"},
+  {"color":"Orange","doc_view":"List","label":"Board Reports","link_to":"Executive MIS Board Report","stats_filter":"[]","type":"DocType"}
+  ,{"color":"Purple","doc_view":"","label":"Bulk Report Cards","link_to":"student-report-card-tool","type":"Page"}
  ],
- "title": "High School",
- "type": "Workspace"
+ "title": "High School"
 }

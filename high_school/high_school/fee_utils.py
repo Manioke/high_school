@@ -2,6 +2,7 @@ import re
 
 import frappe
 from frappe import _
+from frappe.utils import nowdate
 
 from education.education.doctype.fee_schedule.fee_schedule import (
     create_sales_invoice,
@@ -242,3 +243,196 @@ def generate_custom_fees(enrollment, method=None):
     )
 
     return created_invoices
+
+
+def create_late_registration_invoice_link_field():
+    """Create the source-invoice marker used to prevent duplicate late fees."""
+    if frappe.db.exists(
+        "Custom Field",
+        {"dt": "Sales Invoice", "fieldname": "custom_late_registration_source_invoice"},
+    ):
+        return
+    frappe.get_doc(
+        {
+            "doctype": "Custom Field",
+            "dt": "Sales Invoice",
+            "module": "High School",
+            "fieldname": "custom_late_registration_source_invoice",
+            "label": "Late Registration Source Invoice",
+            "fieldtype": "Link",
+            "options": "Sales Invoice",
+            "insert_after": "fee_schedule",
+            "read_only": 1,
+            "no_copy": 1,
+            "description": "The overdue Term 1 invoice that caused this automatic late-registration charge.",
+        }
+    ).insert(ignore_permissions=True)
+    frappe.db.commit()
+
+
+def _term_one_invoice_names(item_identifier):
+    item_fields = {field.fieldname for field in frappe.get_meta("Sales Invoice Item").fields}
+    searchable = [field for field in ("item_code", "item_name") if field in item_fields]
+    if not searchable:
+        return []
+    return list(
+        {
+            row.parent
+            for row in frappe.get_all(
+                "Sales Invoice Item",
+                filters={"parenttype": "Sales Invoice"},
+                or_filters={field: item_identifier for field in searchable},
+                fields=["parent"],
+                limit_page_length=0,
+            )
+        }
+    )
+
+
+def _student_for_fee_invoice(invoice):
+    """Resolve an Education Student from either invoice link."""
+    if invoice.get("student"):
+        return invoice.student
+
+    customer = invoice.get("customer")
+    if not customer or not frappe.get_meta("Student").has_field("customer"):
+        return None
+
+    students = frappe.get_all(
+        "Student",
+        filters={"customer": customer},
+        pluck="name",
+        order_by="modified desc",
+        limit_page_length=2,
+    )
+    # Do not guess if bad master data links one Customer to several Students.
+    return students[0] if len(students) == 1 else None
+
+
+def _create_late_registration_invoice(fee_structure, source_invoice, student):
+    """Build the late charge directly from a submitted Fee Structure."""
+    structure = frappe.get_doc("Fee Structure", fee_structure)
+    if structure.docstatus != 1:
+        frappe.throw(_("Late Registration Fee Structure {0} must be submitted.").format(fee_structure))
+    if not structure.get("components"):
+        frappe.throw(_("Late Registration Fee Structure {0} has no components.").format(fee_structure))
+
+    customer = source_invoice.get("customer")
+    if not customer:
+        customer = frappe.db.get_value("Student", student, "customer")
+    if not customer:
+        # Use Education's supported Customer creation/linking behavior.
+        from education.education.doctype.fee_schedule.fee_schedule import (
+            get_customer_from_student,
+        )
+
+        customer = get_customer_from_student(student)
+
+    invoice = frappe.new_doc("Sales Invoice")
+    invoice.customer = customer
+    invoice.company = structure.get("company") or source_invoice.get("company")
+    invoice.posting_date = nowdate()
+    invoice.due_date = nowdate()
+    if invoice.meta.has_field("student"):
+        invoice.student = student
+    if structure.get("receivable_account"):
+        invoice.debit_to = structure.receivable_account
+    if invoice.meta.has_field("custom_late_registration_source_invoice"):
+        invoice.custom_late_registration_source_invoice = source_invoice.name
+
+    for component in structure.components:
+        invoice.append(
+            "items",
+            {
+                "item_code": component.item,
+                "qty": 1,
+                "rate": component.amount,
+                "price_list_rate": component.amount,
+                "discount_percentage": component.get("discount") or 0,
+                "cost_center": structure.get("cost_center"),
+            },
+        )
+
+    invoice.flags.ignore_permissions = True
+    invoice.insert(ignore_permissions=True)
+    if frappe.db.get_single_value("Education Settings", "auto_submit_sales_invoice"):
+        invoice.submit()
+    return invoice.name
+
+
+def create_overdue_term_one_late_fees():
+    """Daily, create one Late Registration invoice per overdue Term 1 invoice."""
+    settings = frappe.get_single("School MIS Settings")
+    if not settings.get("enable_automatic_late_registration_fees"):
+        return {"created": [], "skipped": 0, "errors": []}
+
+    fee_structure = settings.get("late_registration_fee_structure") or "Late Registration"
+    item_identifier = settings.get("term_one_fee_item") or "Term 1"
+    if not frappe.db.exists("Fee Structure", {"name": fee_structure, "docstatus": 1}):
+        return {
+            "created": [],
+            "skipped": 0,
+            "errors": [f"Submitted Fee Structure {fee_structure} does not exist."],
+        }
+
+    invoice_fields = {field.fieldname for field in frappe.get_meta("Sales Invoice").fields}
+    required = {"outstanding_amount", "due_date"}
+    if not required.issubset(invoice_fields):
+        return {"created": [], "skipped": 0, "errors": ["Required invoice fields are unavailable."]}
+
+    source_names = _term_one_invoice_names(item_identifier)
+    if not source_names:
+        return {"created": [], "skipped": 0, "errors": []}
+
+    sources = frappe.get_all(
+        "Sales Invoice",
+        filters={
+            "name": ["in", source_names],
+            "docstatus": 1,
+            "due_date": ["<", nowdate()],
+            "outstanding_amount": [">", 0],
+        },
+        fields=[
+            field
+            for field in ("name", "student", "customer", "due_date")
+            if field == "name" or field in invoice_fields
+        ],
+        order_by="due_date asc, name asc",
+        limit_page_length=0,
+    )
+    created = []
+    skipped = 0
+    errors = []
+    marker_available = "custom_late_registration_source_invoice" in invoice_fields
+    if not marker_available:
+        return {
+            "created": [],
+            "skipped": 0,
+            "errors": ["Run bench migrate before enabling automatic late-registration fees."],
+        }
+    for row in sources:
+        if frappe.db.exists(
+            "Sales Invoice",
+            {"custom_late_registration_source_invoice": row.name, "docstatus": ["<", 2]},
+        ):
+            skipped += 1
+            continue
+        try:
+            source = frappe.get_doc("Sales Invoice", row.name)
+            student = _student_for_fee_invoice(source)
+            if not student:
+                errors.append(
+                    f"{row.name}: no unique Student is linked directly or through Customer {source.get('customer') or '(not set)'}."
+                )
+                continue
+            invoice_name = _create_late_registration_invoice(
+                fee_structure, source, student
+            )
+            created.append(invoice_name)
+        except Exception:
+            errors.append(row.name)
+            frappe.log_error(
+                title=f"Automatic late-registration fee failed for {row.name}",
+                message=frappe.get_traceback(),
+            )
+    return {"created": created, "skipped": skipped, "errors": errors}

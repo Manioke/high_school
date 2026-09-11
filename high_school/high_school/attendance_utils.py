@@ -18,25 +18,31 @@ def mark_standard_attendance(
     """
     Create or update a Student Attendance record.
 
-    Existing approved Leave attendance is preserved.
+    Existing approved Leave attendance is preserved for an unchecked student,
+    but is changed to Present when the teacher confirms that the student has
+    returned to class.
     """
 
-    course_schedule_filter = (
-        course_schedule
-        if course_schedule
-        else ["is", "not set"]
-    )
-
-    existing_name = frappe.db.exists(
-        "Student Attendance",
-        {
+    # Course-schedule Leave records created by Frappe Education do not carry a
+    # Student Group.  Match them by Student + Course Schedule, which is also
+    # the uniqueness rule enforced by Student Attendance.  Daily/group
+    # attendance still needs Student + Group + Date.
+    if course_schedule:
+        existing_filters = {
             "student": student,
-            "course_schedule": course_schedule_filter,
+            "course_schedule": course_schedule,
+            "docstatus": ["<", 2],
+        }
+    else:
+        existing_filters = {
+            "student": student,
+            "course_schedule": ["is", "not set"],
             "student_group": student_group,
             "date": date,
             "docstatus": ["<", 2],
-        },
-    )
+        }
+
+    existing_name = frappe.db.exists("Student Attendance", existing_filters)
 
     if existing_name:
         current_status = frappe.db.get_value(
@@ -45,8 +51,19 @@ def mark_standard_attendance(
             "status",
         )
 
-        # Do not overwrite approved leave with Present/Absent.
+        # An unchecked row means Absent in the Education tool.  Preserve the
+        # approved Leave record instead of attempting to create a duplicate.
         if current_status == "Leave":
+            if status == "Present":
+                frappe.db.set_value(
+                    "Student Attendance",
+                    existing_name,
+                    {
+                        "status": "Present",
+                        "leave_application": None,
+                    },
+                    update_modified=True,
+                )
             return existing_name
 
         frappe.db.set_value(

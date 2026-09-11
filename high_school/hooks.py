@@ -121,6 +121,7 @@ doctype_calendar_js = {
 after_migrate = [
     "high_school.high_school.student_utils.create_education_settings_custom_fields",
     "high_school.high_school.student_utils.create_student_leaving_fields",
+    "high_school.high_school.fee_utils.create_late_registration_invoice_link_field",
 ]
 
 # Integration Cleanup
@@ -191,6 +192,13 @@ doc_events = {
 	"Student Applicant": {
 		"before_insert": "high_school.high_school.naming.ensure_unique_student_applicant_name",
 	},
+	"Student": {
+		"before_validate": "high_school.high_school.student_lifecycle.prepare_student_departure",
+		"on_update": "high_school.high_school.student_lifecycle.handle_student_update",
+	},
+	"Instructor": {
+		"on_update": "high_school.high_school.staff_lifecycle.sync_instructor_departure",
+	},
 	"Assessment Plan": {
 		"on_update": [
 			"high_school.high_school.exam_preparation.refresh_requirements_for_assessment_plan",
@@ -239,7 +247,8 @@ doc_events = {
     "Program Enrollment": {
         "on_submit": [
             "high_school.high_school.fee_utils.generate_custom_fees",
-            "high_school.high_school.student_utils.update_student_fields"
+            "high_school.high_school.student_utils.update_student_fields",
+            "high_school.high_school.student_group_sync.refresh_groups_after_enrolment",
         ]
     }
 }
@@ -261,6 +270,7 @@ scheduler_events = {
 		"high_school.high_school.result_submission.refresh_open_result_trackers",
 		"high_school.high_school.student_interventions.refresh_overdue_intervention_plans",
 		"high_school.high_school.student_interventions.refresh_current_intervention_plans",
+		"high_school.high_school.fee_utils.create_overdue_term_one_late_fees",
 	],
 # 	"hourly": [
 # 		"high_school.tasks.hourly"

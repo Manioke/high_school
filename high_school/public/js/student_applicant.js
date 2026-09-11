@@ -1,66 +1,64 @@
-// In public/js/student_applicant.js
+function populate_from_returning_student(frm) {
+    if (frm.doc.custom_application_type !== 'Old Student' || !frm.doc.custom_student_id) {
+        return;
+    }
+
+    const preserved = {
+        custom_application_type: frm.doc.custom_application_type,
+        custom_student_id: frm.doc.custom_student_id,
+        academic_year: frm.doc.academic_year,
+        academic_term: frm.doc.academic_term,
+        application_status: frm.doc.application_status,
+    };
+    const protected_fields = new Set([
+        'name', 'doctype', 'owner', 'creation', 'modified', 'modified_by',
+        'docstatus', 'idx', 'enabled', 'status', 'title', 'student_name',
+        'custom_application_type', 'custom_student_id', 'academic_year',
+        'academic_term', 'application_status', 'courses',
+    ]);
+
+    frappe.db.get_doc('Student', frm.doc.custom_student_id).then(student => {
+        const values = {};
+        (frm.meta.fields || []).forEach(field => {
+            if (!field.fieldname || protected_fields.has(field.fieldname)) return;
+            if (['Table', 'Table MultiSelect', 'Section Break', 'Column Break', 'Tab Break', 'Button', 'HTML'].includes(field.fieldtype)) return;
+            if (student[field.fieldname] !== undefined && student[field.fieldname] !== null) {
+                values[field.fieldname] = student[field.fieldname];
+            }
+        });
+
+        const email = student.student_email_id || student.student_email ||
+            student.student_email_address || student.email || student.user;
+        ['student_email_id', 'student_email', 'student_email_address'].forEach(fieldname => {
+            if (email && frm.fields_dict[fieldname]) values[fieldname] = email;
+        });
+
+        if (frm.fields_dict.first_name) {
+            values.first_name = student.first_name || values.first_name || student.student_name;
+        }
+        if (frm.fields_dict.middle_name && student.middle_name) values.middle_name = student.middle_name;
+        if (frm.fields_dict.last_name && student.last_name) values.last_name = student.last_name;
+
+        Object.assign(values, preserved);
+        return frm.set_value(values);
+    }).then(() => {
+        frappe.show_alert({
+            message: __('Returning Student details loaded. The selected Academic Year and Term were preserved.'),
+            indicator: 'green',
+        });
+    });
+}
 
 frappe.ui.form.on('Student Applicant', {
-    custom_student_id: function(frm) {
-        if (frm.doc.custom_application_type === 'Old Student' && frm.doc.custom_student_id) {
-            
-            // 1. Lock in the current Academic Year and Term entered on the form
-            const current_academic_year = frm.doc.academic_year;
-            const current_academic_term = frm.doc.academic_term;
-            
-            // 2. Fetch the FULL master Student document details
-            frappe.db.get_doc('Student', frm.doc.custom_student_id)
-                .then(student_doc => {
-                    if (student_doc) {
-                        
-                        // 3. Define fields that must NOT be auto-filled from the master student record
-                        const fields_to_skip = [
-                            'student_email_id', 
-                            'student_email_address',
-                            'academic_year',
-                            'academic_term'
-                        ];
-                        
-                        // 4. Clear any bulk child tables to speed up form injection
-                        frm.doc.courses = []; 
-                        
-                        // 5. Automatically map all fields that share the exact same name
-                        let applicant_fields = frm.meta.fields.map(f => f.fieldname);
-                        
-                        applicant_fields.forEach(fieldname => {
-                            if (student_doc[fieldname] !== undefined && 
-                                student_doc[fieldname] !== null && 
-                                !fields_to_skip.includes(fieldname)) {
-                                
-                                frm.set_value(fieldname, student_doc[fieldname]);
-                            }
-                        });
-
-                        // 6. Handle the Name Split Edge Case:
-                        if (student_doc.student_name) {
-                            frm.set_value('first_name', student_doc.student_name);
-                        }
-
-                        // 7. Force-restore the new Academic Year and Term 
-                        // This overrides any framework-level mapping that happened in the background
-                        if (current_academic_year) {
-                            frm.set_value('academic_year', current_academic_year);
-                        }
-                        if (current_academic_term) {
-                            frm.set_value('academic_term', current_academic_term);
-                        }
-
-                        frappe.show_alert({
-                            message: __('Imported matching records. Target Academic Year preserved.'),
-                            indicator: 'green'
-                        });
-                    }
-                });
-        }
+    custom_student_id(frm) {
+        populate_from_returning_student(frm);
     },
-    custom_application_type: function(frm) {
+
+    custom_application_type(frm) {
         if (frm.doc.custom_application_type === 'New Student') {
             frm.set_value('custom_student_id', '');
+        } else {
+            populate_from_returning_student(frm);
         }
-    }
+    },
 });

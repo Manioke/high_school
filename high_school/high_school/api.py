@@ -143,7 +143,7 @@ def get_students_custom(*args, **kwargs):
         (
             field_name
             for option_name, field_name in option_field_map.items()
-            if option_name in identifier
+            if option_name.lower() in identifier.lower()
         ),
         None,
     )
@@ -172,6 +172,7 @@ def get_students_custom(*args, **kwargs):
             )
             .where(program_enrollment.docstatus == 1)
             .where(option_field == request_data.get("course"))
+            .where(student.enabled == 1)
         )
 
         if request_data.get("program"):
@@ -189,14 +190,7 @@ def get_students_custom(*args, **kwargs):
         students = query.run(as_dict=True)
 
         for student_row in students:
-            student_row.active = int(
-                frappe.db.get_value(
-                    "Student",
-                    student_row.student,
-                    "enabled",
-                )
-                or 0
-            )
+            student_row.active = 1
 
         return students
 

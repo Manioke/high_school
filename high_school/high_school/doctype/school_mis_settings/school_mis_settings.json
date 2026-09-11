@@ -50,6 +50,10 @@
   "track_student_finance",
   "fee_collection_target",
   "overdue_fee_target",
+  "late_fee_automation_section",
+  "enable_automatic_late_registration_fees",
+  "late_registration_fee_structure",
+  "term_one_fee_item",
   "assessment_management_section",
   "submit_assessment_plans_from_exam_requirements",
   "protect_performance_summaries_until_results_complete"
@@ -361,6 +365,35 @@
    "fieldname": "overdue_fee_target",
    "fieldtype": "Percent",
    "label": "Maximum Overdue Fee Rate"
+  },
+  {
+   "fieldname": "late_fee_automation_section",
+   "fieldtype": "Section Break",
+   "label": "Late Registration Fee Automation"
+  },
+  {
+   "default": "1",
+   "description": "Once per overdue source invoice, create a late-registration invoice during the daily scheduler run.",
+   "fieldname": "enable_automatic_late_registration_fees",
+   "fieldtype": "Check",
+   "label": "Automatically Invoice Late Registration Fees"
+  },
+  {
+   "default": "Late Registration",
+   "depends_on": "enable_automatic_late_registration_fees",
+   "description": "Submitted Fee Structure whose components, amount, receivable account and Cost Center are used for each late-registration invoice.",
+   "fieldname": "late_registration_fee_structure",
+   "fieldtype": "Link",
+   "label": "Late Registration Fee Structure",
+   "options": "Fee Structure"
+  },
+  {
+   "default": "Term 1",
+   "depends_on": "enable_automatic_late_registration_fees",
+   "description": "An overdue invoice must contain an item whose Item Code or Item Name exactly matches this value.",
+   "fieldname": "term_one_fee_item",
+   "fieldtype": "Data",
+   "label": "Term 1 Fee Item"
   }
  ],
  "grid_page_length": 50,
