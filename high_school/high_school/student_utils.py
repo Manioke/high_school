@@ -1,5 +1,5 @@
 import frappe
-from frappe import _
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 
 # ---------------------------------------------------------------------------
@@ -26,52 +26,6 @@ def update_student_fields(doc, method=None):
             "custom_form": doc.student_batch_name,
         },
     )
-
-
-# ---------------------------------------------------------------------------
-# RETURNING STUDENT / SIBLING RANK
-# ---------------------------------------------------------------------------
-
-def sync_old_student_rank_on_approval(
-    doc,
-    method=None,
-):
-    """
-    Synchronize sibling rank from an approved
-    returning Student Applicant to the existing Student.
-    """
-
-    if (
-        doc.custom_application_type != "Old Student"
-        or not doc.custom_student_id
-    ):
-        return
-
-    old_status = frappe.db.get_value(
-        "Student Applicant",
-        doc.name,
-        "application_status",
-    )
-
-    if (
-        doc.application_status == "Approved"
-        and old_status != "Approved"
-    ):
-        frappe.db.set_value(
-            "Student",
-            doc.custom_student_id,
-            "custom_sibling_rank",
-            doc.custom_sibling_rank,
-        )
-
-        frappe.msgprint(
-            _(
-                "Master Student record updated with "
-                "new Sibling Rank: {0}"
-            ).format(
-                doc.custom_sibling_rank
-            )
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -123,6 +77,103 @@ def create_education_settings_custom_fields():
         ).insert(ignore_permissions=True)
 
     frappe.db.commit()
+
+
+def make_student_email_optional():
+    """Junior-school Student records must not require a personal email address."""
+    fields = {field.fieldname for field in frappe.get_meta("Student").fields}
+    for fieldname in ("student_email_id", "student_email"):
+        if fieldname in fields:
+            make_property_setter(
+                "Student",
+                fieldname,
+                "reqd",
+                0,
+                "Check",
+                validate_fields_for_doctype=False,
+            )
+
+
+def create_student_batch_program_field():
+    """Keep reusable Student Batch names scoped to one Program in the core app."""
+    filters = {"dt": "Student Batch Name", "fieldname": "custom_program"}
+    name = frappe.db.get_value("Custom Field", filters, "name")
+    values = {
+        "module": "High School",
+        "label": "Program",
+        "fieldtype": "Link",
+        "options": "Program",
+        "insert_after": "batch_name",
+        "reqd": 1,
+        "allow_in_quick_entry": 1,
+        "in_list_view": 1,
+        "in_standard_filter": 1,
+        "description": "Program that owns this reusable Form/Batch name.",
+    }
+    if name:
+        field = frappe.get_doc("Custom Field", name)
+        changed = False
+        for key, value in values.items():
+            if field.get(key) != value:
+                field.set(key, value)
+                changed = True
+        if changed:
+            field.save(ignore_permissions=True)
+        return
+    frappe.get_doc({"doctype": "Custom Field", **filters, **values}).insert(ignore_permissions=True)
+
+
+def enforce_core_only_registration_boundary():
+    """Disable legacy public intake safely when the optional add-on is absent.
+
+    Existing applicant data is preserved. Only public Web Form publication and
+    legacy add-on fields are disabled/hidden, avoiding destructive migrations.
+    """
+    if "high_school_online_registration" in frappe.get_installed_apps():
+        return
+
+    for name in frappe.get_all(
+        "Web Form",
+        filters={"doc_type": "Student Applicant"},
+        pluck="name",
+        limit_page_length=0,
+    ):
+        web_form = frappe.get_doc("Web Form", name)
+        changed = False
+        if web_form.meta.has_field("published") and web_form.get("published"):
+            web_form.published = 0
+            changed = True
+        if web_form.meta.has_field("login_required") and not web_form.get("login_required"):
+            web_form.login_required = 1
+            changed = True
+        if changed:
+            web_form.save(ignore_permissions=True)
+
+    legacy_fields = frappe.get_all(
+        "Custom Field",
+        filters={
+            "dt": "Student Applicant",
+            "module": ["in", ["High School", "High School Online Registration"]],
+        },
+        pluck="name",
+        limit_page_length=0,
+    )
+    source_field = frappe.db.get_value(
+        "Custom Field",
+        {"dt": "Program Enrollment", "fieldname": "custom_student_applicant"},
+        "name",
+    )
+    if source_field:
+        legacy_fields.append(source_field)
+    for name in legacy_fields:
+        field = frappe.get_doc("Custom Field", name)
+        field.hidden = 1
+        field.reqd = 0
+        field.mandatory_depends_on = None
+        field.save(ignore_permissions=True)
+
+    frappe.clear_cache(doctype="Student Applicant")
+    frappe.clear_cache(doctype="Program Enrollment")
 
 
 def create_student_leaving_fields():

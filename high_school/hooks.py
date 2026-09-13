@@ -24,7 +24,6 @@ add_to_apps_screen = [
 # Includes in <head>
 # ------------------
 import high_school.high_school.api
-from high_school.high_school.patches import apply_patches
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/high_school/css/high_school.css"
@@ -38,9 +37,8 @@ from high_school.high_school.patches import apply_patches
 # website_theme_scss = "high_school/public/scss/website"
 
 # include js, css files in header of web form
-webform_include_js = {
-	"Student Applicant": "public/js/student_applicant_webform.js",
-}
+# Public Student Applicant behavior is provided by the optional
+# high_school_online_registration app.
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
@@ -59,8 +57,6 @@ doctype_js = {
     "Course Scheduling Tool": "public/js/course_scheduling_tool_extension.js",
     "Student Leave Application": "public/js/student_leave_application.js",
     "Program Enrollment": "public/js/program_enrollment.js",
-    "Student Applicant": "public/js/student_applicant.js",
-    "Program Enrollment Tool": "public/js/program_enrollment_tool_override.js",
     "Salary Slip": "public/js/salary_slip.js",
     "Course Schedule": "public/js/course_schedule.js",
     "Fee Schedule": "public/js/fee_schedule.js",
@@ -82,9 +78,7 @@ doctype_calendar_js = {
 # home_page = "login"
 
 # website user home page (by Role)
-role_home_page = {
-	"Guardian": "edu-portal",
-}
+# Guardian portal routing is provided by high_school_online_registration.
 
 # Generators
 # ----------
@@ -124,10 +118,12 @@ role_home_page = {
 
 after_migrate = [
     "high_school.high_school.student_utils.create_education_settings_custom_fields",
+    "high_school.high_school.student_utils.make_student_email_optional",
+    "high_school.high_school.student_utils.create_student_batch_program_field",
+    "high_school.high_school.student_utils.enforce_core_only_registration_boundary",
     "high_school.high_school.student_utils.create_student_leaving_fields",
     "high_school.high_school.fee_utils.create_late_registration_invoice_link_field",
     "high_school.high_school.fee_utils.setup_school_term_fee_fields",
-    "high_school.high_school.admissions.setup_admission_and_guardian_workflow",
     "high_school.high_school.staff_lifecycle.setup_employee_instructor_field",
     "high_school.high_school.workspace_setup.ensure_instructor_workspace_access",
 ]
@@ -176,7 +172,6 @@ has_permission = {
 
 override_doctype_class = {
 	"Course Scheduling Tool": "high_school.high_school.course_scheduling.HighSchoolCourseSchedulingTool",
-	"Program Enrollment Tool": "high_school.high_school.program_enrollment_tool.HighSchoolProgramEnrollmentTool",
 }
 
 #override_doctype_class = {
@@ -197,17 +192,6 @@ override_doctype_class = {
 doc_events = {
 	"Course Schedule": {
 		"before_validate": "high_school.high_school.course_scheduling.normalise_course_schedule_times",
-	},
-	"Student Applicant": {
-		"before_insert": [
-			"high_school.high_school.admissions.validate_public_student_application",
-			"high_school.high_school.naming.ensure_unique_student_applicant_name",
-		],
-		"after_insert": "high_school.high_school.admissions.queue_application_receipt_email",
-		"validate": "high_school.high_school.admissions.validate_applicant_program_batch",
-		"on_update": "high_school.high_school.admissions.handle_applicant_approval",
-		"on_submit": "high_school.high_school.admissions.handle_applicant_approval",
-		"on_update_after_submit": "high_school.high_school.admissions.handle_applicant_approval",
 	},
 	"Student": {
 		"before_validate": "high_school.high_school.student_lifecycle.prepare_student_departure",
@@ -267,14 +251,13 @@ doc_events = {
     },
     "Program Enrollment": {
         "before_submit": [
-            "high_school.high_school.program_enrollment_utils.assign_available_student_category",
+            "high_school.high_school.enrollment.assign_available_student_category",
             "high_school.high_school.fee_utils.set_enrollment_school_term",
         ],
         "on_submit": [
             "high_school.high_school.fee_utils.generate_custom_fees",
             "high_school.high_school.student_utils.update_student_fields",
             "high_school.high_school.student_group_sync.refresh_groups_after_enrolment",
-            "high_school.high_school.admissions.complete_guardian_enrollment",
         ]
     },
     "Fee Schedule": {
@@ -326,9 +309,6 @@ scheduler_events = {
 #
 
 override_whitelisted_methods = {
-	"education.education.api.enroll_student": "high_school.high_school.admissions.enroll_student_with_batch",
-    "education.education.doctype.program_enrollment_tool.program_enrollment_tool.get_students": "high_school.high_school.program_enrollment_utils.get_program_enrollment_tool_students",
-    "education.education.api.get_student_invoices": "high_school.high_school.admissions.get_guardian_student_invoices",
     "education.education.doctype.student_group.student_group.get_students": "high_school.high_school.api.get_students_custom",
     "education.education.api.mark_attendance": "high_school.high_school.api.custom_mark_attendance",
     "education.education.api.get_course_schedule_events": "high_school.high_school.api.get_course_schedule_events",
@@ -365,7 +345,7 @@ override_whitelisted_methods = {
 # Request Events
 # ----------------
 # before_request = ["high_school.utils.before_request"]
-before_request = ["high_school.high_school.auth.restrict_guardian_to_portal"]
+# Guardian-only request restrictions are provided by high_school_online_registration.
 # after_request = ["high_school.utils.after_request"]
 
 # Job Events
@@ -410,10 +390,7 @@ before_request = ["high_school.high_school.auth.restrict_guardian_to_portal"]
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-#on_login = "high_school.high_school.auth.after_login"
-on_session_creation = [
-    "high_school.high_school.auth.redirect_after_login"
-]
+# Guardian portal login routing is provided by high_school_online_registration.
 # Translation
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
@@ -455,7 +432,8 @@ fixtures = [
                     # Keeping your prior Sales Invoice custom rules active
                     "Sales Invoice"
                 ]
-            ]
+            ],
+            ["role", "!=", "Guardian"]
         ]
     }
 ]

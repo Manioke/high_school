@@ -1,6 +1,22 @@
-### High School
+### High School Core MIS
 
-A custom app that extends Education with school-term attendance, assessment operations, executive MIS, board reporting, student fee monitoring, and ERPNext/Frappe HR financial oversight.
+A custom app that extends Education with manual Program Enrollment, balanced
+class allocation, timetables, attendance, assessment operations, executive MIS,
+board reporting, student fee monitoring, and ERPNext/Frappe HR financial
+oversight.
+
+Public applications, applicant emails, Cloudflare Turnstile, automatic
+applicant enrolment, and automatic Guardian portal provisioning are delivered
+separately in the optional `high_school_online_registration` app.
+
+### Base-package enrolment workflow
+
+1. Create or import the Student and any required User/Guardian records.
+2. Create a Program Enrollment manually.
+3. Select Program, Academic Year, Student Batch, and—when automatic balancing
+   is disabled—Student Category.
+4. Submit it. Core fee creation, Student field synchronization, balanced class
+   allocation, and Student Group refresh continue to run normally.
 
 See [School Finance Setup and Demo Guide](docs/SCHOOL_FINANCE_DEMO.md) for the required Company, Cost Center, Account, Budget, purchase, fee, and payroll configuration.
 

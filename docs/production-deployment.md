@@ -66,7 +66,9 @@ Cloudflare Tunnel should route the public hostname to the internal Frappe fronte
 
 ## Turnstile per environment
 
-The site key is public and may be built into the app. Store the secret only in **School MIS Settings → Turnstile Secret Key**.
+Turnstile belongs to the optional `high_school_online_registration` app. The
+site key is public and may be built into that app. Store the secret only in
+**Online Registration Settings → Turnstile Secret Key**.
 
 - Trial allowed hostname: the exact trial hostname
 - Production allowed hostname: the exact production hostname
