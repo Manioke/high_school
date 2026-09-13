@@ -131,7 +131,7 @@ def generate_batch_performance_summaries(program, academic_year, school_term, st
 
 
 @frappe.whitelist()
-def download_report_cards(program, academic_year, school_term, student_batch, include_incomplete=0, include_drafts=1, letter_head=None):
+def download_report_cards(program, academic_year, school_term, student_batch, include_incomplete=0, include_drafts=1, letter_head=None, print_format=None):
     _check_access()
     periods = _periods(program, academic_year, school_term, student_batch)
     summaries = _summaries(periods, cint(include_incomplete), cint(include_drafts))
@@ -139,6 +139,15 @@ def download_report_cards(program, academic_year, school_term, student_batch, in
         frappe.throw(_("No Student Performance Summaries match these filters."))
     if len(summaries) > 1000:
         frappe.throw(_("This selection contains more than 1,000 report cards. Choose a smaller Student Batch."))
+    print_format = print_format or frappe.db.get_single_value(
+        "School MIS Settings", "student_report_card_print_format"
+    ) or "Student Performance Report Card"
+    letter_head = letter_head or frappe.db.get_single_value(
+        "School MIS Settings", "student_report_card_letter_head"
+    )
+    format_doctype = frappe.db.get_value("Print Format", print_format, "doc_type")
+    if format_doctype != "Student Performance Summary":
+        frappe.throw(_("Print Format {0} is not configured for Student Performance Summary.").format(print_format))
 
     pages = []
     for row in summaries:
@@ -148,7 +157,7 @@ def download_report_cards(program, academic_year, school_term, student_batch, in
             frappe.get_print(
                 "Student Performance Summary",
                 row.name,
-                print_format="Student Performance Report Card",
+                print_format=print_format,
                 letterhead=letter_head or None,
                 no_letterhead=0,
             )

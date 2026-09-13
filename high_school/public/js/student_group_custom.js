@@ -1,5 +1,9 @@
 frappe.ui.form.on('Student Group', {
     refresh(frm) {
+        // Frappe v16 removed this private Page API. The standard Education
+        // Get Students button is now routed server-side through hooks.py, so
+        // this legacy override should only run on versions that still expose it.
+        if (typeof frm.page.set_inner_btn_group_item !== 'function') return;
         frm.page.set_inner_btn_group_item(__('Get Students'), null, function() {
             frappe.call({
                 method: 'high_school.high_school.api.get_students_custom',

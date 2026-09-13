@@ -1,0 +1,15 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": [],
+ "is_standard": "Yes",
+ "module": "High School",
+ "name": "Average Performance per Student Batch",
+ "prepared_report": 0,
+ "ref_doctype": "Student Performance Summary",
+ "report_name": "Average Performance per Student Batch",
+ "report_type": "Script Report",
+ "roles": [{"role":"Academics User"},{"role":"Education Manager"},{"role":"System Manager"}]
+}

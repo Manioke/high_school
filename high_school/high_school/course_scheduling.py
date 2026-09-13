@@ -2,6 +2,7 @@ from datetime import time, timedelta
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 from education.education.doctype.course_scheduling_tool.course_scheduling_tool import (
     CourseSchedulingTool as EducationCourseSchedulingTool,
 )
@@ -44,14 +45,37 @@ def apply_school_period(doc):
 
 
 class HighSchoolCourseSchedulingTool(EducationCourseSchedulingTool):
-    @frappe.whitelist()
-    def schedule_course(self, days):
-        apply_school_period(self)
-        return super().schedule_course(days)
+	def validate_mandatory(self, days):
+		if cint(frappe.db.get_single_value("School MIS Settings", "require_rooms_for_timetable")):
+			return super().validate_mandatory(days)
+		if not days:
+			frappe.throw(_("Please select at least one day to schedule the course."))
+		for fieldname in ("course", "instructor", "from_time", "to_time", "course_start_date", "course_end_date"):
+			if not self.get(fieldname):
+				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(fieldname)))
+
+	@frappe.whitelist()
+	def schedule_course(self, days):
+		apply_school_period(self)
+		return super().schedule_course(days)
 
 
 def normalise_course_schedule_times(doc, method=None):
-    if doc.get("from_time") is not None and doc.get("to_time") is not None:
-        validate_time_range(doc.from_time, doc.to_time)
-        doc.from_time = normalise_time(doc.from_time)
-        doc.to_time = normalise_time(doc.to_time)
+	require_room = cint(frappe.db.get_single_value("School MIS Settings", "require_rooms_for_timetable"))
+	if require_room and not doc.get("room"):
+		frappe.throw(_("Room is mandatory because Require Rooms for Timetables is enabled in School MIS Settings."))
+	if not require_room and not doc.get("room"):
+		# Education v16 marks Room mandatory in the standard DocType. This
+		# setting deliberately relaxes only that requirement; all other required
+		# scheduling fields are validated by the standard controller.
+		doc.flags.ignore_mandatory = True
+	if doc.get("custom_period"):
+		period = frappe.db.get_value("School Period", doc.custom_period, ["from_time", "to_time"], as_dict=True)
+		if not period:
+			frappe.throw(_("School Period {0} does not exist.").format(doc.custom_period))
+		doc.from_time = period.from_time
+		doc.to_time = period.to_time
+	if doc.get("from_time") is not None and doc.get("to_time") is not None:
+		validate_time_range(doc.from_time, doc.to_time)
+		doc.from_time = normalise_time(doc.from_time)
+		doc.to_time = normalise_time(doc.to_time)

@@ -32,12 +32,14 @@ def get_enabled_users_with_role(role):
 	return [user for user in users if role in frappe.get_roles(user)]
 
 
-def _student_groups_for_batch(academic_year, student_batch):
+def _student_groups_for_batch(academic_year, student_batch, program=None):
 	fields = _doctype_fields("Student Group")
 	batch_field = _first_available(fields, "student_batch", "student_batch_name", "batch")
 	if not batch_field:
 		return []
 	filters = {"academic_year": academic_year, batch_field: student_batch}
+	if program and "program" in fields:
+		filters["program"] = program
 	if "disabled" in fields:
 		filters["disabled"] = 0
 	query_fields = ["name"]
@@ -172,7 +174,7 @@ def _as_list(value):
 
 
 @frappe.whitelist()
-def get_form_course_rows(academic_year, student_batches, form_level):
+def get_form_course_rows(academic_year, student_batches, form_level, program=None):
 	frappe.only_for(("Education Manager", "System Manager"))
 	form_level = int(form_level)
 	if form_level not in {5, 6, 7}:
@@ -196,7 +198,7 @@ def get_form_course_rows(academic_year, student_batches, form_level):
 			)
 		)
 	student_batch = matches[0]
-	groups = _student_groups_for_batch(academic_year, student_batch)
+	groups = _student_groups_for_batch(academic_year, student_batch, program)
 	courses = set(_course_group_map(academic_year, groups))
 	course_fields = _doctype_fields("Course")
 	filters = {"name": ["like", "Form {0}%".format(form_level)]}
@@ -300,7 +302,7 @@ def generate_exam_paper_requirements(cycle):
 	hod_by_department = {row.department: row.hod_user for row in cycle.hod_assignments}
 	batch_context = {}
 	for batch_row in cycle.student_batches:
-		groups = _student_groups_for_batch(cycle.academic_year, batch_row.student_batch)
+		groups = _student_groups_for_batch(cycle.academic_year, batch_row.student_batch, cycle.program)
 		batch_context[batch_row.student_batch] = {
 			"groups": groups,
 			"course_groups": _course_group_map(cycle.academic_year, groups),

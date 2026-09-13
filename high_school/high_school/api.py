@@ -198,6 +198,46 @@ def get_students_custom(*args, **kwargs):
     # STANDARD FRAPPE EDUCATION GROUP
     # -----------------------------------------------------------------------
 
+    # When a Batch originally had one uncategorized group and is later split,
+    # that blank-category group represents only uncategorized enrollments.
+    # Without this branch Education's standard helper would put every student
+    # into the blank group as well as their categorized group.
+    if request_data.get("group_based_on") == "Batch" and not request_data.get("student_category"):
+        group_fields = {field.fieldname for field in frappe.get_meta("Student Group").fields}
+        batch_field = next((name for name in ("batch", "student_batch_name", "student_batch") if name in group_fields), None)
+        group = frappe.db.get_value(
+            "Student Group",
+            identifier,
+            [name for name in ("academic_year", "program", batch_field) if name],
+            as_dict=True,
+        ) if frappe.db.exists("Student Group", identifier) else None
+        if group and batch_field:
+            sibling_filters = {
+                "academic_year": group.academic_year,
+                "program": group.program,
+                batch_field: group.get(batch_field),
+                "group_based_on": "Batch",
+                "disabled": 0,
+                "student_category": ["is", "set"],
+            }
+            if frappe.db.exists("Student Group", sibling_filters):
+                student = frappe.qb.DocType("Student")
+                enrollment = frappe.qb.DocType("Program Enrollment")
+                rows = (
+                    frappe.qb.from_(enrollment)
+                    .join(student).on(enrollment.student == student.name)
+                    .select(enrollment.student, enrollment.student_name)
+                    .where(enrollment.academic_year == group.academic_year)
+                    .where(enrollment.program == group.program)
+                    .where(enrollment.student_batch_name == group.get(batch_field))
+                    .where(enrollment.docstatus == 1)
+                    .where((enrollment.student_category.isnull()) | (enrollment.student_category == ""))
+                    .where(student.enabled == 1)
+                ).run(as_dict=True)
+                for row in rows:
+                    row.active = 1
+                return rows
+
     from education.education.doctype.student_group.student_group import (
         get_students,
     )

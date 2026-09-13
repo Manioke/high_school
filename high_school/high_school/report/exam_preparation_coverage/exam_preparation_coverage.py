@@ -48,6 +48,11 @@ def get_data(filters):
 	for fieldname in ("examination_cycle", "status", "department", "student_batch", "lead_teacher_user"):
 		if filters.get(fieldname):
 			db_filters[fieldname] = filters.get(fieldname)
+	if filters.get("program"):
+		cycles = frappe.get_all(
+			"School Examination Cycle", filters={"program": filters.program}, pluck="name", limit_page_length=0
+		)
+		db_filters["examination_cycle"] = ["in", cycles or [""]]
 	rows = frappe.get_list(
 		"Exam Paper Requirement",
 		filters=db_filters,

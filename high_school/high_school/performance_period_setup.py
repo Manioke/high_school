@@ -136,6 +136,8 @@ def get_main_group_coverage(academic_year, school_term):
 
 @frappe.whitelist()
 def get_main_group_candidates(academic_year, school_term, program=None, student_batch=None):
+	if student_batch and not program:
+		frappe.throw(_("Select a Program before filtering by Student Batch."))
 	frappe.only_for(MANAGER_ROLES)
 	_validate_school_term(school_term, academic_year)
 

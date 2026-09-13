@@ -2690,19 +2690,11 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     Review ${formatNumber(attentionCount)} Attention Item(s)
                 </button>
 
-                <button
-                    id="open-exam-coverage-report-btn"
-                    class="btn btn-default btn-sm"
-                >
-                    Exam Preparation Coverage
-                </button>
-
-                <button
-                    id="open-result-coverage-report-btn"
-                    class="btn btn-default btn-sm"
-                >
-                    Result Submission Coverage
-                </button>
+                ${(frappe.user.has_role('Education Manager') || frappe.user.has_role('System Manager')) ? `
+                    <button id="open-bulk-assessment-plan-tool-btn" class="btn btn-primary btn-sm">
+                        Bulk Assessment Plans
+                    </button>
+                ` : ''}
 
                 <button
                     id="email-assessment-reminders-btn"
@@ -2719,6 +2711,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 <button id="open-academic-interventions-btn" class="btn btn-default btn-sm">
                     Open Academic Plans
                 </button>
+
+				<button id="open-average-batch-performance-btn" class="btn btn-default btn-sm">
+					Average Performance by Batch
+				</button>
 
                 ${!Number(academics.cycle_count || 0) ? `
                     <button id="create-school-examination-cycle-btn" class="btn btn-primary btn-sm">
@@ -2752,24 +2748,13 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 showAcademicAttentionDialog(academics);
             });
 
-        $('#open-exam-coverage-report-btn')
-            .off('click')
-            .on('click', function() {
-                frappe.set_route(
-                    'query-report',
-                    'Exam Preparation Coverage'
-                );
-            });
-
-        $('#open-result-coverage-report-btn')
-            .off('click')
-            .on('click', function() {
-                frappe.set_route(
-                    'query-report',
-                    'Assessment Result Submission Coverage',
-                    {school_term: data.school_term.name}
-                );
-            });
+        $('#open-bulk-assessment-plan-tool-btn').off('click').on('click', function() {
+            frappe.route_options = {
+                academic_year: data.school_term.academic_year,
+                school_term: data.school_term.name
+            };
+            frappe.set_route('bulk-assessment-plan-tool');
+        });
 
         $('#email-assessment-reminders-btn')
             .off('click')
@@ -2807,6 +2792,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 intervention_type: 'Academic'
             });
         });
+
+		$('#open-average-batch-performance-btn').off('click').on('click', function() {
+			frappe.route_options = {
+				academic_year: data.school_term.academic_year,
+				school_term: data.school_term.name
+			};
+			frappe.set_route('query-report', 'Average Performance per Student Batch');
+		});
 
         $('#academic-operations-content').off('click', '.open-student-intervention').on('click', '.open-student-intervention', function() {
             frappe.set_route('Form', 'Student Intervention Plan', $(this).data('name'));
@@ -3105,9 +3098,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                         >
                             Merit List
                         </button>
-                        <button class="btn btn-xs btn-primary open-performance-period" data-period="${escapeHtml(group.performance_period)}">
-                            Generate Summaries
-                        </button>
                     </td>
                 </tr>
             `)
@@ -3205,6 +3195,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 Open Performance Periods
             </button>
 
+            <button id="open-bulk-report-card-tool-btn" class="btn btn-primary btn-sm" style="margin-left:6px;">
+                Bulk Summaries & Report Cards
+            </button>
+
             ${!setup.complete ? `
                 <button
                     id="setup-missing-performance-periods-btn"
@@ -3232,6 +3226,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                 );
             });
 
+        $('#open-bulk-report-card-tool-btn').off('click').on('click', function() {
+            frappe.route_options = {
+                academic_year: data.school_term.academic_year,
+                school_term: data.school_term.name
+            };
+            frappe.set_route('student-report-card-tool');
+        });
+
         $('#setup-missing-performance-periods-btn')
             .off('click')
             .on('click', function() {
@@ -3250,12 +3252,6 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     'School Performance Merit List',
                     {performance_period: $(this).data('period')}
                 );
-            });
-
-        $('#academic-performance-content')
-            .off('click', '.open-performance-period')
-            .on('click', '.open-performance-period', function() {
-                frappe.set_route('Form', 'School Performance Period', $(this).data('period'));
             });
 
     }

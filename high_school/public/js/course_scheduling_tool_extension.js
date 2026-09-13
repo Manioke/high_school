@@ -7,6 +7,9 @@ frappe.ui.form.on('Course Scheduling Tool', {
         
         // Change the labels of the original fields if needed
         frm.set_df_property('custom_period', 'reqd', 1);
+        frappe.db.get_single_value('School MIS Settings', 'require_rooms_for_timetable').then((required) => {
+            if (frm.fields_dict.room) frm.set_df_property('room', 'reqd', Number(required || 0) === 1);
+        });
     },
     
     custom_period: function(frm) {

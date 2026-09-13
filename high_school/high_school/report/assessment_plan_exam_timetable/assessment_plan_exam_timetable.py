@@ -24,7 +24,7 @@ def execute(filters=None):
 
 
 def _validate_filters(filters):
-	for fieldname in ("academic_year", "assessment_group"):
+	for fieldname in ("academic_year", "program", "assessment_group"):
 		if not filters.get(fieldname):
 			frappe.throw(_("{0} is required.").format(fieldname.replace("_", " ").title()))
 	if filters.from_date and filters.to_date and getdate(filters.from_date) > getdate(filters.to_date):
@@ -35,14 +35,30 @@ def _validate_filters(filters):
 
 def _get_plans(filters):
 	docstatus = ["<", 2] if cint(filters.get("include_draft")) else 1
+	plan_filters = {
+		"academic_year": filters.academic_year,
+		"assessment_group": filters.assessment_group,
+		"docstatus": docstatus,
+		"schedule_date": ["is", "set"],
+	}
+	if filters.student_group:
+		plan_filters["student_group"] = filters.student_group
+	elif filters.student_batch:
+		group_fields = {field.fieldname for field in frappe.get_meta("Student Group").fields}
+		batch_field = next((name for name in ("student_batch_name", "student_batch", "batch") if name in group_fields), None)
+		if batch_field:
+			group_filters = {"academic_year": filters.academic_year, batch_field: filters.student_batch}
+			if filters.program and "program" in group_fields:
+				group_filters["program"] = filters.program
+			groups = frappe.get_all("Student Group", filters=group_filters, pluck="name", limit_page_length=0)
+			plan_filters["student_group"] = ["in", groups or [""]]
+	elif filters.program:
+		group_fields = {field.fieldname for field in frappe.get_meta("Student Group").fields}
+		groups = frappe.get_all("Student Group", filters={"academic_year": filters.academic_year, "program": filters.program}, pluck="name", limit_page_length=0)
+		plan_filters["student_group"] = ["in", groups or [""]]
 	return frappe.get_list(
 		"Assessment Plan",
-		filters={
-			"academic_year": filters.academic_year,
-			"assessment_group": filters.assessment_group,
-			"docstatus": docstatus,
-			"schedule_date": ["is", "set"],
-		},
+		filters=plan_filters,
 		fields=[
 			"name",
 			"schedule_date",

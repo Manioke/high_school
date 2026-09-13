@@ -1945,5 +1945,41 @@
   "translatable": 0,
   "unique": 0,
   "width": null
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Course Schedule",
+  "fieldname": "custom_period",
+  "fieldtype": "Link",
+  "insert_after": "to_time",
+  "label": "School Period",
+  "module": "High School",
+  "name": "Course Schedule-custom_period",
+  "options": "School Period",
+  "read_only": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Course Schedule",
+  "fieldname": "custom_school_term",
+  "fieldtype": "Link",
+  "insert_after": "custom_period",
+  "label": "School Term",
+  "module": "High School",
+  "name": "Course Schedule-custom_school_term",
+  "options": "School Term",
+  "read_only": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Course Schedule",
+  "fieldname": "custom_timetable_generator",
+  "fieldtype": "Link",
+  "insert_after": "custom_school_term",
+  "label": "Timetable Generator",
+  "module": "High School",
+  "name": "Course Schedule-custom_timetable_generator",
+  "options": "School Timetable Generator",
+  "read_only": 1
  }
 ]

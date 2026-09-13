@@ -7,6 +7,12 @@ frappe.query_reports['Exam Preparation Coverage'] = {
 			options: 'School Examination Cycle',
 		},
 		{
+			fieldname: 'program',
+			label: __('Program'),
+			fieldtype: 'Link',
+			options: 'Program',
+		},
+		{
 			fieldname: 'status',
 			label: __('Status'),
 			fieldtype: 'Select',
@@ -23,6 +29,7 @@ frappe.query_reports['Exam Preparation Coverage'] = {
 			label: __('Student Batch'),
 			fieldtype: 'Link',
 			options: 'Student Batch Name',
+			get_query: () => ({ filters: { custom_program: frappe.query_report.get_filter_value('program') } }),
 		},
 		{
 			fieldname: 'lead_teacher_user',

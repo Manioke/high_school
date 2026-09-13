@@ -1,5 +1,8 @@
 frappe.ui.form.on('School Examination Cycle', {
 	setup(frm) {
+		frm.set_query('student_batch', 'student_batches', () => ({
+			filters: { custom_program: frm.doc.program },
+		}));
 		frm.set_query('hod_user', 'hod_assignments', () => ({
 			filters: { enabled: 1, user_type: 'System User' },
 		}));
@@ -13,7 +16,15 @@ frappe.ui.form.on('School Examination Cycle', {
 
 	refresh(frm) {
 		render_form_course_buttons(frm);
+		render_department_loader(frm);
 		if (!frm.is_new() && frm.doc.status !== 'Closed') {
+			frm.add_custom_button(__('Print Exam Timetable'), () => frappe.set_route('query-report', 'Assessment Plan Exam Timetable', {
+				academic_year: frm.doc.academic_year,
+				program: frm.doc.program,
+				assessment_group: frm.doc.assessment_group,
+				from_date: frm.doc.exam_start_date,
+				to_date: frm.doc.exam_end_date,
+			}), __('View'));
 			frm.add_custom_button(__('Generate / Refresh Paper Requirements'), () => {
 				frappe.confirm(
 					__('Generate missing requirements and refresh their affected Student Groups? Existing teacher submissions will be preserved.'),
@@ -94,15 +105,50 @@ function render_form_course_buttons(frm) {
 	$wrapper.append($actions);
 }
 
+function render_department_loader(frm) {
+	const field = frm.fields_dict.hod_assignments;
+	if (!field) return;
+	const $wrapper = field.$wrapper || $(field.wrapper);
+	$wrapper.find('.school-department-loader').remove();
+
+	const $actions = $('<div class="school-department-loader" style="margin-top:10px;"></div>');
+	$('<button type="button" class="btn btn-default btn-xs"></button>')
+		.text(__('Get Departments'))
+		.on('click', () => {
+			frappe.confirm(
+				__('Replace the Department HOD rows with all leaf Departments below the parent configured in School MIS Settings?'),
+				() => frm.call('get_departments').then((r) => {
+					const result = r.message || {};
+					frm.clear_table('hod_assignments');
+					(result.departments || []).forEach((department) => {
+						frm.add_child('hod_assignments', { department });
+					});
+					frm.refresh_field('hod_assignments');
+					render_department_loader(frm);
+					frappe.show_alert({
+						message: __('Loaded {0} department(s) below {1}. Set each HOD User, then save.', [
+							(result.departments || []).length,
+							result.parent || '',
+						]),
+						indicator: 'green',
+					});
+				}),
+			);
+		})
+		.appendTo($actions);
+	$wrapper.append($actions);
+}
+
 function load_form_courses(frm, formLevel) {
-	if (!frm.doc.academic_year) {
-		frappe.msgprint(__('Select an Academic Year first.'));
+	if (!frm.doc.academic_year || !frm.doc.program) {
+		frappe.msgprint(__('Select an Academic Year and Program first.'));
 		return;
 	}
 	frappe.call({
 		method: 'high_school.high_school.exam_preparation.get_form_course_rows',
 		args: {
 			academic_year: frm.doc.academic_year,
+			program: frm.doc.program,
 			student_batches: frm.doc.student_batches || [],
 			form_level: formLevel,
 		},

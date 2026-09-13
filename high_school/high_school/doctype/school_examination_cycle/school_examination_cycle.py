@@ -7,6 +7,7 @@ from frappe.utils import getdate
 class SchoolExaminationCycle(Document):
 	def validate(self):
 		self._validate_school_term()
+		self._validate_student_batches()
 		self._validate_dates()
 		self._validate_unique_rows()
 		self._validate_result_deadline()
@@ -21,6 +22,16 @@ class SchoolExaminationCycle(Document):
 					self.school_term, term_year, self.academic_year
 				)
 			)
+
+	def _validate_student_batches(self):
+		for row in self.student_batches:
+			batch_program = frappe.db.get_value("Student Batch Name", row.student_batch, "custom_program")
+			if batch_program and batch_program != self.program:
+				frappe.throw(
+					_("Student Batch {0} belongs to Program {1}, not {2}.").format(
+						row.student_batch, batch_program, self.program
+					)
+				)
 
 	def _validate_dates(self):
 		if getdate(self.exam_end_date) < getdate(self.exam_start_date):
@@ -88,3 +99,33 @@ class SchoolExaminationCycle(Document):
 		from high_school.high_school.result_submission import generate_trackers_for_cycle
 
 		return generate_trackers_for_cycle(self.name)
+
+	@frappe.whitelist()
+	def get_departments(self):
+		"""Return every leaf Department below the MIS-configured parent."""
+		self.check_permission("write")
+		parent = frappe.db.get_single_value("School MIS Settings", "exam_department_parent")
+		if not parent:
+			frappe.throw(_("Set Examination Department Parent in School MIS Settings first."))
+		department_fields = {field.fieldname for field in frappe.get_meta("Department").fields}
+		if {"lft", "rgt"}.issubset(department_fields):
+			bounds = frappe.db.get_value("Department", parent, ["lft", "rgt"], as_dict=True)
+			if not bounds:
+				frappe.throw(_("Department {0} does not exist.").format(parent))
+			filters = {"lft": [">", bounds.lft], "rgt": ["<", bounds.rgt]}
+			if "is_group" in department_fields:
+				filters["is_group"] = 0
+			if "disabled" in department_fields:
+				filters["disabled"] = 0
+			departments = frappe.get_all("Department", filters=filters, pluck="name", order_by="lft asc", limit_page_length=0)
+		else:
+			# Compatibility fallback for installations where tree indexes are hidden.
+			parent_field = "parent_department"
+			pending, departments = [parent], []
+			while pending:
+				children = frappe.get_all("Department", filters={parent_field: pending.pop(0)}, fields=["name", "is_group"], order_by="name asc", limit_page_length=0)
+				for child in children:
+					(pending if child.get("is_group") else departments).append(child.name)
+		if not departments:
+			frappe.throw(_("No leaf Departments were found below {0}.").format(parent))
+		return {"parent": parent, "departments": departments}

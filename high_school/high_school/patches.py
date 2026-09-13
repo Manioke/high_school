@@ -3,6 +3,10 @@ import frappe
 import education.education.api
 import education.education.doctype.student_report_generation_tool.student_report_generation_tool as report_tool
 from education.education.doctype.program_enrollment_tool.program_enrollment_tool import ProgramEnrollmentTool
+from high_school.high_school.program_enrollment_utils import (
+    enroll_program_students as custom_enroll_students,
+    get_program_enrollment_students as custom_get_students,
+)
 
 def apply_patches():
     # Attendance Patches

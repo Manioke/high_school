@@ -54,6 +54,7 @@ frappe.pages['school-assessment-plan-setup'].on_page_load = function (wrapper) {
 		label: __('Student Batch'),
 		fieldtype: 'Link',
 		options: 'Student Batch Name',
+		get_query: () => ({ filters: { custom_program: fields.program.get_value() } }),
 	});
 
 	const $body = $(

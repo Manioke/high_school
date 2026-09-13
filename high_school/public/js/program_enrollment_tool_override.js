@@ -1,4 +1,9 @@
 frappe.ui.form.on('Program Enrollment Tool', {
+    setup: function(frm) {
+        frm.set_query('student_batch_name', 'students', () => ({
+            filters: { custom_program: frm.doc.program || frm.doc.new_program },
+        }));
+    },
     refresh: function(frm) {
         // Unlock row fields in grid view
         if (frm.fields_dict['students'] && frm.fields_dict['students'].grid) {
@@ -29,7 +34,10 @@ frappe.ui.form.on('Program Enrollment Tool', {
                             label: 'Student Batch',
                             fieldname: 'student_batch_name',
                             fieldtype: 'Link',
-                            options: 'Student Batch'
+                            options: 'Student Batch Name',
+                            get_query: () => ({
+                                filters: { custom_program: frm.doc.program || frm.doc.new_program },
+                            }),
                         }
                     ],
                     primary_action_label: __('Apply to Rows'),
@@ -50,6 +58,15 @@ frappe.ui.form.on('Program Enrollment Tool', {
                 d.show();
             }, __('Actions'));
         }
+
+        const applicantMode = frm.doc.get_students_from === 'Student Applicant';
+        (frm.meta.fields || [])
+            .filter((field) => field.fieldtype === 'Section Break' && /enrollment details/i.test(field.label || ''))
+            .forEach((field) => frm.toggle_display(field.fieldname, !applicantMode));
+        ['new_student_batch', 'new_student_category', 'new_program', 'new_academic_year', 'new_academic_term']
+            .forEach((fieldname) => {
+                if (frm.fields_dict[fieldname]) frm.toggle_display(fieldname, !applicantMode);
+            });
     }
 });
 

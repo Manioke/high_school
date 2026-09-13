@@ -1,5 +1,5 @@
 frappe.pages['student-report-card-tool'].on_page_load = function(wrapper) {
-    const page = frappe.ui.make_app_page({ parent: wrapper, title: __('Student Report Card Tool'), single_column: true });
+    const page = frappe.ui.make_app_page({ parent: wrapper, title: __('Bulk Performance Summaries & Report Cards'), single_column: true });
     const fields = {};
     const add = (df) => { fields[df.fieldname] = page.add_field(df); return fields[df.fieldname]; };
 
@@ -7,10 +7,19 @@ frappe.pages['student-report-card-tool'].on_page_load = function(wrapper) {
     add({ fieldname: 'academic_year', label: __('Academic Year'), fieldtype: 'Link', options: 'Academic Year', reqd: 1 });
     add({ fieldname: 'school_term', label: __('School Term'), fieldtype: 'Link', options: 'School Term', reqd: 1,
         get_query: () => ({ filters: { academic_year: fields.academic_year.get_value() } }) });
-    add({ fieldname: 'student_batch', label: __('Student Batch'), fieldtype: 'Link', options: 'Student Batch Name', reqd: 1 });
+    add({ fieldname: 'student_batch', label: __('Student Batch'), fieldtype: 'Link', options: 'Student Batch Name', reqd: 1,
+        get_query: () => ({ filters: { custom_program: fields.program.get_value() } }) });
     add({ fieldname: 'include_incomplete', label: __('Include Incomplete'), fieldtype: 'Check', default: 0 });
     add({ fieldname: 'include_drafts', label: __('Include Draft Summaries'), fieldtype: 'Check', default: 1 });
     add({ fieldname: 'letter_head', label: __('Letter Head'), fieldtype: 'Link', options: 'Letter Head' });
+    add({ fieldname: 'print_format', label: __('Report Card Template'), fieldtype: 'Link', options: 'Print Format', reqd: 1,
+        get_query: () => ({ filters: { doc_type: 'Student Performance Summary' } }) });
+
+    const routeOptions = frappe.route_options || {};
+    frappe.route_options = null;
+    Object.entries(routeOptions).forEach(([name, value]) => fields[name] && fields[name].set_value(value));
+    frappe.db.get_single_value('School MIS Settings', 'student_report_card_print_format').then(value => fields.print_format.set_value(value || 'Student Performance Report Card'));
+    frappe.db.get_single_value('School MIS Settings', 'student_report_card_letter_head').then(value => { if (value && !fields.letter_head.get_value()) fields.letter_head.set_value(value); });
 
     const $body = $(`<div style="padding:18px 0;max-width:1100px;">
         <div class="alert alert-info">${__('This tool uses Student Performance Summary and its merit position. Generate or refresh summaries, check the preview, then download one combined PDF for the selected batch.')}</div>
@@ -24,7 +33,7 @@ frappe.pages['student-report-card-tool'].on_page_load = function(wrapper) {
 
     function values() {
         const args = Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, field.get_value()]));
-        for (const name of ['program', 'academic_year', 'school_term', 'student_batch']) {
+        for (const name of ['program', 'academic_year', 'school_term', 'student_batch', 'print_format']) {
             if (!args[name]) { frappe.msgprint(__('Please select {0}.', [fields[name].df.label])); return null; }
         }
         return args;

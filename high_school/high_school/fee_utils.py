@@ -2,7 +2,8 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import nowdate
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+from frappe.utils import getdate, nowdate, today
 
 from education.education.doctype.fee_schedule.fee_schedule import (
     create_sales_invoice,
@@ -81,23 +82,74 @@ def get_fee_structure_for_student(student, batch_name=None):
     return f"{stream}{form_code}{rank}"
 
 
-def get_fee_schedules(fee_structure):
+def _school_terms(academic_year):
+    terms = frappe.get_all(
+        "School Term",
+        filters={"academic_year": academic_year},
+        fields=["name", "term", "start_date", "end_date"],
+        order_by="start_date asc, name asc",
+        limit_page_length=0,
+    )
+    return [term for term in terms if term.start_date and term.end_date]
+
+
+def resolve_enrollment_school_term(enrollment):
+    terms = _school_terms(enrollment.academic_year)
+    if not terms:
+        frappe.throw(_("No dated School Terms are configured for Academic Year {0}.").format(enrollment.academic_year))
+    enrollment_date = getdate(enrollment.get("enrollment_date") or today())
+    containing = [term for term in terms if getdate(term.start_date) <= enrollment_date <= getdate(term.end_date)]
+    if containing:
+        return containing[0]
+    upcoming = [term for term in terms if getdate(term.start_date) > enrollment_date]
+    if upcoming:
+        return upcoming[0]
+    frappe.throw(_("Enrollment date {0} falls after the final School Term in {1}.").format(enrollment_date, enrollment.academic_year))
+
+
+def set_enrollment_school_term(enrollment, method=None):
+    if enrollment.meta.has_field("custom_school_term"):
+        enrollment.custom_school_term = resolve_enrollment_school_term(enrollment).name
+
+
+def validate_fee_schedule_school_term(doc, method=None):
+    if not doc.get("custom_school_term"):
+        frappe.throw(_("School Term is required. Academic Term is not used by this billing workflow."))
+    term_year = frappe.db.get_value("School Term", doc.custom_school_term, "academic_year")
+    if not term_year:
+        frappe.throw(_("School Term {0} does not exist.").format(doc.custom_school_term))
+    if term_year != doc.academic_year:
+        frappe.throw(
+            _("School Term {0} belongs to Academic Year {1}, not {2}.").format(
+                doc.custom_school_term, term_year, doc.academic_year
+            )
+        )
+
+
+def get_fee_schedules(fee_structure, enrollment):
     """
     Get all submitted Fee Schedules belonging
     to the Fee Structure.
 
-    Academic Term is deliberately not used here.
+    Academic Term is deliberately not used. Only the enrollment School Term
+    and later School Terms are billed, preventing a Term 2 transfer from being
+    invoiced for Term 1.
     """
 
     fee_schedules = frappe.get_all(
         "Fee Schedule",
         filters={
             "fee_structure": fee_structure,
+            "program": enrollment.program,
+            "academic_year": enrollment.academic_year,
             "docstatus": 1,
         },
         fields=[
             "name",
             "fee_structure",
+            "program",
+            "academic_year",
+            "custom_school_term",
         ],
         order_by="creation asc",
     )
@@ -110,7 +162,24 @@ def get_fee_schedules(fee_structure):
             ).format(fee_structure)
         )
 
-    return fee_schedules
+    missing = [row.name for row in fee_schedules if not row.get("custom_school_term")]
+    if missing:
+        frappe.throw(_("Set School Term on these submitted Fee Schedules before enrolling students: {0}.").format(", ".join(missing)))
+    term_rows = {row.name: row for row in _school_terms(enrollment.academic_year)}
+    current = resolve_enrollment_school_term(enrollment)
+    applicable = []
+    for schedule in fee_schedules:
+        term = term_rows.get(schedule.custom_school_term)
+        if not term:
+            frappe.throw(_("Fee Schedule {0} uses a School Term outside Academic Year {1}.").format(schedule.name, enrollment.academic_year))
+        if getdate(term.start_date) >= getdate(current.start_date):
+            schedule.term_start_date = term.start_date
+            applicable.append(schedule)
+    if not applicable:
+        frappe.throw(
+            _("No Fee Schedule applies from enrollment School Term {0} onward.").format(current.name)
+        )
+    return sorted(applicable, key=lambda row: (getdate(row.term_start_date), row.name))
 
 
 def apply_student_fee_discount(invoice_name, student):
@@ -173,7 +242,7 @@ def generate_custom_fees(enrollment, method=None):
                 ↓
         Sales Invoice(s)
 
-    Academic Term is NOT required.
+    Academic Term is not used. School Term determines which invoices are created.
 
     If there is currently one Fee Schedule, one invoice
     will be created.
@@ -205,9 +274,7 @@ def generate_custom_fees(enrollment, method=None):
     # 2. Get all Fee Schedules for that structure
     # ---------------------------------------------------------
 
-    fee_schedules = get_fee_schedules(
-        fee_structure
-    )
+    fee_schedules = get_fee_schedules(fee_structure, enrollment)
 
     created_invoices = []
 
@@ -215,12 +282,26 @@ def generate_custom_fees(enrollment, method=None):
     # 3. Create one invoice per Fee Schedule
     # ---------------------------------------------------------
 
+    skipped_invoices = []
     for fee_schedule in fee_schedules:
+
+        existing = frappe.db.exists(
+            "Sales Invoice",
+            {"fee_schedule": fee_schedule.name, "student": enrollment.student, "docstatus": ["<", 2]},
+        )
+        if existing:
+            skipped_invoices.append(existing)
+            continue
 
         invoice_name = create_sales_invoice(
             fee_schedule.name,
             enrollment.student,
         )
+
+        invoice_updates = {"student": enrollment.student}
+        if "custom_school_term" in {field.fieldname for field in frappe.get_meta("Sales Invoice").fields}:
+            invoice_updates["custom_school_term"] = fee_schedule.custom_school_term
+        frappe.db.set_value("Sales Invoice", invoice_name, invoice_updates, update_modified=False)
 
         apply_student_fee_discount(
             invoice_name,
@@ -235,14 +316,75 @@ def generate_custom_fees(enrollment, method=None):
 
     frappe.msgprint(
         _(
-            "Created {0} Sales Invoice(s) for Fee Structure {1}."
+            "Created {0} Sales Invoice(s) and kept {1} existing invoice(s) for Fee Structure {2}."
         ).format(
             len(created_invoices),
+            len(skipped_invoices),
             fee_structure,
         )
     )
 
     return created_invoices
+
+
+def _upsert_custom_field(dt, fieldname, **values):
+    name = frappe.db.get_value("Custom Field", {"dt": dt, "fieldname": fieldname}, "name")
+    if name:
+        doc = frappe.get_doc("Custom Field", name)
+        for key, value in values.items():
+            doc.set(key, value)
+        doc.save(ignore_permissions=True)
+        return
+    frappe.get_doc({"doctype": "Custom Field", "dt": dt, "fieldname": fieldname, "module": "High School", **values}).insert(ignore_permissions=True)
+
+
+def setup_school_term_fee_fields():
+    """Install School Term billing fields and repair safe legacy invoice links."""
+    _upsert_custom_field(
+        "Fee Schedule", "custom_school_term", label="School Term", fieldtype="Link",
+        options="School Term", insert_after="academic_year", reqd=1, in_list_view=1, allow_on_submit=1,
+        description="Controls which School Term this schedule bills. Academic Term is not used by the High School billing workflow.",
+    )
+    _upsert_custom_field(
+        "Program Enrollment", "custom_school_term", label="Enrollment School Term", fieldtype="Link",
+        options="School Term", insert_after="enrollment_date", read_only=1,
+    )
+    _upsert_custom_field(
+        "Sales Invoice", "custom_school_term", label="School Term", fieldtype="Link",
+        options="School Term", insert_after="fee_schedule", read_only=1, in_list_view=1,
+    )
+    make_property_setter("Fee Schedule", "academic_term", "hidden", 1, "Check", validate_fields_for_doctype=False)
+    frappe.clear_cache(doctype="Fee Schedule")
+    frappe.clear_cache(doctype="Sales Invoice")
+    invoice_fields = {field.fieldname for field in frappe.get_meta("Sales Invoice").fields}
+    if "student" in invoice_fields:
+        students = frappe.get_all("Student", filters={"customer": ["is", "set"]}, fields=["name", "customer"], limit_page_length=0)
+        by_customer = {}
+        duplicates = set()
+        for student in students:
+            if student.customer in by_customer:
+                duplicates.add(student.customer)
+            else:
+                by_customer[student.customer] = student.name
+        for customer, student in by_customer.items():
+            if customer in duplicates:
+                continue
+            frappe.db.sql(
+                """UPDATE `tabSales Invoice` SET student = %s
+                WHERE customer = %s AND COALESCE(student, '') = ''""",
+                (student, customer),
+            )
+    if "custom_school_term" in invoice_fields:
+        frappe.db.sql(
+            """UPDATE `tabSales Invoice` si
+            INNER JOIN `tabFee Schedule` fs ON fs.name = si.fee_schedule
+            SET si.custom_school_term = fs.custom_school_term
+            WHERE COALESCE(si.custom_school_term, '') = ''
+              AND COALESCE(fs.custom_school_term, '') != ''"""
+        )
+    frappe.clear_cache(doctype="Fee Schedule")
+    frappe.clear_cache(doctype="Sales Invoice")
+    frappe.db.commit()
 
 
 def create_late_registration_invoice_link_field():

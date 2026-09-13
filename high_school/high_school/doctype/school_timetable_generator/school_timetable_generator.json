@@ -1,0 +1,34 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TIMETABLE-{academic_year}-{#####}",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["academic_year", "program", "school_term", "student_batch", "courses_section", "courses", "result_section", "generated_schedule_count", "last_generated_on"],
+ "fields": [
+  {"fieldname": "academic_year", "fieldtype": "Link", "in_list_view": 1, "label": "Academic Year", "options": "Academic Year", "reqd": 1},
+  {"fieldname": "program", "fieldtype": "Link", "in_list_view": 1, "label": "Program", "options": "Program", "reqd": 1},
+  {"fieldname": "school_term", "fieldtype": "Link", "in_list_view": 1, "label": "School Term", "options": "School Term", "reqd": 1},
+  {"description": "Optional. Leave blank to load every active Student Group in the Academic Year.", "fieldname": "student_batch", "fieldtype": "Link", "label": "Student Batch", "options": "Student Batch Name"},
+  {"fieldname": "courses_section", "fieldtype": "Section Break", "label": "Weekly Course Requirements"},
+  {"fieldname": "courses", "fieldtype": "Table", "label": "Courses", "options": "School Timetable Course"},
+  {"fieldname": "result_section", "fieldtype": "Section Break", "label": "Last Generation"},
+  {"fieldname": "generated_schedule_count", "fieldtype": "Int", "label": "Schedules Created", "read_only": 1},
+  {"fieldname": "last_generated_on", "fieldtype": "Datetime", "label": "Last Generated On", "read_only": 1}
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "module": "High School",
+ "name": "School Timetable Generator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Education Manager", "share": 1, "write": 1},
+  {"create": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Academics User", "write": 1}
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "school_term"
+}

@@ -7,6 +7,7 @@
  "field_order": [
   "cycle_name",
   "academic_year",
+  "program",
   "school_term",
   "assessment_group",
   "assessment_type",
@@ -49,6 +50,14 @@
    "in_list_view": 1,
    "label": "Academic Year",
    "options": "Academic Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Program",
+   "options": "Program",
    "reqd": 1
   },
   {

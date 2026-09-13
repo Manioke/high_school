@@ -56,7 +56,22 @@
   "term_one_fee_item",
   "assessment_management_section",
   "submit_assessment_plans_from_exam_requirements",
-  "protect_performance_summaries_until_results_complete"
+  "protect_performance_summaries_until_results_complete",
+  "enrollment_automation_section",
+  "randomly_assign_student_category",
+  "public_admission_security_section",
+  "enable_public_admission_turnstile",
+  "turnstile_site_key",
+  "turnstile_secret_key",
+  "turnstile_allowed_hostnames",
+  "public_admission_hourly_limit",
+  "scheduling_section",
+  "require_rooms_for_timetable",
+  "exam_department_parent",
+  "printing_section",
+  "student_report_card_print_format",
+  "student_report_card_letter_head",
+  "salary_slip_print_format"
  ],
  "fields": [
   {
@@ -172,6 +187,105 @@
    "fieldname": "protect_performance_summaries_until_results_complete",
    "fieldtype": "Check",
    "label": "Require Complete Result Submission Before Performance Summaries"
+  },
+  {
+   "fieldname": "enrollment_automation_section",
+   "fieldtype": "Section Break",
+   "label": "Program Enrollment Automation"
+  },
+  {
+   "default": "1",
+   "description": "When enabled, an enrollment with a Batch but no Student Category is assigned to the least-populated matching Student Group while respecting capacity. A single uncategorized group needs no category.",
+   "fieldname": "randomly_assign_student_category",
+   "fieldtype": "Check",
+   "label": "Automatically Balance Students Across Batch Groups"
+  },
+  {
+   "fieldname": "public_admission_security_section",
+   "fieldtype": "Section Break",
+   "label": "Public Student Admission Security"
+  },
+  {
+   "default": "0",
+   "description": "Require Cloudflare Turnstile verification on the public Student Applicant Web Form. Configure both keys before enabling.",
+   "fieldname": "enable_public_admission_turnstile",
+   "fieldtype": "Check",
+   "label": "Require Cloudflare Turnstile"
+  },
+  {
+   "default": "0x4AAAAAAEyC-Z8GCHiJAmgp",
+   "depends_on": "enable_public_admission_turnstile",
+   "fieldname": "turnstile_site_key",
+   "fieldtype": "Data",
+   "label": "Turnstile Site Key"
+  },
+  {
+   "depends_on": "enable_public_admission_turnstile",
+   "fieldname": "turnstile_secret_key",
+   "fieldtype": "Password",
+   "label": "Turnstile Secret Key"
+  },
+  {
+   "default": "development.localhost,localhost,127.0.0.1",
+   "depends_on": "enable_public_admission_turnstile",
+   "description": "Comma-separated hostnames accepted from Cloudflare Siteverify. For production, replace the development values with the exact public hostname; do not include URL schemes or paths.",
+   "fieldname": "turnstile_allowed_hostnames",
+   "fieldtype": "Data",
+   "label": "Turnstile Allowed Hostnames"
+  },
+  {
+   "default": "20",
+   "description": "Maximum public Student Applicant submissions accepted from one IP address in one hour. Frappe's built-in Web Form rate limit still applies as an additional control.",
+   "fieldname": "public_admission_hourly_limit",
+   "fieldtype": "Int",
+   "label": "Public Applications per IP per Hour"
+  },
+  {
+   "fieldname": "scheduling_section",
+   "fieldtype": "Section Break",
+   "label": "Timetable Scheduling"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, every row in School Timetable Generator and every Course Schedule must select a Room. Leave disabled for schools that do not allocate rooms.",
+   "fieldname": "require_rooms_for_timetable",
+   "fieldtype": "Check",
+   "label": "Require Rooms for Timetables"
+  },
+  {
+   "description": "Parent Department used by Get Departments in School Examination Cycle. Every active leaf Department below this parent is loaded recursively.",
+   "fieldname": "exam_department_parent",
+   "fieldtype": "Link",
+   "label": "Examination Department Parent",
+   "options": "Department"
+  },
+  {
+   "fieldname": "printing_section",
+   "fieldtype": "Section Break",
+   "label": "School Print Templates"
+  },
+  {
+   "default": "Student Performance Report Card",
+   "description": "Print Format used by the Bulk Student Report Card Tool. Duplicate the supplied format in Print Format Builder to customize branding and layout, then select the copy here.",
+   "fieldname": "student_report_card_print_format",
+   "fieldtype": "Link",
+   "label": "Student Report Card Print Format",
+   "options": "Print Format"
+  },
+  {
+   "description": "Optional Letter Head used for bulk report cards. Configure the school logo and header in Letter Head.",
+   "fieldname": "student_report_card_letter_head",
+   "fieldtype": "Link",
+   "label": "Student Report Card Letter Head",
+   "options": "Letter Head"
+  },
+  {
+   "default": "High School Salary Slip",
+   "description": "Salary Slip print format offered by the High School Salary Slip actions. Duplicate it to remove or rearrange details, then select the copy here.",
+   "fieldname": "salary_slip_print_format",
+   "fieldtype": "Link",
+   "label": "Salary Slip Print Format",
+   "options": "Print Format"
   },
   {
    "fieldname": "academic_mis_section",

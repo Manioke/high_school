@@ -438,3 +438,95 @@ def create_assessment_plans(setup, rows, criteria):
 		requirement.save(ignore_permissions=True)
 		result["requirement_status"] = requirement.status
 	return result
+
+
+@frappe.whitelist()
+def get_bulk_approved_requirements(academic_year, school_term, program=None, assessment_group=None, student_batch=None):
+	frappe.only_for(("Education Manager", "System Manager"))
+	_validate_school_term(school_term, academic_year)
+	filters = {
+		"academic_year": academic_year,
+		"school_term": school_term,
+		"status": ["in", ["Approved", "Plans Partially Created", "Complete"]],
+		"docstatus": ["<", 2],
+	}
+	if program:
+		cycles = frappe.get_all(
+			"School Examination Cycle",
+			filters={"academic_year": academic_year, "program": program},
+			pluck="name",
+			limit_page_length=0,
+		)
+		filters["examination_cycle"] = ["in", cycles or [""]]
+	if assessment_group:
+		filters["assessment_group"] = assessment_group
+	if student_batch:
+		filters["student_batch"] = student_batch
+	return frappe.get_all(
+		"Exam Paper Requirement",
+		filters=filters,
+		fields=[
+			"name", "requirement_title", "student_batch", "course", "assessment_group",
+			"examination_date", "from_time", "to_time", "status",
+			"expected_plan_count", "created_plan_count", "missing_plan_count",
+		],
+		order_by="examination_date asc, student_batch asc, course asc",
+		limit_page_length=0,
+	)
+
+
+@frappe.whitelist()
+def create_bulk_approved_assessment_plans(requirements):
+	frappe.only_for(("Education Manager", "System Manager"))
+	names = _as_list(requirements)
+	if not names:
+		frappe.throw(_("Select at least one approved Exam Paper Requirement."))
+	if len(names) > 250:
+		frappe.throw(_("Create plans for at most 250 paper requirements in one run."))
+
+	results = []
+	for index, name in enumerate(names):
+		savepoint = "bulk_assessment_plan_{0}".format(index)
+		frappe.db.savepoint(savepoint)
+		try:
+			requirement = frappe.get_doc("Exam Paper Requirement", name)
+			requirement.check_permission("read")
+			if requirement.status not in {"Approved", "Plans Partially Created", "Complete"}:
+				frappe.throw(_("{0} is not approved.").format(name))
+			setup = get_setup_candidates(
+				academic_year=requirement.academic_year,
+				school_term=requirement.school_term,
+				assessment_group=requirement.assessment_group,
+				course=requirement.course,
+				student_batch=requirement.student_batch,
+				exam_paper_requirement=requirement.name,
+			)
+			rows = [row for row in setup.get("rows", []) if cint(row.get("create_plan"))]
+			if not rows:
+				results.append({"requirement": name, "ok": True, "created": 0, "submitted": 0, "skipped": setup.get("group_count", 0)})
+				continue
+			args = {
+				"academic_year": requirement.academic_year,
+				"school_term": requirement.school_term,
+				"assessment_group": requirement.assessment_group,
+				"course": requirement.course,
+				"exam_paper_requirement": requirement.name,
+				**(setup.get("schedule_defaults") or {}),
+			}
+			outcome = create_assessment_plans(args, rows, setup.get("criteria") or [])
+			results.append({
+				"requirement": name,
+				"ok": True,
+				"created": len(outcome.get("created") or []),
+				"submitted": len(outcome.get("submitted") or []),
+				"skipped": len(outcome.get("skipped") or []),
+			})
+		except Exception as exc:
+			frappe.db.rollback(save_point=savepoint)
+			results.append({"requirement": name, "ok": False, "error": str(exc)})
+	return {
+		"results": results,
+		"created": sum(row.get("created", 0) for row in results),
+		"submitted": sum(row.get("submitted", 0) for row in results),
+		"failed": len([row for row in results if not row.get("ok")]),
+	}

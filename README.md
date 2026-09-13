@@ -1,6 +1,8 @@
 ### High School
 
-A custom app that extends the functionality of the education app so that you can easily change the School settings for different high schools and enables different modules or fields like is board school and other settings spefic to each school will only show if you set it in the settings
+A custom app that extends Education with school-term attendance, assessment operations, executive MIS, board reporting, student fee monitoring, and ERPNext/Frappe HR financial oversight.
+
+See [School Finance Setup and Demo Guide](docs/SCHOOL_FINANCE_DEMO.md) for the required Company, Cost Center, Account, Budget, purchase, fee, and payroll configuration.
 
 ### Installation
 

@@ -80,8 +80,33 @@ def _get_assessment_plans(group_names, component_names, academic_year):
 			"academic_year": academic_year,
 			"docstatus": ["<", 2],
 		},
-		fields=["name", "student_group", "assessment_group", "course"],
+		fields=["name", "student_group", "assessment_group", "course", "grading_scale"],
 	)
+
+
+def _course_grade(plans, percentage):
+	if percentage is None:
+		return ""
+	scales = sorted({plan.grading_scale for plan in plans if plan.get("grading_scale")})
+	if not scales:
+		return ""
+	if len(scales) > 1:
+		frappe.throw(
+			_("Assessment Plans for one course use different Grading Scales: {0}. Make them consistent before generating summaries.").format(
+				", ".join(scales)
+			)
+		)
+	intervals = frappe.get_all(
+		"Grading Scale Interval",
+		filters={"parent": scales[0]},
+		fields=["grade_code", "threshold"],
+		order_by="threshold desc",
+		limit_page_length=0,
+	)
+	for interval in intervals:
+		if flt(percentage) >= flt(interval.threshold):
+			return interval.grade_code or ""
+	return ""
 
 
 def _get_results(plan_names, students, submitted_only):
@@ -166,6 +191,7 @@ def build_performance(period):
 
 		for course in courses:
 			scores = []
+			course_plans = [plan for plan in plans_by_student[student] if plan.course == course]
 			for assessment_group, weight in component_weights.items():
 				matching_plans = [
 					plan
@@ -197,6 +223,7 @@ def build_performance(period):
 				{
 					"course": course,
 					"percentage": course_percentage,
+					"grade": _course_grade(course_plans, course_percentage),
 					"status": "Complete" if complete else "Incomplete",
 				}
 			)
