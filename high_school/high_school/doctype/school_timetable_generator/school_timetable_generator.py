@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import timedelta
+import json
 import re
 
 import frappe
@@ -349,3 +350,32 @@ class SchoolTimetableGenerator(Document):
 		self.last_generated_on = now_datetime()
 		self.save()
 		return {"created": created, "skipped": skipped, "weeks": len(weeks)}
+
+
+@frappe.whitelist()
+def generate_schedules(name=None, docname=None, doc=None, **kwargs):
+	"""Compatibility endpoint for callers using the module method path.
+
+	The Desk form normally invokes the controller method with ``frm.call``.
+	Some Button fields and older client scripts call the fully-qualified module
+	path instead, so resolve the saved generator and delegate to the controller.
+	"""
+	payload = doc
+	if isinstance(payload, str):
+		try:
+			payload = json.loads(payload)
+		except (TypeError, ValueError):
+			payload = None
+
+	target_name = (
+		name
+		or docname
+		or (payload.get("name") if isinstance(payload, dict) else None)
+		or frappe.form_dict.get("name")
+		or frappe.form_dict.get("docname")
+	)
+	if not target_name:
+		frappe.throw(_("Save the School Timetable Generator before generating Course Schedules."))
+
+	generator = frappe.get_doc("School Timetable Generator", target_name)
+	return generator.generate_schedules()
