@@ -20,7 +20,13 @@ frappe.ui.form.on('School Timetable Generator', {
         });
         frm.add_custom_button(__('Generate Course Schedules'), () => {
             frappe.confirm(__('Generate conflict-checked Course Schedule records for every teaching week in this School Term? Existing identical schedules will be kept.'), () => {
-                frm.call({ method: 'generate_schedules', freeze: true, freeze_message: __('Building the timetable...') }).then((r) => {
+                frm.call({
+                    doc: frm.doc,
+                    method: 'generate_schedules',
+                    args: { name: frm.doc.name },
+                    freeze: true,
+                    freeze_message: __('Building the timetable...')
+                }).then((r) => {
                     const result = r.message || {};
                     frappe.msgprint(__('Created {0} schedule(s) across {1} week(s); {2} identical schedule(s) already existed.', [(result.created || []).length, result.weeks || 0, (result.skipped || []).length]));
                     frm.reload_doc();
