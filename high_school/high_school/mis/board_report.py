@@ -188,8 +188,8 @@ def _report_html(data):
        <tr><th>Payroll-to-ledger difference</th><td>{payroll_difference}</td><th>Payroll payable</th><td>{payroll_payable}</td></tr>
        <tr><th>Open fund requests</th><td colspan="3">{fund_requests}</td></tr>
       </tbody></table>
-      <h3>Term Profit and Loss Detail</h3>
-      <p>Submitted income and expense General Ledger entries from {start} through {finance_as_of}, scoped to {finance_scope}.</p>
+      <h3>Term Collected Fees and Expenses</h3>
+      <p>Term income is student fees collected from invoices assigned to {term}. Expenses are submitted General Ledger entries from {start} through {finance_as_of}, scoped to {finance_scope}.</p>
       <table class="table table-bordered">
        <thead><tr><th>Type</th><th>Category</th><th>Account</th><th>Cost Center</th><th>Amount</th></tr></thead>
        <tbody>{profit_and_loss_rows}</tbody>

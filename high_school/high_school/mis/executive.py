@@ -30,6 +30,7 @@ from high_school.high_school.mis.finance import (
     get_financial_mis,
 )
 from high_school.high_school.mis.school_finance import (
+    apply_collected_fee_income,
     get_school_financial_operations,
 )
 
@@ -374,9 +375,13 @@ def get_executive_summary(
         term=term,
         settings=settings,
     )
-    finance["operations"] = get_school_financial_operations(
-        term=term,
-        settings=settings,
+    finance["operations"] = apply_collected_fee_income(
+        get_school_financial_operations(
+            term=term,
+            settings=settings,
+        ),
+        finance,
+        term.name,
     )
     if not finance.get("currency"):
         finance["currency"] = finance["operations"].get("currency")

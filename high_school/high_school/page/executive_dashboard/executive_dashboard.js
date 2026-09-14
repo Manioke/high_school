@@ -1493,7 +1493,9 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             createKpiCard({
                 title: 'Term Income',
                 value: formatMoney(financialOperations.term_income, financialOperations.currency || finance.currency),
-                subtitle: `Scope: ${financialOperations.scope || 'not configured'}`,
+                subtitle: financialOperations.income_basis === 'collected_school_term_student_fees'
+                    ? `Student fees collected for ${data.school_term?.name || 'selected term'}`
+                    : `Scope: ${financialOperations.scope || 'not configured'}`,
                 status: operationsHaveData ? 'healthy' : 'no_data'
             })
         );
@@ -3325,13 +3327,14 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
             operationsHtml = `
                 <h4 style="margin-top:0;">Whole-School Financial Position</h4>
                 <div class="text-muted" style="margin-bottom:16px;">
-                    Submitted General Ledger entries for <b>${escapeHtml(operations.scope)}</b> from
+                    Term income is student fees collected from invoices assigned to <b>${escapeHtml(data.school_term.name)}</b>.
+                    Expenses are submitted General Ledger entries for <b>${escapeHtml(operations.scope)}</b> from
                     ${escapeHtml(data.school_term.start_date)} through ${escapeHtml(operations.as_of)}.
                     Group Cost Centers include their descendants. Cash is the company-wide bank/cash balance.
                 </div>
                 ${diagnosticRows ? `<div class="alert alert-info"><b>Finance checks</b><ul style="margin-bottom:0;">${diagnosticRows}</ul></div>` : ''}
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px;">
-                    <div class="card" style="padding:14px;"><b>Income composition</b><div style="margin-top:8px;">Student fees: ${operations.student_fee_income_account_configured ? formatMoney(operations.student_fee_income, currency) : 'account not configured'}</div><div>Other income: ${formatMoney(operations.other_income, currency)}</div></div>
+                    <div class="card" style="padding:14px;"><b>Term income</b><div style="margin-top:8px;">Student fees collected: ${formatMoney(operations.student_fee_income, currency)}</div><div class="text-muted">Ledger-recognised income: ${formatMoney(operations.ledger_term_income, currency)}</div></div>
                     <div class="card" style="padding:14px;"><b>Expense composition</b><div style="margin-top:8px;">Wages: ${operations.wage_expense_account_configured ? formatMoney(operations.wage_expense, currency) : 'account not configured'}</div><div>Other expenses: ${formatMoney(operations.other_expenses, currency)}</div></div>
                     <div class="card" style="padding:14px;"><b>Budget (${escapeHtml(budget.fiscal_year || 'not set')})</b><div style="margin-top:8px;">${formatMoney(budget.used, currency)} used of ${formatMoney(budget.budget_total, currency)}</div><div>${formatMoney(budget.remaining, currency)} remaining (${formatPercent(budget.utilisation_rate)})</div><div class="text-muted">Fiscal-year actual through ${escapeHtml(operations.as_of)}</div></div>
                     <div class="card" style="padding:14px;"><b>Frappe HR payroll</b><div style="margin-top:8px;">${formatMoney(payroll.gross_pay, currency)} submitted gross pay</div><div>${formatMoney(payroll.net_pay, currency)} submitted net pay</div><div>${formatMoney(payroll.wage_gl_expense, currency)} posted wage expense</div><div>${payroll.payroll_payable_available ? `${formatMoney(payroll.payroll_payable, currency)} payable` : 'payable account not configured'}</div>${payroll.reconciliation_status === 'warning' ? `<div class="text-danger" style="margin-top:8px;"><b>Unreconciled:</b> ${escapeHtml(payroll.reconciliation_message || '')}</div>` : ''}</div>
@@ -3347,10 +3350,10 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
                     <button class="btn btn-default btn-sm open-payables">Accounts Payable</button>
                     <button class="btn btn-default btn-sm open-finance-settings">Finance Settings</button>
                 </div>
-                <h5>Term Profit and Loss Detail</h5>
+                <h5>Term Collected Fees and Expenses</h5>
                 <div style="overflow-x:auto;margin-bottom:20px;"><table class="table table-bordered table-hover">
                     <thead><tr><th>Type</th><th>Category</th><th>Account</th><th>Cost Center</th><th>Amount</th></tr></thead>
-                    <tbody>${incomeRows}${expenseRows}${(!incomeRows && !expenseRows) ? '<tr><td colspan="5">No matching income or expense GL entries.</td></tr>' : ''}</tbody>
+                    <tbody>${incomeRows}${expenseRows}${(!incomeRows && !expenseRows) ? '<tr><td colspan="5">No collected fees or matching expense entries.</td></tr>' : ''}</tbody>
                     <tfoot>
                         <tr><th colspan="4">Term Income</th><th class="text-right">${formatMoney(operations.term_income, currency)}</th></tr>
                         <tr><th colspan="4">Term Expenses</th><th class="text-right">${formatMoney(operations.term_expenses, currency)}</th></tr>

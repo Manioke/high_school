@@ -25,53 +25,63 @@ def _meta_fields(doctype):
     }
 
 
+def _school_term_field(fields):
+    """Return the explicit School Term link used by Core customisations."""
+    return next(
+        (
+            fieldname
+            for fieldname in ("custom_school_term", "school_term")
+            if fieldname in fields
+        ),
+        None,
+    )
+
+
 def _school_fee_filters(invoice_fields, term):
+    """Identify student invoices and scope them to the selected School Term.
+
+    School fee attribution is deliberately based on the billing term stored on
+    Sales Invoice or its Fee Schedule. Posting and due dates are accounting and
+    collection dates; they do not decide which term the fee belongs to.
+    """
     filters = {"docstatus": 1}
     if "is_return" in invoice_fields:
         filters["is_return"] = 0
 
-    if "school_term" in invoice_fields:
-        filters["school_term"] = term.name
-
-    if "academic_year" in invoice_fields:
-        filters["academic_year"] = term.academic_year
-        return filters, "Academic Year"
-
     if "fee_schedule" in invoice_fields:
         schedule_fields = _meta_fields("Fee Schedule")
-        if "academic_year" in schedule_fields:
+        schedule_term_field = _school_term_field(schedule_fields)
+        if schedule_term_field:
+            schedule_filters = {schedule_term_field: term.name}
+            if "academic_year" in schedule_fields:
+                schedule_filters["academic_year"] = term.academic_year
             schedules = frappe.get_all(
                 "Fee Schedule",
-                filters={"academic_year": term.academic_year},
+                filters=schedule_filters,
                 pluck="name",
+                limit_page_length=0,
             )
-            if not schedules:
-                return None, "Fee Schedule"
-            filters["fee_schedule"] = ["in", schedules]
-        else:
-            filters["fee_schedule"] = ["is", "set"]
-        return filters, "Fee Schedule"
+            # Keep a valid filter when this term simply has no Fee Schedules.
+            filters["fee_schedule"] = ["in", schedules or ["__no_fee_schedule__"]]
+            return filters, "Fee Schedule"
 
-    if "student" in invoice_fields:
-        filters["student"] = ["is", "set"]
-        return filters, "Student"
+    invoice_term_field = _school_term_field(invoice_fields)
+    if invoice_term_field:
+        filters[invoice_term_field] = term.name
+        if "student" in invoice_fields:
+            filters["student"] = ["is", "set"]
+        return filters, "Student-linked Sales Invoice"
 
     return None, None
 
 
 def _apply_term_scope(filters, invoice_fields, term):
-    """Scope fees to a School Term without assuming a custom field exists."""
-    if "school_term" in invoice_fields:
-        filters["school_term"] = term.name
-        return "School Term"
-
-    date_field = "due_date" if "due_date" in invoice_fields else "posting_date"
-    if date_field in invoice_fields:
-        filters[date_field] = ["between", [term.start_date, term.end_date]]
-        return "{0} within School Term".format(
-            "Due Date" if date_field == "due_date" else "Posting Date"
-        )
-
+    """Describe the explicit term scope already applied by the fee filters."""
+    if "fee_schedule" in filters:
+        return "Fee Schedule School Term"
+    invoice_term_field = _school_term_field(invoice_fields)
+    if invoice_term_field and filters.get(invoice_term_field) == term.name:
+        return "Sales Invoice School Term"
     return None
 
 
@@ -133,7 +143,7 @@ def _student_batches(students, academic_year):
 
 
 def get_financial_mis(term, settings, attention_limit=50):
-    """Summarize the existing student Sales Invoices for an academic year."""
+    """Summarize student Sales Invoices assigned to the selected School Term."""
     target = flt(settings.get("fee_collection_target") or 90)
     overdue_target = flt(settings.get("overdue_fee_target") or 5)
 
@@ -164,8 +174,8 @@ def get_financial_mis(term, settings, attention_limit=50):
             "available": False,
             "status": "no_data",
             "message": (
-                "Sales Invoice has no Student, Fee Schedule, or Academic Year "
-                "field that can identify school fees safely."
+                "Run bench migrate so Sales Invoice or Fee Schedule has the "
+                "School Term field required for student-fee tracking."
             ),
             "target": target,
         }
@@ -176,7 +186,7 @@ def get_financial_mis(term, settings, attention_limit=50):
             "enabled": True,
             "available": False,
             "status": "no_data",
-            "message": "Sales Invoice has no date field for School Term comparison.",
+            "message": "Student fees could not be scoped by an explicit School Term link.",
             "target": target,
         }
 
@@ -192,6 +202,8 @@ def get_financial_mis(term, settings, attention_limit=50):
         "student",
         "student_name",
         "fee_schedule",
+        "custom_school_term",
+        "school_term",
         "grand_total",
         "outstanding_amount",
         "base_grand_total",

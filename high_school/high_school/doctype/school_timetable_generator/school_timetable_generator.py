@@ -353,19 +353,28 @@ class SchoolTimetableGenerator(Document):
 
 
 @frappe.whitelist()
-def generate_schedules(name=None, docname=None, doc=None, **kwargs):
+def generate_schedules(name=None, docname=None, doc=None, docs=None, **kwargs):
 	"""Compatibility endpoint for callers using the module method path.
 
 	The Desk form normally invokes the controller method with ``frm.call``.
 	Some Button fields and older client scripts call the fully-qualified module
 	path instead, so resolve the saved generator and delegate to the controller.
 	"""
-	payload = doc
+	payload = doc or docs or kwargs.get("docs")
 	if isinstance(payload, str):
 		try:
 			payload = json.loads(payload)
 		except (TypeError, ValueError):
 			payload = None
+
+	if isinstance(payload, dict) and payload.get("doctype") == "School Timetable Generator":
+		generator = frappe.get_doc(payload)
+		generator.check_permission("write")
+		if generator.is_new():
+			generator.insert()
+		else:
+			generator.save()
+		return generator.generate_schedules()
 
 	target_name = (
 		name
@@ -375,7 +384,7 @@ def generate_schedules(name=None, docname=None, doc=None, **kwargs):
 		or frappe.form_dict.get("docname")
 	)
 	if not target_name:
-		frappe.throw(_("Save the School Timetable Generator before generating Course Schedules."))
+		frappe.throw(_("The School Timetable Generator document was not included in the request. Refresh the form and try again."))
 
 	generator = frappe.get_doc("School Timetable Generator", target_name)
 	return generator.generate_schedules()

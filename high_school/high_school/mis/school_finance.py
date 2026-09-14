@@ -18,6 +18,61 @@ def _percentage(numerator, denominator):
     return round((flt(numerator) / flt(denominator)) * 100, 1)
 
 
+def apply_collected_fee_income(operations, finance, school_term=None):
+    """Use collected School-Term student fees as the executive term income.
+
+    The operational expense figures remain ledger based.  The original term
+    ledger income and its breakdown are retained explicitly so this executive
+    presentation does not hide or replace the accounting view.
+    """
+    if not (operations.get("enabled") and operations.get("available")):
+        return operations
+    if not (finance.get("enabled") and finance.get("available")):
+        return operations
+
+    collected = max(0, flt(finance.get("collected")))
+    expenses = max(0, flt(operations.get("term_expenses")))
+    ledger_income = max(0, flt(operations.get("term_income")))
+    operating_surplus = collected - expenses
+
+    operations["ledger_term_income"] = round(ledger_income, 2)
+    operations["ledger_income_breakdown"] = list(
+        operations.get("income_breakdown") or []
+    )
+    operations["term_income"] = round(collected, 2)
+    operations["student_fee_income"] = round(collected, 2)
+    operations["other_income"] = 0.0
+    operations["operating_surplus"] = round(operating_surplus, 2)
+    operations["operating_margin"] = _percentage(
+        operating_surplus, collected
+    )
+    operations["income_basis"] = "collected_school_term_student_fees"
+    operations["income_breakdown"] = [
+        {
+            "type": "Income",
+            "category": "Student Fees Collected",
+            "account": "School Term Sales Invoices",
+            "account_name": "School Term Sales Invoices",
+            "cost_center": operations.get("scope"),
+            "amount": round(collected, 2),
+        }
+    ]
+
+    diagnostics = operations.setdefault("diagnostics", [])
+    diagnostics.append(
+        "Term Income is the amount collected from student Sales Invoices "
+        "assigned to {0}. Ledger-recognised term income ({1:,.2f}) is retained "
+        "separately for accounting reference.".format(
+            school_term or finance.get("school_term") or "the selected School Term",
+            ledger_income,
+        )
+    )
+    if operating_surplus < 0:
+        operations["status"] = "warning"
+
+    return operations
+
+
 def _doctype_exists(doctype):
     return bool(frappe.db.exists("DocType", doctype))
 
