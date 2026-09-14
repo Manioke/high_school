@@ -440,14 +440,13 @@
    "label": "Late Registration Fee Automation"
   },
   {
-   "default": "1",
+   "default": "0",
    "description": "Once per overdue source invoice, create a late-registration invoice during the daily scheduler run.",
    "fieldname": "enable_automatic_late_registration_fees",
    "fieldtype": "Check",
    "label": "Automatically Invoice Late Registration Fees"
   },
   {
-   "default": "Late Registration",
    "depends_on": "enable_automatic_late_registration_fees",
    "description": "Submitted Fee Structure whose components, amount, receivable account and Cost Center are used for each late-registration invoice.",
    "fieldname": "late_registration_fee_structure",

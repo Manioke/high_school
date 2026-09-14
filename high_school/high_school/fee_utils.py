@@ -508,8 +508,17 @@ def create_overdue_term_one_late_fees():
     if not settings.get("enable_automatic_late_registration_fees"):
         return {"created": [], "skipped": 0, "errors": []}
 
-    fee_structure = settings.get("late_registration_fee_structure") or "Late Registration"
+    fee_structure = settings.get("late_registration_fee_structure")
     item_identifier = settings.get("term_one_fee_item") or "Term 1"
+    if not fee_structure:
+        return {
+            "created": [],
+            "skipped": 0,
+            "errors": [
+                "Configure a submitted Late Registration Fee Structure in "
+                "School MIS Settings before enabling this automation."
+            ],
+        }
     if not frappe.db.exists("Fee Structure", {"name": fee_structure, "docstatus": 1}):
         return {
             "created": [],
