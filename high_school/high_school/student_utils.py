@@ -76,7 +76,6 @@ def create_education_settings_custom_fields():
             }
         ).insert(ignore_permissions=True)
 
-    frappe.db.commit()
 
 
 def make_student_email_optional():
@@ -147,7 +146,15 @@ def enforce_core_only_registration_boundary():
             web_form.login_required = 1
             changed = True
         if changed:
-            web_form.save(ignore_permissions=True)
+            # Scalar publication controls only: a Standard Web Form cannot be
+            # saved in production, and may have stale field rows.
+            frappe.db.set_value("Web Form", name, {
+                "published": 0, "login_required": 1,
+            })
+
+    from frappe.website.utils import clear_website_cache
+    frappe.clear_cache(doctype="Web Form")
+    clear_website_cache()
 
     legacy_fields = frappe.get_all(
         "Custom Field",
@@ -206,4 +213,3 @@ def create_student_leaving_fields():
         }
     ).insert(ignore_permissions=True)
 
-    frappe.db.commit()

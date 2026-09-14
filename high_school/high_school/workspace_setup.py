@@ -18,4 +18,3 @@ def ensure_instructor_workspace_access():
 			continue
 		workspace.append("roles", {"role": "Instructor"})
 		workspace.save(ignore_permissions=True)
-	frappe.db.commit()

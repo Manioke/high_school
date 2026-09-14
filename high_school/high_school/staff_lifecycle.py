@@ -20,7 +20,6 @@ def setup_employee_instructor_field():
         "insert_after": insert_after,
         "description": "After this Employee is saved, create and link an Education Instructor if one does not already exist.",
     }).insert(ignore_permissions=True)
-    frappe.db.commit()
 
 
 def create_instructor_from_employee(doc, method=None):

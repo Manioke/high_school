@@ -384,7 +384,6 @@ def setup_school_term_fee_fields():
         )
     frappe.clear_cache(doctype="Fee Schedule")
     frappe.clear_cache(doctype="Sales Invoice")
-    frappe.db.commit()
 
 
 def create_late_registration_invoice_link_field():
@@ -409,7 +408,6 @@ def create_late_registration_invoice_link_field():
             "description": "The overdue Term 1 invoice that caused this automatic late-registration charge.",
         }
     ).insert(ignore_permissions=True)
-    frappe.db.commit()
 
 
 def _term_one_invoice_names(item_identifier):
