@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import timedelta
-import json
 import re
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, getdate, now_datetime
+from frappe.utils import cint
 
-from high_school.high_school.course_scheduling import normalise_time
 
 
 def _meta_fields(doctype):
@@ -36,16 +33,6 @@ def _term(doc):
 
 def _room_required():
 	return cint(frappe.db.get_single_value("School MIS Settings", "require_rooms_for_timetable")) == 1
-
-
-def _school_periods():
-	periods = frappe.get_all(
-		"School Period", fields=["name", "period_name", "from_time", "to_time"], order_by="from_time asc", limit_page_length=0
-	)
-	periods = [row for row in periods if row.from_time is not None and row.to_time is not None]
-	if not periods:
-		frappe.throw(_("Create at least one School Period with From Time and To Time before generating a timetable."))
-	return periods
 
 
 def _group_filters(doc):
@@ -146,7 +133,7 @@ class SchoolTimetableGenerator(Document):
 			"Course Schedule",
 			filters={"student_group": ["in", [row.name for row in groups]], "schedule_date": ["between", [term.start_date, term.end_date]], "docstatus": ["<", 2]},
 			fields=[name for name in ("student_group", "course", "instructor", "room") if name in schedule_fields],
-			limit_page_length=0,
+			order_by="schedule_date desc", limit_page_length=0,
 		)
 		defaults = {}
 		for row in existing:
@@ -154,10 +141,11 @@ class SchoolTimetableGenerator(Document):
 			if key not in defaults:
 				defaults[key] = row
 
+		previous = {(r.student_group, r.course): r.as_dict() for r in self.courses}
 		self.set("courses", [])
 		for group in groups:
 			for course in _group_courses(group):
-				current = defaults.get((group.name, course), {})
+				current = previous.get((group.name, course)) or defaults.get((group.name, course), {})
 				self.append("courses", {
 					"student_group": group.name,
 					"student_batch": group.get("student_batch"),
@@ -165,7 +153,8 @@ class SchoolTimetableGenerator(Document):
 					"course": course,
 					"instructor": current.get("instructor"),
 					"room": current.get("room"),
-					"periods_per_week": 3,
+					"periods_per_week": current.get("periods_per_week", 3),
+					"max_per_day": current.get("max_per_day", 1),
 				})
 		if not self.courses:
 			frappe.throw(_("The matching groups do not expose courses. Add course-based Student Groups or courses to their Program, then reload."))
@@ -173,218 +162,26 @@ class SchoolTimetableGenerator(Document):
 		return {"loaded": len(self.courses)}
 
 	@frappe.whitelist()
+	def print_timetable(self, week_start=None, student_group=None, instructor=None):
+		from high_school.high_school.timetable_printing import printable
+		return printable(self.name, week_start, student_group, instructor)
+
+	@frappe.whitelist()
+	def preview_schedules(self):
+		from high_school.high_school.timetable_operations import preview
+		return preview(self.name)
+
+	@frappe.whitelist()
+	def apply_schedules(self, token=None):
+		from high_school.high_school.timetable_operations import apply
+		return apply(self.name, token)
+
+	@frappe.whitelist()
 	def generate_schedules(self):
-		self.check_permission("write")
-		self.validate()
-		if not self.courses:
-			frappe.throw(_("Load or add timetable course rows first."))
-		missing_instructors = [str(row.idx) for row in self.courses if not row.instructor]
-		if missing_instructors:
-			frappe.throw(_("Select an Instructor in timetable row(s): {0}.").format(", ".join(missing_instructors)))
-		missing_rooms = [str(row.idx) for row in self.courses if not row.room]
-		if _room_required() and missing_rooms:
-			frappe.throw(_("Select a Room in timetable row(s): {0}. Rooms are mandatory in School MIS Settings.").format(", ".join(missing_rooms)))
-
-		term = _term(self)
-		periods = _school_periods()
-		start, end = getdate(term.start_date), getdate(term.end_date)
-		dates = []
-		current = start
-		while current <= end:
-			if current.weekday() < 5:
-				dates.append(current)
-			current += timedelta(days=1)
-		weeks = defaultdict(list)
-		for value in dates:
-			monday = value - timedelta(days=value.weekday())
-			weeks[monday].append(value)
-
-		cs_fields = _meta_fields("Course Schedule")
-		query_fields = [name for name in ("name", "student_group", "course", "instructor", "room", "schedule_date", "from_time", "to_time") if name in cs_fields]
-		existing = frappe.get_all(
-			"Course Schedule",
-			filters={"schedule_date": ["between", [start, end]], "docstatus": ["<", 2]},
-			fields=query_fields,
-			limit_page_length=0,
-		)
-
-		def overlaps(a_start, a_end, b_start, b_end):
-			return a_start < b_end and a_end > b_start
-
-		group_info = {
-			row.student_group: frappe._dict(
-				student_batch=row.student_batch,
-				option_block=row.option_block or _option_block(row.student_group),
-			)
-			for row in self.courses
-		}
-		missing_groups = {item.get("student_group") for item in existing if item.get("student_group")} - set(group_info)
-		if missing_groups:
-			group_fields = _meta_fields("Student Group")
-			batch_field = _first_field(group_fields, "student_batch_name", "student_batch", "batch")
-			fields = ["name"] + ([f"{batch_field} as student_batch"] if batch_field else [])
-			for group in frappe.get_all("Student Group", filters={"name": ["in", list(missing_groups)]}, fields=fields, limit_page_length=0):
-				group_info[group.name] = frappe._dict(student_batch=group.get("student_batch"), option_block=_option_block(group.name))
-
-		option_slots = {}
-		for item in existing:
-			info = group_info.get(item.get("student_group"))
-			if not info or not info.option_block or not info.student_batch:
-				continue
-			option_slots[(info.student_batch, getdate(item.schedule_date), normalise_time(item.from_time), normalise_time(item.to_time))] = info.option_block
-
-		def blocked(row, date, period):
-			p_start, p_end = normalise_time(period.from_time), normalise_time(period.to_time)
-			for item in existing:
-				if getdate(item.schedule_date) != date:
-					continue
-				if not overlaps(p_start, p_end, normalise_time(item.from_time), normalise_time(item.to_time)):
-					continue
-				if item.get("student_group") == row.student_group or item.get("instructor") == row.instructor:
-					return True
-				if row.room and item.get("room") == row.room:
-					return True
-			return False
-
-		planned = []
-		unscheduled = []
-		bundles = defaultdict(list)
-		for row in self.courses:
-			if row.option_block and row.student_batch:
-				key = ("option", row.student_batch, row.option_block)
-			else:
-				key = ("course", row.student_group, row.course)
-			bundles[key].append(row)
-		ordered_bundles = sorted(
-			bundles.items(),
-			key=lambda item: (-cint(item[1][0].periods_per_week), str(item[0])),
-		)
-		for monday, week_dates in sorted(weeks.items()):
-			for bundle_key, bundle_rows in ordered_bundles:
-				required = cint(bundle_rows[0].periods_per_week)
-				instructors = [row.instructor for row in bundle_rows if row.instructor]
-				rooms = [row.room for row in bundle_rows if row.room]
-				if len(instructors) != len(set(instructors)):
-					frappe.throw(_("{0} uses the same Instructor for simultaneous option classes. Assign a different Instructor to each row.").format(bundle_key[-1]))
-				if _room_required() and len(rooms) != len(set(rooms)):
-					frappe.throw(_("{0} uses the same Room for simultaneous option classes. Assign a different Room to each row.").format(bundle_key[-1]))
-				placed_days = set()
-				row_slots = []
-				for row in bundle_rows:
-					slots = {
-						(getdate(item.schedule_date), normalise_time(item.from_time), normalise_time(item.to_time))
-						for item in existing
-						if getdate(item.schedule_date) in week_dates
-						and item.get("student_group") == row.student_group
-						and item.get("course") == row.course
-						and item.get("instructor") == row.instructor
-					}
-					row_slots.append(slots)
-				common_slots = set.intersection(*row_slots) if row_slots else set()
-				placed = min(len(common_slots), required)
-				placed_days.update(slot[0].weekday() for slot in common_slots)
-				candidates = [(date, period) for date in week_dates for period in periods]
-				candidates.sort(key=lambda item: (item[0].weekday() in placed_days, item[0].weekday(), normalise_time(item[1].from_time)))
-				for date, period in candidates:
-					if placed >= required:
-						break
-					if date.weekday() in placed_days and required <= len(week_dates):
-						continue
-					p_start, p_end = normalise_time(period.from_time), normalise_time(period.to_time)
-					if bundle_key[0] == "option":
-						occupied = option_slots.get((bundle_key[1], date, p_start, p_end))
-						if occupied and occupied != bundle_key[2]:
-							continue
-					if any(blocked(row, date, period) for row in bundle_rows):
-						continue
-					for row in bundle_rows:
-						values = {
-							"student_group": row.student_group, "course": row.course, "instructor": row.instructor,
-							"room": row.room, "schedule_date": date, "from_time": p_start,
-							"to_time": p_end, "period": period.name,
-						}
-						planned.append(values)
-						existing.append(frappe._dict(values))
-					if bundle_key[0] == "option":
-						option_slots[(bundle_key[1], date, p_start, p_end)] = bundle_key[2]
-					placed_days.add(date.weekday())
-					placed += 1
-				if placed < required:
-					label = _("{0} option block for {1}").format(bundle_key[2], bundle_key[1]) if bundle_key[0] == "option" else _("{0} / {1}").format(bundle_rows[0].student_group, bundle_rows[0].course)
-					unscheduled.append(_("Week of {0}: {1} ({2} of {3} placed)").format(monday, label, placed, required))
-
-		if unscheduled:
-			frappe.throw(
-				_("The timetable has unresolved conflicts. Nothing was created.<br>{0}").format("<br>".join(unscheduled[:50])),
-				title=_("Unscheduled Timetable Courses"),
-			)
-
-		created, skipped = [], []
-		for values in planned:
-			duplicate = frappe.db.exists("Course Schedule", {
-				"student_group": values["student_group"], "course": values["course"],
-				"schedule_date": values["schedule_date"], "from_time": values["from_time"], "to_time": values["to_time"],
-				"docstatus": ["<", 2],
-			})
-			if duplicate:
-				skipped.append(duplicate)
-				continue
-			group = frappe.db.get_value("Student Group", values["student_group"], ["program"], as_dict=True) or {}
-			doc = frappe.new_doc("Course Schedule")
-			payload = {key: values[key] for key in ("student_group", "course", "instructor", "room", "schedule_date", "from_time", "to_time") if key in cs_fields and values.get(key)}
-			if "program" in cs_fields and group.get("program"):
-				payload["program"] = group.program
-			if "academic_year" in cs_fields:
-				payload["academic_year"] = self.academic_year
-			if "custom_period" in cs_fields:
-				payload["custom_period"] = values["period"]
-			if "custom_school_term" in cs_fields:
-				payload["custom_school_term"] = self.school_term
-			if "custom_timetable_generator" in cs_fields:
-				payload["custom_timetable_generator"] = self.name
-			doc.update(payload)
-			doc.insert()
-			created.append(doc.name)
-
-		self.generated_schedule_count = len(created)
-		self.last_generated_on = now_datetime()
-		self.save()
-		return {"created": created, "skipped": skipped, "weeks": len(weeks)}
+		frappe.throw(_("Use Preview Schedule Changes, then Apply. Direct generation is disabled to protect existing timetables."))
 
 
 @frappe.whitelist()
-def generate_schedules(name=None, docname=None, doc=None, docs=None, **kwargs):
-	"""Compatibility endpoint for callers using the module method path.
-
-	The Desk form normally invokes the controller method with ``frm.call``.
-	Some Button fields and older client scripts call the fully-qualified module
-	path instead, so resolve the saved generator and delegate to the controller.
-	"""
-	payload = doc or docs or kwargs.get("docs")
-	if isinstance(payload, str):
-		try:
-			payload = json.loads(payload)
-		except (TypeError, ValueError):
-			payload = None
-
-	if isinstance(payload, dict) and payload.get("doctype") == "School Timetable Generator":
-		generator = frappe.get_doc(payload)
-		generator.check_permission("write")
-		if generator.is_new():
-			generator.insert()
-		else:
-			generator.save()
-		return generator.generate_schedules()
-
-	target_name = (
-		name
-		or docname
-		or (payload.get("name") if isinstance(payload, dict) else None)
-		or frappe.form_dict.get("name")
-		or frappe.form_dict.get("docname")
-	)
-	if not target_name:
-		frappe.throw(_("The School Timetable Generator document was not included in the request. Refresh the form and try again."))
-
-	generator = frappe.get_doc("School Timetable Generator", target_name)
-	return generator.generate_schedules()
+def generate_schedules(**kwargs):
+	"""Retire the old write endpoint without saving client-supplied documents."""
+	frappe.throw(_("Use Preview Schedule Changes, then Apply in School Timetable Generator. Refresh your browser after upgrading to v0.0.29."))

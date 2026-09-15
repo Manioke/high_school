@@ -5,6 +5,7 @@ from frappe import _
 from frappe.utils import escape_html, now_datetime
 
 from high_school.high_school.mis.executive import get_executive_summary
+from high_school.high_school.mis.academic_explanations import render_explanations_html
 
 
 MANAGER_ROLES = ("Academics User", "Education Manager", "System Manager")
@@ -179,6 +180,7 @@ def _report_html(data):
        <tr><td>{academic_interventions}</td><td>{attendance_interventions}</td><td>{overdue_interventions}</td><td>{improved_students}</td><td>{not_improved_students}</td></tr>
       </tbody></table>
       <p><b>Average overall change across evaluated students:</b> {academic_improvement}. Term 1 establishes the baseline; later terms are compared with the immediately preceding official Student Performance Summary.</p>
+      {academic_explanations}
       <h3>Whole-School Finance</h3>
       <table class="table table-bordered"><tbody>
        <tr><th>Cash and bank</th><td>{cash}</td><th>Term income</th><td>{term_income}</td></tr>
@@ -299,6 +301,7 @@ def _report_html(data):
         fiscal_result=_money(
             fiscal_profit_and_loss.get("net_result"), operations_currency
         ),
+        academic_explanations=render_explanations_html(data.get("academic_explanations"), include_people=True, expand_groups=True),
         recommendations=recommendations,
     )
 

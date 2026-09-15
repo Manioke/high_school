@@ -443,6 +443,15 @@ def get_executive_summary(
         settings=settings,
     )
     result["interventions"] = get_intervention_summary(term.name)
+    from high_school.high_school.mis.academic_explanations import (
+        get_academic_explanations, render_explanations_html,
+    )
+    result["academic_explanations"] = get_academic_explanations(
+        term.name, (academics or {}).get("performance") or {}, settings,
+    )
+    result["academic_explanations_html"] = render_explanations_html(
+        result["academic_explanations"], include_people=True,
+    )
 
     # =====================================================
     # Dynamic Alert Rules

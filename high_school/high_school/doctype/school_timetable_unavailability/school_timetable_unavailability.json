@@ -1,0 +1,70 @@
+{
+ "doctype": "DocType",
+ "name": "School Timetable Unavailability",
+ "module": "High School",
+ "istable": 1,
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "from_date",
+  "to_date",
+  "instructor",
+  "room",
+  "student_group",
+  "from_time",
+  "to_time",
+  "reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_date",
+   "label": "From Date",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_date",
+   "label": "To Date",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "instructor",
+   "label": "Instructor",
+   "fieldtype": "Link",
+   "options": "Instructor",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "room",
+   "label": "Room",
+   "fieldtype": "Link",
+   "options": "Room",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "student_group",
+   "label": "Student Group",
+   "fieldtype": "Link",
+   "options": "Student Group"
+  },
+  {
+   "fieldname": "from_time",
+   "label": "From Time",
+   "fieldtype": "Time"
+  },
+  {
+   "fieldname": "to_time",
+   "label": "To Time",
+   "fieldtype": "Time"
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": []
+}

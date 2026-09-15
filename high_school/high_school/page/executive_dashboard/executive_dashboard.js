@@ -3136,6 +3136,8 @@ frappe.pages['executive-dashboard'].on_page_load = function(wrapper) {
 
             ${configurationWarning}
             ${setupWarning}
+            ${data.academic_explanations_html || ''}
+            <p><a class="btn btn-default btn-sm" href="/app/query-report/Intervention%20Follow-up?school_term=${encodeURIComponent(data.school_term.name)}">${__('Open Intervention Follow-up')}</a></p>
 
             <div
                 style="

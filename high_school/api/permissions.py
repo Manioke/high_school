@@ -83,12 +83,13 @@ def student_attendance_query(user=None):
 def course_schedule_has_permission(
     doc,
     user=None,
-    permission_type=None,
+    ptype=None,
 ):
     user = user or frappe.session.user
 
     if not is_instructor_user(user):
-        return None
+        # Do not veto normal role/user permissions for other users.
+        return True
 
     return doc.instructor == get_instructor(user)
 
@@ -96,12 +97,13 @@ def course_schedule_has_permission(
 def student_attendance_has_permission(
     doc,
     user=None,
-    permission_type=None,
+    ptype=None,
 ):
     user = user or frappe.session.user
 
     if not is_instructor_user(user):
-        return None
+        # Do not veto normal role/user permissions for other users.
+        return True
 
     if not doc.course_schedule:
         return False
@@ -253,14 +255,15 @@ def assessment_result_query(user=None):
 def assessment_plan_has_permission(
     doc,
     user=None,
-    permission_type=None,
+    ptype=None,
 ):
     user = user or frappe.session.user
 
     if not is_instructor_user(user):
-        return None
+        # Do not veto normal role/user permissions for other users.
+        return True
 
-    if permission_type not in {
+    if ptype not in {
         "read",
         "select",
         "print",
@@ -291,14 +294,15 @@ def assessment_plan_has_permission(
 def assessment_result_has_permission(
     doc,
     user=None,
-    permission_type=None,
+    ptype=None,
 ):
     user = user or frappe.session.user
 
     if not is_instructor_user(user):
-        return None
+        # Do not veto normal role/user permissions for other users.
+        return True
 
-    if permission_type not in {
+    if ptype not in {
         "read",
         "select",
         "create",
@@ -310,7 +314,7 @@ def assessment_result_has_permission(
 
     assessment_plan = getattr(doc, "assessment_plan", None)
     if (
-        permission_type == "create"
+        ptype == "create"
         and not assessment_plan
         and getattr(frappe.flags, "in_high_school_assessment_result_tool", False)
     ):
@@ -348,8 +352,8 @@ def validate_assessment_result(doc, method=None):
 
 
 def has_high_school_app_permission(user=None):
-    """Show the High School app tile to school managers and administrators."""
+    """Keep app visibility consistent with the Instructor-visible workspace."""
     user = user or frappe.session.user
     if user == "Administrator":
         return True
-    return bool({"Academics User", "Education Manager", "System Manager"} & set(frappe.get_roles(user)))
+    return bool({"Academics User", "Education Manager", "System Manager", "Instructor"} & set(frappe.get_roles(user)))

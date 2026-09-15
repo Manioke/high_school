@@ -3,15 +3,78 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "field_order": ["student_group", "student_batch", "option_block", "course", "instructor", "periods_per_week", "room"],
+ "field_order": [
+  "student_group",
+  "student_batch",
+  "option_block",
+  "course",
+  "instructor",
+  "periods_per_week",
+  "room",
+  "max_per_day"
+ ],
  "fields": [
-  {"fieldname": "student_group", "fieldtype": "Link", "in_list_view": 1, "label": "Student Group", "options": "Student Group", "reqd": 1},
-  {"fieldname": "student_batch", "fieldtype": "Link", "label": "Student Batch", "options": "Student Batch Name", "read_only": 1},
-  {"description": "Rows with the same Batch and option block are scheduled simultaneously. Different option blocks in one Batch are kept apart.", "fieldname": "option_block", "fieldtype": "Select", "in_list_view": 1, "label": "Option Block", "options": "\nOpt1\nOpt2\nOpt3\nOpt4", "read_only": 1},
-  {"fieldname": "course", "fieldtype": "Link", "in_list_view": 1, "label": "Course", "options": "Course", "reqd": 1},
-  {"fieldname": "instructor", "fieldtype": "Link", "in_list_view": 1, "label": "Instructor", "options": "Instructor"},
-  {"default": "3", "fieldname": "periods_per_week", "fieldtype": "Int", "in_list_view": 1, "label": "Periods Per Week", "reqd": 1},
-  {"fieldname": "room", "fieldtype": "Link", "in_list_view": 1, "label": "Room", "options": "Room"}
+  {
+   "fieldname": "student_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Student Group",
+   "options": "Student Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "student_batch",
+   "fieldtype": "Link",
+   "label": "Student Batch",
+   "options": "Student Batch Name",
+   "read_only": 1
+  },
+  {
+   "description": "Rows with the same Batch and option block are scheduled simultaneously. Different option blocks in one Batch are kept apart.",
+   "fieldname": "option_block",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Option Block",
+   "options": "\nOpt1\nOpt2\nOpt3\nOpt4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Course",
+   "options": "Course",
+   "reqd": 1
+  },
+  {
+   "fieldname": "instructor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Instructor",
+   "options": "Instructor"
+  },
+  {
+   "default": "3",
+   "fieldname": "periods_per_week",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Periods Per Week",
+   "reqd": 1
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Room",
+   "options": "Room"
+  },
+  {
+   "fieldname": "max_per_day",
+   "label": "Maximum Lessons per Day",
+   "fieldtype": "Int",
+   "default": "1",
+   "description": "Per course and group. Increase to allow more than one lesson on the same day."
+  }
  ],
  "grid_page_length": 50,
  "istable": 1,

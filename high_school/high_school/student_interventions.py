@@ -797,7 +797,7 @@ def intervention_permission_query(user=None):
     return "(`tabStudent Intervention Plan`.`assigned_to` = {0} OR EXISTS (SELECT 1 FROM `tabStudent Intervention Action` action WHERE action.parent = `tabStudent Intervention Plan`.name AND action.parenttype = 'Student Intervention Plan' AND action.assigned_to = {0}))".format(escaped)
 
 
-def has_intervention_permission(doc, user=None, permission_type=None):
+def has_intervention_permission(doc, user=None, ptype=None):
     user = user or frappe.session.user
     if set(frappe.get_roles(user)) & MANAGER_ROLES:
         return True

@@ -4,17 +4,162 @@
  "autoname": "format:TIMETABLE-{academic_year}-{#####}",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["academic_year", "program", "school_term", "student_batch", "courses_section", "courses", "result_section", "generated_schedule_count", "last_generated_on"],
+ "field_order": [
+  "academic_year",
+  "program",
+  "school_term",
+  "student_batch",
+  "planning_section",
+  "schedule_mode",
+  "effective_from",
+  "schedule_until",
+  "teaching_days",
+  "max_periods_per_day",
+  "max_teacher_periods_per_day",
+  "holiday_list",
+  "periods",
+  "unavailability",
+  "print_notes",
+  "courses_section",
+  "courses",
+  "result_section",
+  "generated_schedule_count",
+  "last_generated_on"
+ ],
  "fields": [
-  {"fieldname": "academic_year", "fieldtype": "Link", "in_list_view": 1, "label": "Academic Year", "options": "Academic Year", "reqd": 1},
-  {"fieldname": "program", "fieldtype": "Link", "in_list_view": 1, "label": "Program", "options": "Program", "reqd": 1},
-  {"fieldname": "school_term", "fieldtype": "Link", "in_list_view": 1, "label": "School Term", "options": "School Term", "reqd": 1},
-  {"description": "Optional. Leave blank to load every active Student Group in the Academic Year.", "fieldname": "student_batch", "fieldtype": "Link", "label": "Student Batch", "options": "Student Batch Name"},
-  {"fieldname": "courses_section", "fieldtype": "Section Break", "label": "Weekly Course Requirements"},
-  {"fieldname": "courses", "fieldtype": "Table", "label": "Courses", "options": "School Timetable Course"},
-  {"fieldname": "result_section", "fieldtype": "Section Break", "label": "Last Generation"},
-  {"fieldname": "generated_schedule_count", "fieldtype": "Int", "label": "Schedules Created", "read_only": 1},
-  {"fieldname": "last_generated_on", "fieldtype": "Datetime", "label": "Last Generated On", "read_only": 1}
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Program",
+   "options": "Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "school_term",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "School Term",
+   "options": "School Term",
+   "reqd": 1
+  },
+  {
+   "description": "Optional. Leave blank to load every active Student Group in the Academic Year.",
+   "fieldname": "student_batch",
+   "fieldtype": "Link",
+   "label": "Student Batch",
+   "options": "Student Batch Name"
+  },
+  {
+   "fieldname": "courses_section",
+   "fieldtype": "Section Break",
+   "label": "Weekly Course Requirements"
+  },
+  {
+   "fieldname": "courses",
+   "fieldtype": "Table",
+   "label": "Courses",
+   "options": "School Timetable Course"
+  },
+  {
+   "fieldname": "result_section",
+   "fieldtype": "Section Break",
+   "label": "Last Generation"
+  },
+  {
+   "fieldname": "generated_schedule_count",
+   "fieldtype": "Int",
+   "label": "Schedules Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_generated_on",
+   "fieldtype": "Datetime",
+   "label": "Last Generated On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planning_section",
+   "label": "Scheduling Options",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "schedule_mode",
+   "label": "Mode",
+   "fieldtype": "Select",
+   "options": "Add missing lessons\nReplace future lessons",
+   "default": "Add missing lessons",
+   "reqd": 1,
+   "description": "Replace only schedules owned by this generator and this term. Removed course rows are also removed from the replacement date onward."
+  },
+  {
+   "fieldname": "effective_from",
+   "label": "Schedule From",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "description": "Tomorrow or later. Nothing before this date is created or replaced."
+  },
+  {
+   "fieldname": "schedule_until",
+   "label": "Schedule Until",
+   "fieldtype": "Date",
+   "description": "Optional; defaults to the end of the School Term."
+  },
+  {
+   "fieldname": "teaching_days",
+   "label": "Teaching Days",
+   "fieldtype": "Small Text",
+   "default": "Monday, Tuesday, Wednesday, Thursday, Friday",
+   "reqd": 1,
+   "description": "Comma-separated full weekday names."
+  },
+  {
+   "fieldname": "max_periods_per_day",
+   "label": "Maximum Lessons per Group per Day",
+   "fieldtype": "Int",
+   "default": "0",
+   "description": "0 uses the available teaching slots. Includes existing lessons."
+  },
+  {
+   "fieldname": "max_teacher_periods_per_day",
+   "label": "Maximum Lessons per Teacher per Day",
+   "fieldtype": "Int",
+   "default": "0",
+   "description": "0 imposes no additional limit. Counts existing lessons across groups."
+  },
+  {
+   "fieldname": "holiday_list",
+   "label": "Holiday List",
+   "fieldtype": "Link",
+   "options": "Holiday List"
+  },
+  {
+   "fieldname": "periods",
+   "label": "Available Periods and Breaks",
+   "fieldtype": "Table",
+   "options": "School Timetable Period",
+   "description": "Select School Periods for lesson times or breaks. Blank uses every School Period. Breaks are printed but never used for lessons."
+  },
+  {
+   "fieldname": "unavailability",
+   "label": "Unavailable Dates and Times",
+   "fieldtype": "Table",
+   "options": "School Timetable Unavailability",
+   "description": "Blank times mean all day. Blank Instructor, Room and Group mean school closure. If multiple are set, the rule applies to their combination."
+  },
+  {
+   "fieldname": "print_notes",
+   "label": "Timetable Notes",
+   "fieldtype": "Small Text"
+  }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
@@ -22,9 +167,40 @@
  "module": "High School",
  "name": "School Timetable Generator",
  "permissions": [
-  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1},
-  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Education Manager", "share": 1, "write": 1},
-  {"create": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Academics User", "write": 1}
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Education Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Academics User",
+   "write": 1
+  }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,

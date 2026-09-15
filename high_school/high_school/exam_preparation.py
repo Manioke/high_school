@@ -426,14 +426,14 @@ def get_requirement_permission_query_conditions(user=None):
 	)""".format(user=escaped)
 
 
-def has_requirement_permission(doc, user=None, permission_type=None):
+def has_requirement_permission(doc, user=None, ptype=None):
 	user = user or frappe.session.user
 	if user == "Administrator" or _is_manager(user):
 		return True
 	allowed = user in {doc.hod_user, doc.lead_teacher_user} or user in {row.user for row in doc.collaborators}
 	if not allowed:
 		return False
-	if permission_type in {"create", "delete", "submit", "cancel", "amend"}:
+	if ptype in {"create", "delete", "submit", "cancel", "amend"}:
 		return False
 	return True
 
